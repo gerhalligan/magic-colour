@@ -1,0 +1,27 @@
+{
+  "name": "magic-colour",
+  "version": "1.0.0",
+  "description": "Ad-free colour-by-numbers for kids: magic brush + one-by-one modes, offline, single-file build",
+  "main": "index.js",
+  "scripts": {
+    "pictures": "node tools/art/render.mjs && node tools/build-pictures.mjs",
+    "build": "vite build && node tools/inline.mjs",
+    "test:segment": "node tests/segment.mjs",
+    "test:game": "node tests/game.mjs",
+    "test:pictures": "node tests/pictures.mjs",
+    "test:smoke": "node tests/smoke.mjs",
+    "test": "npm run test:segment && npm run test:game && npm run test:pictures && npm run build && npm run test:smoke"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "playwright-core": "^1.63.0",
+    "pngjs": "^7.0.0",
+    "sharp": "^0.35.5",
+    "vite": "^8.3.2",
+    "vite-plugin-singlefile": "^2.3.3"
+  },
+  "type": "module",
+  "private": true
+}

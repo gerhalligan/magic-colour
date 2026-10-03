@@ -1,0 +1,409 @@
+[
+ {
+  "id": "happy-fish",
+  "name": "Happy Fish",
+  "cat": "animals",
+  "diff": "easy",
+  "src": "art/source/happy-fish.png",
+  "opts": {
+   "k": 7,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "kitty-cat",
+  "name": "Kitty Cat",
+  "cat": "animals",
+  "diff": "easy",
+  "src": "art/source/kitty-cat.png",
+  "opts": {
+   "k": 9,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "yummy-ice-cream",
+  "name": "Yummy Ice Cream",
+  "cat": "food",
+  "diff": "easy",
+  "src": "art/source/yummy-ice-cream.png",
+  "opts": {
+   "k": 12,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "rocket-blast",
+  "name": "Rocket Blast",
+  "cat": "space",
+  "diff": "easy",
+  "src": "art/source/rocket-blast.png",
+  "opts": {
+   "k": 8,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "little-red-car",
+  "name": "Little Red Car",
+  "cat": "vehicles",
+  "diff": "easy",
+  "src": "art/source/little-red-car.png",
+  "opts": {
+   "k": 7,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "sailboat",
+  "name": "Sailing Day",
+  "cat": "vehicles",
+  "diff": "easy",
+  "src": "art/source/sailboat.png",
+  "opts": {
+   "k": 8,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "dino-egg",
+  "name": "Hatching Dino",
+  "cat": "dinosaurs",
+  "diff": "easy",
+  "src": "art/source/dino-egg.png",
+  "opts": {
+   "k": 8,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "rainbow-sky",
+  "name": "Over the Rainbow",
+  "cat": "nature",
+  "diff": "easy",
+  "src": "art/source/rainbow-sky.png",
+  "opts": {
+   "k": 7,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "sunny-flower",
+  "name": "Sunny Flower",
+  "cat": "nature",
+  "diff": "easy",
+  "src": "art/source/sunny-flower.png",
+  "opts": {
+   "k": 8,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "magic-potion",
+  "name": "Magic Potion",
+  "cat": "fantasy",
+  "diff": "easy",
+  "src": "art/source/magic-potion.png",
+  "opts": {
+   "k": 7,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "unicorn-pal",
+  "name": "Unicorn Pal",
+  "cat": "unicorns",
+  "diff": "easy",
+  "src": "art/source/unicorn-pal.png",
+  "opts": {
+   "k": 7,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "cupcake-party",
+  "name": "Cupcake Party",
+  "cat": "food",
+  "diff": "easy",
+  "src": "art/source/cupcake-party.png",
+  "opts": {
+   "k": 8,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "mandala-magic",
+  "name": "Mandala Magic",
+  "cat": "nature",
+  "diff": "hard",
+  "src": "art/source/mandala-magic.png",
+  "opts": {
+   "k": 15,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "pretty-peacock",
+  "name": "Pretty Peacock",
+  "cat": "animals",
+  "diff": "hard",
+  "src": "art/source/pretty-peacock.png",
+  "opts": {
+   "k": 14,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "busy-city",
+  "name": "Busy City",
+  "cat": "vehicles",
+  "diff": "hard",
+  "src": "art/source/busy-city.png",
+  "opts": {
+   "k": 16,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "under-the-sea",
+  "name": "Under the Sea",
+  "cat": "animals",
+  "diff": "hard",
+  "src": "art/source/under-the-sea.png",
+  "opts": {
+   "k": 16,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "dino-land",
+  "name": "Dino Land",
+  "cat": "dinosaurs",
+  "diff": "hard",
+  "src": "art/source/dino-land.png",
+  "opts": {
+   "k": 16,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "space-adventure",
+  "name": "Space Adventure",
+  "cat": "space",
+  "diff": "hard",
+  "src": "art/source/space-adventure.png",
+  "opts": {
+   "k": 15,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "brick-castle",
+  "name": "Brick Castle",
+  "cat": "fantasy",
+  "diff": "hard",
+  "src": "art/source/brick-castle.png",
+  "opts": {
+   "k": 16,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "cake-party",
+  "name": "Cake Party",
+  "cat": "food",
+  "diff": "hard",
+  "src": "art/source/cake-party.png",
+  "opts": {
+   "k": 16,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "treehouse-fun",
+  "name": "Treehouse Fun",
+  "cat": "nature",
+  "diff": "hard",
+  "src": "art/source/treehouse-fun.png",
+  "opts": {
+   "k": 16,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "butterfly-garden",
+  "name": "Butterfly Garden",
+  "cat": "animals",
+  "diff": "medium",
+  "src": "art/source/butterfly-garden.png",
+  "opts": {
+   "k": 11,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "wise-owl",
+  "name": "Wise Owl",
+  "cat": "animals",
+  "diff": "medium",
+  "src": "art/source/wise-owl.png",
+  "opts": {
+   "k": 13,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "elephant-parade",
+  "name": "Elly Elephant",
+  "cat": "animals",
+  "diff": "medium",
+  "src": "art/source/elephant-parade.png",
+  "opts": {
+   "k": 11,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "penguin-pals",
+  "name": "Penguin Pal",
+  "cat": "animals",
+  "diff": "medium",
+  "src": "art/source/penguin-pals.png",
+  "opts": {
+   "k": 8,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "rainbow-unicorn",
+  "name": "Rainbow Unicorn",
+  "cat": "unicorns",
+  "diff": "medium",
+  "src": "art/source/rainbow-unicorn.png",
+  "opts": {
+   "k": 10,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "dream-castle",
+  "name": "Dream Castle",
+  "cat": "fantasy",
+  "diff": "medium",
+  "src": "art/source/dream-castle.png",
+  "opts": {
+   "k": 11,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "trex-roar",
+  "name": "T-Rex Roar",
+  "cat": "dinosaurs",
+  "diff": "medium",
+  "src": "art/source/trex-roar.png",
+  "opts": {
+   "k": 16,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "stegosaurus",
+  "name": "Spiky Stegosaurus",
+  "cat": "dinosaurs",
+  "diff": "medium",
+  "src": "art/source/stegosaurus.png",
+  "opts": {
+   "k": 15,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "choo-choo-train",
+  "name": "Choo-Choo Train",
+  "cat": "vehicles",
+  "diff": "medium",
+  "src": "art/source/choo-choo-train.png",
+  "opts": {
+   "k": 14,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "fire-truck",
+  "name": "Fire Truck",
+  "cat": "vehicles",
+  "diff": "medium",
+  "src": "art/source/fire-truck.png",
+  "opts": {
+   "k": 11,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "hot-air-balloon",
+  "name": "Hot Air Balloon",
+  "cat": "vehicles",
+  "diff": "medium",
+  "src": "art/source/hot-air-balloon.png",
+  "opts": {
+   "k": 11,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "pizza-time",
+  "name": "Pizza Time",
+  "cat": "food",
+  "diff": "medium",
+  "src": "art/source/pizza-time.png",
+  "opts": {
+   "k": 10,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "big-burger",
+  "name": "Big Burger",
+  "cat": "food",
+  "diff": "medium",
+  "src": "art/source/big-burger.png",
+  "opts": {
+   "k": 10,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "ufo-visitor",
+  "name": "Friendly UFO",
+  "cat": "space",
+  "diff": "medium",
+  "src": "art/source/ufo-visitor.png",
+  "opts": {
+   "k": 15,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "ringed-planet",
+  "name": "Ringed Planet",
+  "cat": "space",
+  "diff": "medium",
+  "src": "art/source/ringed-planet.png",
+  "opts": {
+   "k": 12,
+   "mergeDE": 9
+  }
+ },
+ {
+  "id": "wizard-wonder",
+  "name": "Wizard Wonder",
+  "cat": "fantasy",
+  "diff": "medium",
+  "src": "art/source/wizard-wonder.png",
+  "opts": {
+   "k": 13,
+   "mergeDE": 9
+  }
+ }
+]
