@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.0 — 2026-10-04
+Feedback from Gerard.
+- **One by one is now the default mode** for new players and on first load. A mode the player really picks later is still remembered (`modeChosen` flag); the mode that 1.0.0 silently auto-saved as its default is reset to One by one.
+- **Magic brush is harder (less automatic).** Selecting a colour in the palette now only *selects* it (matching spots glow softly for a moment); it no longer colours anything. The player must tap a numbered region with the correct colour selected, and that single tap colours **all** regions with that number at once. Tapping a region with nothing selected just picks its colour. Wrong-colour taps still give the gentle wiggle + hint.
+- Updated toasts, button label and README; hint, undo, progress saving and celebration unchanged.
+- Tests: game logic (default mode, palette-only never fills, magic tap fills all, wrong tap, undo, save/restore), per-picture solve in both modes (select + tap), smoke tests (default mode, palette-tap-fills-nothing, one-tap-fills-all, settings migration), all four viewports.
+
 ## 1.0.0 — 2026-10-04
 First release of **Magic Colour**, an ad-free, tracking-free, offline colour-by-numbers game for young children (about 4–9).
 - **37 pictures** in 8 categories (animals, unicorns, dinosaurs, vehicles, space, fantasy, food, nature), graded **Easy** (8–25 regions, 5–8 colours), **Medium** (20–84 regions) and **Hard** (75–158 regions, 11–16 colours).

@@ -28,11 +28,15 @@ for (const p of pics) {
     for (const mode of [MODE_MAGIC, MODE_CLASSIC]) {
       const g = createGame(p, { mode }); let taps = 0, res;
       for (let c = 1; c <= p.palette.length; c++) {
-        res = g.selectColour(c); taps++;
+        res = g.selectColour(c); assert.equal(res.type, 'select'); assert.equal(g.filledCount(), g.total - [...Array(p.palette.length).keys()].reduce((a, k) => a + g.remaining(k + 1), 0), 'selecting never fills');
+        if (!g.byColour[c].length) continue;
+        const before = g.filledCount();
         if (mode === MODE_CLASSIC) for (const id of g.byColour[c]) { res = g.tapRegion(id); taps++; assert.notEqual(res.type, 'wrong'); }
+        else { res = g.tapRegion(g.byColour[c][0]); taps++; assert.equal(res.type, 'fill'); assert.equal(g.filledCount() - before, g.byColour[c].length, 'one tap fills every region of the colour'); }
       }
       assert.ok(g.complete && g.isComplete(), mode + ' did not complete'); assert.ok(res.complete);
-      if (mode === MODE_MAGIC) assert.equal(taps, p.palette.length);
+      if (mode === MODE_MAGIC) assert.equal(taps, p.palette.filter((_, i) => g.byColour[i + 1].length).length);
+      else assert.equal(taps, p.regions.filter((r) => r[0] > 0).length);
     }
   });
 }

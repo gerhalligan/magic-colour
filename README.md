@@ -3,8 +3,9 @@
 Ad-free colour-by-numbers for young children (≈4–9). No ads, no tracking, no network calls at runtime, works offline.
 
 * **Play**: open `dist-single/Magic-Colour.html` (one self-contained file), or the GitHub Pages build (installable PWA).
-* **Magic brush** (default): tap a colour number — or any region — and *every* region with that number is coloured at once.
-* **One by one**: pick a colour, tap each region yourself. Wrong number? A gentle wiggle and a hint, never a penalty.
+* **One by one** (default): pick a colour, then tap each region yourself.
+* **Magic brush**: pick a colour, then tap **one** region with that number — *every* region with that number is coloured at once. (Picking a colour in the palette only selects it and softly glows the matching spots; it never fills anything.)
+* Wrong number in either mode? A gentle wiggle and a hint, never a penalty.
 * Pinch/drag/wheel zoom, hint, undo, auto-save per picture, celebration, "My gallery", save/share PNG, cute WebAudio sounds with mute.
 
 ## Develop

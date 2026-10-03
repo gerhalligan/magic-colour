@@ -1,6 +1,6 @@
 {
   "name": "magic-colour",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Ad-free colour-by-numbers for kids: magic brush + one-by-one modes, offline, single-file build",
   "main": "index.js",
   "scripts": {

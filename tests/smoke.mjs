@@ -48,22 +48,39 @@ for (const [name, vp, touch, dsf] of VIEWPORTS) {
     await page.screenshot({ path: `${SHOTS}/${name}-2-play-start.png` });
   });
 
-  await test(`${name}: MAGIC brush (default) - one palette tap colours every region with that number`, async () => {
-    const mode = await page.evaluate(() => window.__MC.settings.mode); assert.equal(mode, 'magic');
-    const on = await page.$eval('.mode[data-mode="magic"]', (b) => b.classList.contains('on')); assert.ok(on);
-    const info = await page.evaluate(() => { const g = window.__MC.cur.game; return { n1: g.byColour[1].length, ids: g.byColour[1].slice(), n2: g.byColour[2].length }; });
-    await page.click('.sw[data-c="2"]'); const s = await state(page);
-    assert.equal(s.filled, info.n2, 'all regions of colour 2'); assert.equal(s.sel, 2);
-    const pal = await page.evaluate(() => window.__MC.cur.pic.palette[1]); const id2 = await page.evaluate(() => window.__MC.cur.game.byColour[2][0]);
-    assert.equal(await px(page, id2), pal);
+  await test(`${name}: DEFAULT mode is One by one - selecting a colour never fills, each region is tapped`, async () => {
+    assert.equal(await page.evaluate(() => window.__MC.settings.mode), 'classic'); assert.equal(await page.evaluate(() => window.__MC.cur.game.mode), 'classic');
+    assert.ok(await page.$eval('.mode[data-mode="classic"]', (b) => b.classList.contains('on')), 'One by one button is on by default');
+    assert.ok(!(await page.$eval('.mode[data-mode="magic"]', (b) => b.classList.contains('on'))));
+    const ids = await page.evaluate(() => window.__MC.cur.game.byColour[1].slice());
+    await page.click('.sw[data-c="1"]'); let s = await state(page); assert.equal(s.filled, 0, 'palette tap does not fill'); assert.equal(s.sel, 1);
+    const r = await regionXY(page, ids[0]); await tapAt(page, touch, r.x, r.y); s = await state(page); assert.equal(s.filled, 1, 'one tap = one region');
+    await page.click('#pUndo'); s = await state(page); assert.equal(s.filled, 0);
+  });
+
+  await test(`${name}: MAGIC brush - palette tap alone fills nothing; ONE tap on a region fills every region with that number`, async () => {
+    await page.click('.mode[data-mode="magic"]'); assert.equal(await page.evaluate(() => window.__MC.settings.mode), 'magic');
+    assert.ok(await page.$eval('.mode[data-mode="magic"]', (b) => b.classList.contains('on')));
+    const info = await page.evaluate(() => { const g = window.__MC.cur.game; return { ids: g.byColour[2].slice(), n2: g.byColour[2].length }; });
+    await page.click('.sw[data-c="2"]'); let s = await state(page);
+    assert.equal(s.filled, 0, 'palette tap alone does NOT colour anything'); assert.equal(s.sel, 2);
+    assert.ok(await page.evaluate(() => !!window.__MC.view.overlayItems), 'matching spots glow'); assert.ok(!(await page.$eval('.sw[data-c="2"]', (b) => b.classList.contains('done'))));
+    const r = await regionXY(page, info.ids[0]); await tapAt(page, touch, r.x, r.y); s = await state(page);
+    assert.equal(s.filled, info.n2, 'a single tap fills all regions of colour 2'); assert.equal(s.sel, 2);
+    const pal = await page.evaluate(() => window.__MC.cur.pic.palette[1]);
+    for (const id of info.ids) assert.equal(await px(page, id), pal);
     assert.ok(await page.$eval('.sw[data-c="2"]', (b) => b.classList.contains('done')), 'tick shown for completed colour');
     await page.waitForTimeout(300); await page.screenshot({ path: `${SHOTS}/${name}-3-magic-colour2.png` });
   });
 
-  await test(`${name}: tapping a region in magic mode colours all regions of its number`, async () => {
-    const id = await page.evaluate(() => { const g = window.__MC.cur.game; return g.byColour[3][0]; });
-    const { x, y } = await regionXY(page, id); await tapAt(page, touch, x, y); const s = await state(page);
-    const left = await page.evaluate(() => window.__MC.cur.game.remaining(3)); assert.equal(left, 0); assert.equal(s.sel, 3);
+  await test(`${name}: MAGIC brush - wrong colour tap wiggles, then the right tap fills all`, async () => {
+    await page.click('.sw[data-c="3"]');
+    const wrongId = await page.evaluate(() => { const g = window.__MC.cur.game; for (let c = 1; c <= g.puzzle.palette.length; c++) if (c !== 3 && g.remaining(c) > 0) return g.byColour[c].find((i) => !g.filled[i]); });
+    const before = await state(page); const w = await regionXY(page, wrongId); await tapAt(page, touch, w.x, w.y);
+    const s1 = await state(page); assert.equal(s1.filled, before.filled, 'wrong tap fills nothing'); assert.equal(s1.sel, 3);
+    assert.ok(await page.evaluate(() => window.__MC.view.wiggle.size > 0), 'wiggle'); assert.match(await page.textContent('#toast'), /number \d+/);
+    const id = await page.evaluate(() => window.__MC.cur.game.byColour[3][0]); const r = await regionXY(page, id); await tapAt(page, touch, r.x, r.y);
+    assert.equal(await page.evaluate(() => window.__MC.cur.game.remaining(3)), 0); assert.equal((await state(page)).sel, 3);
   });
 
   await test(`${name}: undo + hint + wrong colour are gentle`, async () => {
@@ -127,7 +144,11 @@ for (const [name, vp, touch, dsf] of VIEWPORTS) {
   await test(`${name}: finishing a picture -> celebration, gallery entry, PNG save`, async () => {
     await page.click('.mode[data-mode="magic"]');
     const K = await page.evaluate(() => window.__MC.cur.pic.palette.length);
-    for (let c = 1; c <= K; c++) { await page.click(`.sw[data-c="${c}"]`); await page.waitForTimeout(40); }
+    for (let c = 1; c <= K; c++) {
+      if (await page.evaluate((c) => window.__MC.cur.game.remaining(c) === 0, c)) continue;
+      await page.click(`.sw[data-c="${c}"]`); const id = await page.evaluate((c) => { const g = window.__MC.cur.game; return g.byColour[c].find((i) => !g.filled[i]); }, c);
+      const r = await regionXY(page, id); await tapAt(page, touch, r.x, r.y); await page.waitForTimeout(40);
+    }
     const s = await state(page); assert.ok(s.complete && s.filled === s.total);
     await page.waitForTimeout(500); assert.ok(await page.evaluate(() => !!window.__MC.view.celeb), 'sparkle reveal running');
     const confettiPx = await page.evaluate(() => { const c = document.getElementById('confetti'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4 * 53) if (d[i] > 0) n++; return n; });
@@ -143,6 +164,14 @@ for (const [name, vp, touch, dsf] of VIEWPORTS) {
     const g = await page.$$eval('#gGrid .pic.done img', (e) => e.map((i) => i.naturalWidth)); assert.ok(g.length >= 1 && g[0] > 50, 'gallery thumbnail');
     await page.screenshot({ path: `${SHOTS}/${name}-11-gallery.png` });
     await page.click('#gBack'); await page.click('.pic[data-id="happy-fish"]'); await page.waitForSelector('#modal.on'); await page.click('#modalCard [data-a="close"]');
+  });
+
+  await test(`${name}: mode setting - default One by one, a real later choice is remembered, old auto-saved default is migrated`, async () => {
+    const orig = await page.evaluate(() => localStorage.getItem('mc1.settings')); const p2 = await ctx.newPage();
+    const modeAfter = async (val) => { await p2.goto(FILE); await p2.waitForSelector('.pic'); await p2.evaluate((v) => { if (v === null) localStorage.removeItem('mc1.settings'); else localStorage.setItem('mc1.settings', v); }, val); await p2.reload(); await p2.waitForSelector('.pic'); return p2.evaluate(() => window.__MC.settings.mode); };
+    assert.equal(await modeAfter(null), 'classic', 'fresh player'); assert.equal(await modeAfter('{"mode":"magic","sound":true}'), 'classic', 'v1.0.0 auto-saved default');
+    assert.equal(await modeAfter('{"mode":"magic","sound":true,"modeChosen":true}'), 'magic', 'chosen magic remembered'); assert.equal(await modeAfter('{"mode":"classic","sound":true,"modeChosen":true}'), 'classic');
+    await p2.close(); await page.evaluate((o) => { if (o === null) localStorage.removeItem('mc1.settings'); else localStorage.setItem('mc1.settings', o); }, orig);
   });
 
   await test(`${name}: sound toggle, no console errors, no network requests`, async () => {

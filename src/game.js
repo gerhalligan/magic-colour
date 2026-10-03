@@ -1,8 +1,9 @@
-// Pure game logic for one picture (no DOM): palette selection, magic brush vs classic mode, undo, hint, completion, save/restore.
+// Pure game logic for one picture (no DOM): palette selection, magic brush vs one-by-one (classic) mode, undo, hint, completion, save/restore.
+// In BOTH modes the player must select a colour and then tap a region of that number; magic brush then fills every region of that number at once.
 export const MODE_MAGIC = 'magic';
 export const MODE_CLASSIC = 'classic';
 
-export function createGame(puzzle, { mode = MODE_MAGIC } = {}) {
+export function createGame(puzzle, { mode = MODE_CLASSIC } = {}) {
   const regions = puzzle.regions, n = regions.length, K = puzzle.palette.length;
   const filled = new Uint8Array(n);
   const byColour = Array.from({ length: K + 1 }, () => []);
@@ -23,11 +24,10 @@ export function createGame(puzzle, { mode = MODE_MAGIC } = {}) {
       const done = []; for (const id of ids) if (!filled[id]) { filled[id] = 1; doneCount[colour]++; done.push(id); }
       return done;
     },
-    /** Choose a palette colour. In magic mode this immediately colours every region with that number. */
+    /** Choose a palette colour. It only selects it (never fills) in every mode; the player must still tap a matching region. */
     selectColour(c) {
       if (g.complete || c < 1 || c > K) return { type: 'noop' };
       g.selected = c;
-      if (g.mode === MODE_MAGIC && g.remaining(c) > 0) return g._magic(c);
       return { type: 'select', colour: c, done: g.colourDone(c) };
     },
     _magic(c) {
@@ -39,17 +39,16 @@ export function createGame(puzzle, { mode = MODE_MAGIC } = {}) {
       const complete = g.isComplete(); if (complete) g.complete = true;
       return { type, ids, colour: c, magic: !!magic, colourDone: g.colourDone(c), complete };
     },
-    /** Tap a region. Right number = fills (all of that number in magic mode, just that region in classic). Wrong number = gentle hint, never a penalty. */
+    /** Tap a region. Right number (with that colour selected) = fills (all regions of that number in magic mode, just that region in one-by-one). Wrong number = gentle hint, never a penalty. */
     tapRegion(id) {
       if (g.complete || id < 0 || id >= n) return { type: 'noop' };
       const want = regions[id][0];
       if (want === 0) return { type: 'paper' };
       if (filled[id]) return { type: 'already', id, colour: want };
       const sel = g.selected;
-      // nothing selected, or the selected colour is finished: just pick this region's colour (friendly), magic mode then paints it
+      // nothing selected, or the selected colour is finished: just pick this region's colour (friendly); the next tap paints
       if (sel === 0 || g.colourDone(sel)) {
         g.selected = want;
-        if (g.mode === MODE_MAGIC) return g._magic(want);
         return { type: 'select', colour: want, done: false, fromRegion: true, id };
       }
       if (sel !== want) return { type: 'wrong', id, want, selected: sel };

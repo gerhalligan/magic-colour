@@ -41,7 +41,7 @@ app.innerHTML = `
   <header class="bar">
     <button class="tool" id="pHome" aria-label="All pictures">${I.home}</button>
     <div class="modes" role="group" aria-label="Colouring mode">
-      <button class="mode" data-mode="magic" aria-label="Magic brush: colours every spot with that number">${I.wand}<b>Magic</b></button>
+      <button class="mode" data-mode="magic" aria-label="Magic brush: pick a colour, tap one spot, and every spot with that number gets coloured">${I.wand}<b>Magic</b></button>
       <button class="mode" data-mode="classic" aria-label="One by one: tap each spot">${I.finger}<b>One by one</b></button>
     </div>
     <div class="grow"></div>
@@ -157,11 +157,17 @@ $('#palette').addEventListener('click', (e) => {
   flush();
   const res = g.selectColour(c);
   if (res.type === 'select' && res.done) { toast('All the ' + c + 's are done \u2705'); audio.tap(); }
+  else if (res.type === 'select') {
+    // selecting only selects: softly glow the matching spots so the player can find one and tap it
+    const ids = g.byColour[c].filter((i) => !g.filled[i]);
+    view.setOverlay(ids.map((id) => ({ id, color: '#ffd93d' })), 1600);
+    toast(g.mode === MODE_MAGIC ? '\u{1FA84} Now tap a spot numbered ' + c + ' \u2013 the magic brush colours them all!' : 'Now tap the spots numbered ' + c, 2400);
+  }
   handle(res);
 });
 app.querySelector('.modes').addEventListener('click', (e) => {
-  const b = e.target.closest('.mode'); if (!b) return; audio.unlock(); settings.mode = b.dataset.mode; store.saveSettings(settings); updateModeUI(); audio.tap();
-  toast(settings.mode === MODE_MAGIC ? '\u{1FA84} Magic brush: one tap colours every spot with that number!' : '\u261D\uFE0F One by one: tap each spot to colour it', 3200);
+  const b = e.target.closest('.mode'); if (!b) return; audio.unlock(); settings.mode = b.dataset.mode; settings.modeChosen = true; store.saveSettings(settings); updateModeUI(); audio.tap();
+  toast(settings.mode === MODE_MAGIC ? '\u{1FA84} Magic brush: pick a colour, tap one spot \u2013 every spot with that number gets coloured!' : '\u261D\uFE0F One by one: tap each spot to colour it', 3200);
 });
 
 // ---------- gameplay ----------
@@ -176,6 +182,7 @@ function handle(res, ctx = {}) {
   const g = cur.game, P = cur.pic;
   switch (res.type) {
     case 'fill': {
+      view.setOverlay(null);
       const col = P.palette[res.colour - 1];
       const ids = res.ids.slice();
       const ox = ctx.mx !== undefined ? ctx.mx : P.regions[ids[0]][1], oy = ctx.my !== undefined ? ctx.my : P.regions[ids[0]][2];
@@ -187,7 +194,7 @@ function handle(res, ctx = {}) {
       save();
       if (res.complete) later(() => finish(false), ids.length * step + 350);
       break; }
-    case 'select': audio.select(res.colour); if (res.fromRegion) toast('Colour ' + res.colour + ' picked! Now tap the spots numbered ' + res.colour); break;
+    case 'select': audio.select(res.colour); if (res.fromRegion) toast('Colour ' + res.colour + ' picked! ' + (g.mode === MODE_MAGIC ? 'Tap that spot again \u2013 the magic brush colours them all!' : 'Now tap the spots numbered ' + res.colour)); break;
     case 'wrong': {
       view.wrong(res.id); audio.wrong();
       const b = $('#palette').children[res.want - 1]; b.classList.remove('nudge'); void b.offsetWidth; b.classList.add('nudge');

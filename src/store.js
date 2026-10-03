@@ -6,7 +6,13 @@ const get = (k) => { try { const v = ls ? ls.getItem(P + k) : mem[k]; return v ?
 const set = (k, v) => { try { const s = JSON.stringify(v); if (ls) ls.setItem(P + k, s); else mem[k] = s; } catch (e) { /* storage full */ } };
 const del = (k) => { try { if (ls) ls.removeItem(P + k); else delete mem[k]; } catch (e) { /* ignore */ } };
 export const store = {
-  settings() { return Object.assign({ mode: 'magic', sound: true }, get('settings') || {}); },
+  // Default mode is 'classic' (One by one). A saved mode is only honoured if the player really picked it (modeChosen);
+  // v1.0.0 saved the old 'magic' default into settings without a choice, so those are reset to the new default.
+  settings() {
+    const s = Object.assign({ mode: 'classic', sound: true }, get('settings') || {});
+    if (!s.modeChosen) s.mode = 'classic';
+    return s;
+  },
   saveSettings(s) { set('settings', s); },
   progress(id) { return get('p.' + id); },
   saveProgress(id, data) { set('p.' + id, data); },
