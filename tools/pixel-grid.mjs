@@ -8,7 +8,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Grid, gridToPuzzle } from './lib/grid.mjs';
+import { Grid, gridToPuzzle, compactGrid } from './lib/grid.mjs';
 import { validatePuzzle } from './lib/validate.mjs';
 import { PIXEL } from './art/pixel.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -34,7 +34,7 @@ for (const j of jobs) {
   const old = manifest.find((m) => m.id === j.id), added = (old && old.added) || new Date().toISOString().slice(0, 10);
   const { puzzle, full } = await gridToPuzzle(j.grid, { id: j.id, name: j.name, cat: j.cat, diff: j.diff, added });
   const problems = validatePuzzle(puzzle); if (problems.length) { bad++; console.log('PROBLEMS', j.id, problems.slice(0, 5)); }
-  fs.writeFileSync(path.join(root, 'src/pictures', j.id + '.json'), JSON.stringify(puzzle));
+  fs.writeFileSync(path.join(root, 'src/pictures', j.id + '.json'), JSON.stringify(compactGrid(puzzle)));
   fs.writeFileSync(path.join(root, 'art/thumbs', j.id + '.png'), full);
   fs.writeFileSync(path.join(root, 'art/pixel', j.id + '.txt'), j.ascii || j.grid.toAscii());
   const entry = { id: j.id, name: j.name, cat: j.cat, diff: puzzle.diff, kind: 'grid', src: 'art/pixel/' + j.id + '.txt', added };

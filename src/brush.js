@@ -8,7 +8,7 @@ export const BRUSH_SIZES = [
   { id: 'large', label: 'Large', px: 44 },
   { id: 'huge', label: 'Huge', px: 70 },
 ];
-export const DEFAULT_BRUSH = 1;
+export const DEFAULT_BRUSH = 0; // the smallest brush is the default (a size the player picks later is remembered)
 export const clampBrushSize = (i) => { i = Math.round(+i); return Number.isFinite(i) ? Math.min(BRUSH_SIZES.length - 1, Math.max(0, i)) : DEFAULT_BRUSH; };
 
 /**

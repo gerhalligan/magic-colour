@@ -2,6 +2,7 @@
 // size (Grid(n, k = n / native)), so e.g. the dinosaur exists as a 36x36 and a 50x50 puzzle. (0,0) is the top-left corner.
 // To add your own: copy a design below, or write an ASCII file (see README) and run `node tools/pixel-grid.mjs my.txt --name "My Picture"`.
 import { Grid } from '../lib/grid.mjs';
+import { bigDesigns } from './pixel-big.mjs';
 
 const INK = '#22223b';
 export const PIXEL = [];
@@ -124,7 +125,7 @@ add('grid-robot', 'Cute Robot', 'fantasy', 28, 28, (g) => {
   g.outline(INK);
 });
 
-add('grid-rocket', 'Rocket Ship', 'space', 30, [30, 44], (g) => {
+add('grid-rocket-30', 'Rocket Ship', 'space', 30, 30, (g) => {
   g.poly([[15, 22.6], [18.3, 22.6], [15, 29.6], [11.7, 22.6]], '#ff9f1c').poly([[15, 22.6], [16.6, 22.6], [15, 27], [13.4, 22.6]], '#ffe066');
   g.mirrored((m) => { m.poly([[10.4, 15.5], [5.2, 24.2], [5.4, 20], [10.4, 12]], '#e63946'); });
   g.ell(15, 14, 5.2, 9, '#f1f4ff'); g.rect(10, 12, 19, 20, '#f1f4ff');
@@ -152,7 +153,6 @@ const unicorn = (g) => {
   g.outline(INK);
 };
 add('grid-unicorn-small', 'Little Unicorn', 'unicorns', 32, 24, unicorn);
-add('grid-unicorn', 'Unicorn Dream', 'unicorns', 32, 40, unicorn);
 
 add('grid-castle', 'Fairy Castle', 'fantasy', 32, 36, (g) => {
   g.rect(0, 29, 31, 31, '#69db7c'); g.recolour((x, y) => y >= 0 && (x * 5 + y * 3) % 7 === 0, '#40c057');
@@ -183,4 +183,120 @@ const dino = (g) => {
   g.outline(INK);
 };
 add('grid-dino', 'Friendly Dino', 'dinosaurs', 36, 36, dino);
-add('grid-dino-giant', 'Giant Dino', 'dinosaurs', 36, 50, dino);
+
+// ---- v1.5.1: three designs that replaced near-identical copies (same art at two sizes). Every picture must look clearly different: see tests/duplicates.mjs ----
+
+/** Unicorn Dream: a full-body unicorn standing in a meadow in front of a big rainbow */
+add('grid-unicorn-dream', 'Unicorn Dream', 'unicorns', 40, 40, (g) => {
+  const R = ['#e63946', '#ff9f1c', '#ffd93d', '#51cf66', '#339af0', '#9775fa'];
+  R.forEach((c, i) => { const ro = 19.6 - i * 1.7, ri = ro - 1.7; g.paint((a, b) => { const d = Math.hypot(a - 20, b - 31); return d <= ro && d > ri && b < 31.5; }, c); });
+  const cloud = (cx, cy) => { g.disc(cx, cy, 2.6, '#f1f5ff').disc(cx + 2.7, cy + 0.7, 2.2, '#f1f5ff').disc(cx - 2.6, cy + 0.9, 2, '#f1f5ff').rect(Math.round(cx - 4), Math.round(cy + 1), Math.round(cx + 4.4), Math.round(cy + 2.6), '#f1f5ff'); };
+  cloud(3.6, 30); cloud(36.4, 30);
+  // meadow
+  g.rect(0, 35, 39, 39, '#69db7c'); g.recolour((x, y) => y >= 36 && (x * 5 + y * 3) % 7 === 0, '#40c057');
+  [[3, 37, '#ff6fa5'], [8, 38, '#ffd93d'], [33, 37, '#ff6fa5'], [37, 38, '#ffd93d'], [20, 38, '#f1f5ff'], [26, 37, '#ff6fa5']].forEach(([x, y, c]) => g.px(x, y, c));
+  // tail + mane (rainbow tufts)
+  const tail = [[11, 22, 2.4], [9.2, 24.6, 2.5], [8, 27.6, 2.5], [7.6, 30.6, 2.4], [8.4, 33, 2]];
+  tail.forEach(([x, y, r], i) => g.disc(x, y, r, R[(i + 5) % 6]));
+  // legs (back pair a bit darker), hooves
+  g.rect(12, 28, 14, 34, '#f1f5ff').rect(11.5, 34, 14.5, 34, '#ffd93d');
+  g.rect(24, 28, 26, 34, '#f1f5ff').rect(23.5, 34, 26.5, 34, '#ffd93d');
+  g.rect(15, 28, 17, 34, '#f1f5ff').rect(14.5, 34, 17.5, 34, '#ffd93d');
+  g.rect(27, 28, 29, 34, '#f1f5ff').rect(26.5, 34, 29.5, 34, '#ffd93d');
+  // body, neck, head
+  g.ell(20, 25, 9.4, 5.2, '#f1f5ff');
+  g.poly([[23, 24], [24.4, 13], [30, 13.4], [29.2, 25]], '#f1f5ff');
+  g.ell(30, 12.4, 4.6, 3.1, '#f1f5ff', 24); g.ell(33.2, 15, 2.8, 2.1, '#f1f5ff', 34);
+  g.poly([[26.4, 10.4], [27, 6.6], [29.6, 9.6]], '#f1f5ff').poly([[27.3, 9.8], [27.6, 7.9], [28.8, 9.6]], '#ff6fa5');
+  g.poly([[29, 9.6], [31.6, 9], [32.6, 2]], '#ffd93d');
+  g.paint((a, b) => a > 29 && b < 9.6 && b > 2.6 && Math.floor(a + b) % 3 === 0 && (a - 29) / 3.6 + (9.2 - b) / 7 < 1, '#ff9f1c');
+  // mane down the neck
+  [[24.2, 9.6, 2.2], [22.6, 12.6, 2.3], [21.8, 15.8, 2.3], [21, 19, 2.3]].forEach(([x, y, r], i) => g.disc(x, y, r, R[i % 6]));
+  g.disc(26.4, 10.6, 1.4, R[4]);
+  // face
+  g.px(30, 11, INK).px(30, 12, INK).px(31, 11, INK).px(31, 12, INK).px(29, 11, '#f1f5ff');
+  g.px(29, 14, '#ff6fa5').px(30, 14, '#ff6fa5').px(35, 15, '#e63946').px(34, 16, '#e63946');
+  // saddle blanket with a star
+  g.rect(17, 21, 23, 24, '#9775fa'); g.px(20, 22, '#ffd93d').px(19, 22, '#ffd93d').px(21, 22, '#ffd93d').px(20, 21, '#ffd93d').px(20, 23, '#ffd93d');
+  // sparkles
+  const star = (x, y, c = '#ffd93d') => g.px(x, y, c).px(x - 1, y, c).px(x + 1, y, c).px(x, y - 1, c).px(x, y + 1, c);
+  star(5, 5); star(14, 3, '#ff6fa5'); star(36, 5, '#339af0'); star(35, 24, '#ffd93d');
+  g.outline(INK);
+});
+
+/** Mighty T-Rex: a different dinosaur (facing left, big head with teeth, tiny arms, volcano scene) */
+add('grid-trex', 'Mighty T-Rex', 'dinosaurs', 50, 50, (g) => {
+  const O = '#f08c3a', OD = '#c9611e', CR = '#ffe3b3', W = '#f8f9fa';
+  // sky details + sun + volcano
+  g.disc(42, 7, 4.4, '#ffd93d'); [[36, 3], [47, 12], [39, 10]].forEach(([x, y]) => g.px(x, y, '#ffd93d'));
+  g.poly([[0, 40], [8, 18], [13, 18], [22, 40]], '#8d6e63'); g.poly([[8, 18], [10.5, 14], [13, 18]], '#ff6b35'); g.poly([[9.4, 18], [10.5, 16], [11.6, 18]], '#ffd93d');
+  g.disc(10, 11, 1.6, '#adb5bd').disc(12.4, 8.6, 2, '#adb5bd').disc(15, 6, 2.2, '#adb5bd');
+  g.rect(0, 40, 49, 49, '#7cb342'); g.rect(0, 45, 49, 49, '#8d5f35'); g.recolour((x, y) => y >= 45 && (x * 7 + y * 3) % 5 === 0, '#6d4a2a');
+  g.recolour((x, y) => y >= 41 && y < 45 && (x * 5 + y * 3) % 7 === 0, '#558b2f');
+  // tail, body, legs (facing left)
+  g.poly([[33, 21], [49.2, 31.4], [49.2, 33.6], [31, 34]], O);
+  g.poly([[44, 29], [49, 31.4], [46, 33]], OD);
+  g.ell(27, 27, 11.5, 8.2, O, -12);
+  g.paint((a, b) => ((a - 25) / 9) ** 2 + ((b - 31.6) / 4.4) ** 2 <= 1 && b > 29.4, CR);
+  g.poly([[27, 33], [37, 31], [35, 42], [37.6, 44], [38, 46.6], [26, 46.6], [26.6, 43], [26, 39]], OD);
+  g.poly([[19, 33], [30, 31], [28.4, 41], [31, 43.4], [31.4, 46.6], [17, 46.6], [18, 43], [18, 39]], O);
+  [[19, 46], [22, 46], [25, 46], [29, 46], [32, 46]].forEach(([x, y]) => g.px(x, y, W));
+  g.rect(17, 46, 31, 46, O).rect(26, 46, 38, 46, OD);
+  [[17.4, 45], [20.4, 45.4], [23.4, 45], [26.8, 45.4], [30.4, 45], [33.4, 45.4]].forEach(([x, y]) => g.px(Math.floor(x) - 1, Math.floor(y) + 1, W));
+  // neck + head
+  g.poly([[17, 24], [14, 14], [24, 11], [26, 24]], O);
+  g.poly([[3, 14], [14, 7.4], [24, 8.6], [24, 18.4], [6, 18.4]], O);          // upper jaw + skull
+  g.poly([[6, 19.6], [22, 19.6], [24, 22.4], [10, 22.6]], OD);                  // lower jaw
+  g.poly([[5, 18.4], [23, 18.4], [22, 19.8], [6, 19.8]], '#c92a2a');            // mouth
+  for (let x = 6; x <= 21; x += 3) g.px(x, 19, W).px(x + 1, 19, W);              // teeth
+  for (let x = 7; x <= 20; x += 4) g.px(x, 18, W);
+  g.px(4, 12, INK).px(5, 12, INK);                                               // nostril
+  g.ell(14.4, 11.4, 2.3, 2.1, W).px(14, 11, INK).px(14, 12, INK).px(13, 11, INK).px(13, 12, INK); g.rect(11, 8, 17, 8, OD);
+  g.paint((a, b) => a > 5 && a < 21 && b > 13.4 && b < 17.6 && (Math.floor(a) % 4 === 0), OD);
+  // tiny arms
+  g.poly([[13, 25], [8, 28], [8.4, 30], [13.6, 28]], OD); g.px(7, 29, W).px(8, 30, W);
+  // spots and stripes on the back
+  [[26, 21], [30, 22], [34, 25], [22, 22], [38, 28], [42, 30]].forEach(([x, y]) => g.px(x, y, OD).px(x + 1, y, OD).px(x, y + 1, OD));
+  [[17, 15], [18, 18], [19, 21]].forEach(([x, y]) => g.px(x, y, OD));
+  // ferns and rocks
+  const fern = (x, y) => { g.line(x, y, x, y - 5, 1, '#33691e'); g.line(x, y - 3, x - 3, y - 6, 1, '#33691e'); g.line(x, y - 3, x + 3, y - 6, 1, '#33691e'); g.line(x, y - 5, x - 2, y - 8, 1, '#33691e'); g.line(x, y - 5, x + 2, y - 8, 1, '#33691e'); };
+  fern(3, 44); fern(44, 44);
+  g.ell(40, 45, 3.4, 2.2, '#adb5bd').ell(6, 46, 2.6, 1.6, '#adb5bd');
+  g.outline(INK);
+});
+
+/** Rocket in Space: a deep-space scene (navy sky filled in) with a tilted rocket, ringed planet, blue planet, moon and stars */
+add('grid-space-rocket', 'Rocket in Space', 'space', 44, 44, (g) => {
+  const inSky = (x, y) => Math.hypot(x - 21.5, y - 21.5) <= 20.6; // a round "window" onto space
+  g.paint((a, b) => Math.hypot(a - 22, b - 22) <= 21.6, '#1b1f4b');
+  g.recolour((x, y) => (x * 13 + y * 7) % 23 === 0, '#2b3170');
+  const star = (x, y, c = '#ffd93d') => { if (inSky(x, y)) g.px(x, y, c).px(x - 1, y, c).px(x + 1, y, c).px(x, y - 1, c).px(x, y + 1, c); };
+  const dot = (x, y, c = '#f1f5ff') => { if (inSky(x, y)) g.px(x, y, c); };
+  [[9, 5], [15, 3], [24, 2], [34, 5], [31, 11], [41, 22], [2, 20], [20, 25], [37, 31], [14, 39], [27, 41], [34, 38], [7, 15], [2, 26]].forEach(([x, y]) => dot(x, y));
+  star(14, 9); star(37, 9, '#ff8fab'); star(26, 14); star(5, 19, '#4cc9f0'); star(40, 25); star(30, 4, '#4cc9f0');
+  // big ringed planet (bottom left)
+  g.disc(10, 33, 7.6, '#ff9f1c'); g.paint((a, b) => Math.hypot(a - 10, b - 33) <= 7.6 && (Math.floor(b) % 4 === 0), '#e8590c');
+  g.paint((a, b) => Math.hypot(a - 10, b - 33) <= 7.6 && a < 6.2 && b < 30, '#ffc078');
+  g.paint((a, b) => { const u = a - 10, v = (b - 33) / 0.3; return Math.hypot(u, v) < 14 && Math.hypot(u, v) > 10.4 && (b > 33.1 || Math.hypot(a - 10, b - 33) > 7.6); }, '#f1f5ff');
+  // blue-green planet (top right) with craters and a little moon
+  g.disc(35, 18, 5.4, '#339af0'); g.paint((a, b) => Math.hypot(a - 35, b - 18) <= 5.4 && Math.hypot(a - 33.5, b - 17) < 2.6 && b > 16 && a < 36, '#51cf66');
+  g.px(36, 20, '#51cf66').px(37, 20, '#51cf66').px(34, 21, '#51cf66').px(36, 15, '#f1f5ff').px(37, 15, '#f1f5ff');
+  g.disc(40.4, 12, 1.9, '#ced4da').px(40, 12, '#adb5bd');
+  // moon (top left)
+  g.disc(6, 6.2, 3.4, '#ced4da'); g.px(5, 5, '#adb5bd').px(7, 7, '#adb5bd').px(6, 8, '#adb5bd').px(8, 5, '#adb5bd');
+  // rocket, tilted 38 degrees to the right, flying up-right; coordinates are rocket-local (nose up, centre 0,0)
+  const A = 38 * Math.PI / 180, cx = 22, cy = 21, T = (x, y) => [cx + x * Math.cos(A) - y * Math.sin(A), cy + x * Math.sin(A) + y * Math.cos(A)];
+  const poly = (pts, c) => g.poly(pts.map(([x, y]) => T(x, y)), c), ell = (x, y, rx, ry, c) => { const [X, Y] = T(x, y); g.ell(X, Y, rx, ry, c, 38); }, disc = (x, y, r, c) => { const [X, Y] = T(x, y); g.disc(X, Y, r, c); };
+  poly([[0, 12], [3.2, 18], [0, 24], [-3.2, 18]], '#ff9f1c'); poly([[0, 12], [1.7, 15.8], [0, 20], [-1.7, 15.8]], '#ffd93d');
+  poly([[-4.4, 4], [-8.4, 12.4], [-4.4, 10]], '#e63946'); poly([[4.4, 4], [8.4, 12.4], [4.4, 10]], '#e63946');
+  ell(0, 0, 4.6, 9, '#f1f5ff'); poly([[-4.6, 0], [4.6, 0], [4.6, 9], [-4.6, 9]], '#f1f5ff'); poly([[-4.6, 8], [4.6, 8], [4.6, 11.4], [-4.6, 11.4]], '#e63946');
+  poly([[0, -12.6], [4.6, -4], [-4.6, -4]], '#e63946'); ell(0, -4, 4.6, 1.1, '#e63946');
+  disc(0, -0.2, 2.9, '#adb5bd'); disc(0, -0.2, 2.1, '#4cc9f0'); disc(-0.7, -0.9, 0.7, '#f1f5ff');
+  poly([[-2, 6], [2, 6], [2, 7.2], [-2, 7.2]], '#e63946');
+  // comet
+  g.line(4, 14, 14, 10, 1.1, '#f1f5ff'); g.disc(15, 9.6, 1.4, '#ffd93d');
+  g.outline(INK);
+});
+
+// ---- v1.5.1: EPIC pictures (60x60 .. 120x120), see pixel-big.mjs ----
+bigDesigns(add);

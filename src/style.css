@@ -30,7 +30,7 @@ svg{display:block}
 .pic{position:relative;display:flex;flex-direction:column;align-items:center;background:#fff;border-radius:22px;padding:10px 8px 10px;box-shadow:0 4px 0 var(--line);text-align:center;min-height:170px}
 .pic img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:14px;background:#f4efe6;image-rendering:auto}
 .pic .nm{font-weight:900;font-size:15px;margin-top:6px;line-height:1.1}
-.stars{font-size:15px;color:#ffb400;letter-spacing:1px}.stars i{font-style:normal;color:#e5dcc9}
+.stars{font-size:15px;color:#ffb400;letter-spacing:1px}.stars i{font-style:normal;color:#e5dcc9}.stars.epic{color:#e8590c;letter-spacing:0}
 .badge{position:absolute;top:6px;right:6px;width:34px;height:34px;border-radius:50%;background:var(--mint);color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 0 #14877c}
 .meter{position:absolute;left:12px;right:12px;bottom:6px;height:7px;border-radius:5px;background:#eee4d0;overflow:hidden}
 .meter i{display:block;height:100%;background:linear-gradient(90deg,var(--pink),var(--sun))}

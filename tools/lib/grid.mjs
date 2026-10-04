@@ -63,7 +63,12 @@ export class Grid {
 
 export const cellSize = (w, h) => Math.max(14, Math.round(600 / Math.max(w, h)));
 /** difficulty from the grid size: up to 20 = easy, up to 32 = medium, bigger = hard */
-export const gridGrade = (w, h) => (Math.max(w, h) <= 20 ? 'easy' : Math.max(w, h) <= 32 ? 'medium' : 'hard');
+export const gridGrade = (w, h) => (Math.max(w, h) <= 20 ? 'easy' : Math.max(w, h) <= 32 ? 'medium' : Math.max(w, h) <= 52 ? 'hard' : 'epic');
+/** compact file form of a grid puzzle (see hydrate() in src/codec.js): regions + outline are dropped and rebuilt from `cells` */
+export function compactGrid(p) {
+  const { regions, outline, map, ...rest } = p; void outline; void map;
+  return { ...rest, cells: regions.map((r) => r[0].toString(36)).join('') };
+}
 
 /** Grid -> puzzle JSON (same shape the app already loads; `grid:{w,h,cs}` replaces the map, which the app computes) */
 export async function gridToPuzzle(g, meta) {
@@ -76,8 +81,8 @@ export async function gridToPuzzle(g, meta) {
   // thumbnail: the cells, padded to a square, nearest-neighbour so the pixels stay crisp
   const S = Math.max(g.w, g.h), buf = Buffer.alloc(S * S * 3, 255), ox = (S - g.w) >> 1, oy = (S - g.h) >> 1;
   g.c.forEach((c, i) => { if (!c) return; const x = i % g.w + ox, y = ((i / g.w) | 0) + oy; for (let k = 0; k < 3; k++) buf[(y * S + x) * 3 + k] = parseInt(c.slice(1 + 2 * k, 3 + 2 * k), 16); });
-  const png = await sharp(buf, { raw: { width: S, height: S, channels: 3 } }).resize(128, 128, { kernel: 'nearest' }).png({ palette: true, colours: 48, compressionLevel: 9 }).toBuffer();
-  const full = await sharp(buf, { raw: { width: S, height: S, channels: 3 } }).resize(256, 256, { kernel: 'nearest' }).png().toBuffer();
+  const png = await sharp(buf, { raw: { width: S, height: S, channels: 3 } }).resize(S > 64 ? 160 : 128, S > 64 ? 160 : 128, { kernel: S > 64 ? 'lanczos3' : 'nearest' }).png({ palette: true, colours: 64, compressionLevel: 9 }).toBuffer();
+  const full = await sharp(buf, { raw: { width: S, height: S, channels: 3 } }).resize(256, 256, { kernel: S > 64 ? 'lanczos3' : 'nearest' }).png().toBuffer();
   const puzzle = {
     id: meta.id, name: meta.name, cat: meta.cat || 'fantasy', diff, wanted: diff, ...(meta.added ? { added: meta.added } : {}),
     w: W, h: H, palette, regions, map: '', outline,

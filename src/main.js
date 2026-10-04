@@ -16,7 +16,7 @@ const filters = { shapes: { cat: 'all', diff: 'all' }, grid: { cat: 'all', diff:
 let filter = filters[settings.type];
 const ofType = (t) => pictures.filter((p) => (t === 'grid') === !!p.grid);
 let tipShown = false, cur = null, view = null, pending = [], toastTimer = 0, stopConfetti = null, celebTimer = 0;
-const stars = (d) => '<span class="stars" aria-label="' + d + '">' + '\u2605'.repeat(DIFF[d]) + '<i>' + '\u2605'.repeat(3 - DIFF[d]) + '</i></span>';
+const stars = (d) => '<span class="stars' + (d === 'epic' ? ' epic' : '') + '" aria-label="' + d + '">' + '\u2605'.repeat(DIFF[d]) + '<i>' + '\u2605'.repeat(Math.max(0, 3 - DIFF[d])) + '</i></span>';
 const byId = (id) => pictures.find((p) => p.id === id);
 
 app.innerHTML = `
@@ -96,7 +96,7 @@ function renderChips() {
   renderTypes();
   const cats = ['all', ...new Set(ofType(settings.type).map((p) => p.cat))];
   $('#catChips').innerHTML = cats.map((c) => `<button class="chip${filter.cat === c ? ' on' : ''}" data-cat="${c}"><em>${(CAT[c] || ['\u2B50'])[0]}</em>${(CAT[c] || [0, c])[1]}</button>`).join('');
-  $('#diffChips').innerHTML = [['all', 'Any level'], ['easy', '\u2605 Easy'], ['medium', '\u2605\u2605 Medium'], ['hard', '\u2605\u2605\u2605 Hard']].map(([d, l]) => `<button class="chip${filter.diff === d ? ' on' : ''}" data-diff="${d}">${l}</button>`).join('');
+  $('#diffChips').innerHTML = [['all', 'Any level'], ['easy', '\u2605 Easy'], ['medium', '\u2605\u2605 Medium'], ['hard', '\u2605\u2605\u2605 Hard'], ['epic', '\u2605\u2605\u2605\u2605 Epic']].filter(([d]) => d === 'all' || ofType(settings.type).some((p) => p.diff === d)).map(([d, l]) => `<button class="chip${filter.diff === d ? ' on' : ''}" data-diff="${d}">${l}</button>`).join('');
 }
 const NEW_MS = 7 * 864e5;
 /** Pictures with an `added` ISO date stay "new" for about a week (unfinished ones get a sparkle badge + sort to the front). */
@@ -202,7 +202,7 @@ function startPicture(p) {
   if (game.complete) finish(true);
   else if (!settings.introSeen) { settings.introSeen = true; store.saveSettings(settings); tipShown = true; toast('Three ways to play (top bar): \u2728 Magic \u00B7 \u261D\uFE0F One by one \u00B7 \u{1F58C}\uFE0F Brush', 5200); }
   else if (p.grid && !tipShown) { tipShown = true; toast('Grid: every square has a number. Try the \u{1F58C}\uFE0F Brush \u2013 drag across the squares!', 4200); }
-  else if (p.diff === 'hard' && !tipShown) { tipShown = true; toast('Pinch to zoom in and find the tiny spots! \u{1F50D}', 3600); }
+  else if ((p.diff === 'hard' || p.diff === 'epic') && !tipShown) { tipShown = true; toast('Pinch to zoom in and find the tiny spots! \u{1F50D}', 3600); }
 }
 
 // ---------- palette ----------
@@ -254,7 +254,7 @@ $('#brushbar').addEventListener('click', (e) => {
   const b = e.target.closest('[data-size]'); if (!b) return; audio.unlock(); setBrushSize(+b.dataset.size);
 });
 function setBrushSize(i) {
-  i = Math.min(BRUSH_SIZES.length - 1, Math.max(0, i)); settings.brushSize = i; store.saveSettings(settings); audio.tap(); updateModeUI();
+  i = Math.min(BRUSH_SIZES.length - 1, Math.max(0, i)); settings.brushSize = i; settings.brushChosen = true; store.saveSettings(settings); audio.tap(); updateModeUI();
   if (view) view.previewBrush(1100);
   toast(BRUSH_SIZES[i].label + ' brush \u{1F58C}\uFE0F', 1100);
 }

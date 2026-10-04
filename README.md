@@ -5,7 +5,7 @@ Ad-free colour-by-numbers for young children (≈4–9). No ads, no tracking, no
 * **Play**: open `dist-single/Magic-Colour.html` (one self-contained file), or the GitHub Pages build (installable PWA).
 * **Two kinds of pictures** (big switch at the top of the home screen, each with its own categories and levels):
   * **Shapes** – the original irregular-region pictures (animals, unicorns, dinosaurs, …).
-  * **Grid** – pixel-art style pictures made of square numbered cells (16×16 easy … 50×50 hard): heart, rainbow, unicorn, cat, dog, rocket, robot, castle, dinosaur and more. Uncoloured squares are grey, the picture appears as you colour.
+  * **Grid** – pixel-art style pictures made of square numbered cells (16×16 easy … 50×50 hard, plus an **Epic ★★★★ tier of 70×70 … 120×120 full-page scenes**): heart, rainbow, unicorn, cat, dog, rocket, robot, castle, T-rex, dinosaur and more. Uncoloured squares are grey, the picture appears as you colour.
 * **Three colouring modes** (top bar, big icons, work on both kinds):
   * **Magic** – pick a colour, then tap **one** area with that number: *every* area with that number is coloured at once. (Picking a colour in the palette only selects it and softly glows the matching spots; it never fills anything.)
   * **One by one** (default) – pick a colour, then tap each area yourself.
@@ -23,7 +23,22 @@ npm test           # unit + picture validation + build + headless-browser smoke 
 npm run build      # vite -> dist/app.js, tools/inline.mjs -> dist-single/Magic-Colour.html (+ docs/ for GitHub Pages, + /workspace/magic-colour-share/)
 ```
 
+Brush: the **smallest** size is the default; a size the player picks is remembered (`brushChosen` in settings).
+
 Layout: `src/` game (`game.js` pure logic, `brush.js` brush radius / stroke interpolation / hit-testing, `view.js` canvas + gestures, `main.js` UI, `audio.js`, `export.js`, `confetti.js`), `tools/` picture pipeline, `art/` source images + manifest + thumbnails, `tests/`, `docs/` Pages build, `public/` PWA files.
+
+## Guidance for the scheduled routine: make pictures BIGGER and LONGER
+
+Gerard's daughter finishes small pictures too quickly. **Future runs should add bigger, more detailed pictures, not more small ones**:
+
+* Prefer **Epic grid pictures** (60×60 up to 120×120, full-page scenes, 16–24 colours, 4 900–14 400 squares) – the Epic tier already has 14 (unicorn castle, rainbow valley, fire dragon, coral reef, galaxy voyage, jungle friends, grand mandala, city lights, happy farm, fairy garden, snowy village, pirate bay, dino valley, candy land). Add new ones to `tools/art/pixel-big.mjs` (sprite helper `L(g, x, y, scale)`, `bands`, `hill`, `speckle`, `rng`; colours are reduced to 24 automatically) and run `npm run pictures`. A new Epic picture needs a **new subject and a different layout** (the duplicate test enforces it).
+* For Shapes pictures aim for the top of the Hard range (about 300–420 regions; the validator limit is 420) instead of Easy ones.
+* Do not add Easy/Medium pictures unless a category has none. Never re-use art at another size.
+* Big grids are stored compactly (`cells` string, regions/outline rebuilt on first use), draw numbers only for squares that are on screen and zoomed enough to read, and save progress as ranges – keep it that way (the smoke test opens a 120×120 picture and checks speed, hint pan, saving and completion).
+
+## No duplicate pictures (automatic check)
+
+Every picture must be genuinely different: the same art re-used at a bigger size, in other colours or mirrored is **not** allowed (a "harder" version of a subject needs a new, more detailed design, or a different subject). `npm test` runs `tests/duplicates.mjs`, which renders every picture to a 40×40 signature and fails when two pictures of the same type (Shapes / Grid) are too similar (look-alike colours, same region layout, or same outline; mirrored copies included). It also fails for duplicate titles or titles carrying a size like "30×30" (the app shows the size itself). Run `npm run audit` to list the closest pairs and their scores (score ≥ 1 = fails). **The scheduled routine and anyone adding art must keep `npm test` green; never "fix" a failure by raising the limits in `tools/lib/similarity.mjs`.** Picture ids that people already have in localStorage (progress, finished list) must never be reused for different art: when replacing a picture give it a **new id** and delete the old one (the app ignores saved data for ids that no longer exist).
 
 ## Adding more SHAPES pictures
 
@@ -66,7 +81,7 @@ node tools/build-pictures.mjs                                           # refres
 npm test && npm run build
 ```
 
-**From code** – built-in designs live in `tools/art/pixel.mjs`. A design is drawn with simple shapes (`disc`, `ell`, `rect`, `poly`, `line`, `px`, `outline`, `mirrored`) in *native* cell units and can be built at several sizes, e.g. `add('grid-dino', 'Friendly Dino', 'dinosaurs', 36, [36, 50], draw)` produces a 36×36 and a 50×50 puzzle. `node tools/pixel-grid.mjs` rebuilds them all (also part of `npm run pictures`); `art/pixel/<id>.txt` has an editable ASCII copy of each. The validator (`tools/lib/validate.mjs`) checks every cell/label/colour and `tests/pictures.mjs` plays every picture to completion in all three modes.
+**From code** – built-in designs live in `tools/art/pixel.mjs`. A design is drawn with simple shapes (`disc`, `ell`, `rect`, `poly`, `line`, `px`, `outline`, `mirrored`) in *native* cell units and can be built at several sizes, e.g. `add('grid-dino', 'Friendly Dino', 'dinosaurs', 36, 36, draw)` produces a 36×36 puzzle. (Building one design at several sizes is possible but the duplicate test will reject the result – draw a new design per size instead.) `node tools/pixel-grid.mjs` rebuilds them all (also part of `npm run pictures`); `art/pixel/<id>.txt` has an editable ASCII copy of each. The validator (`tools/lib/validate.mjs`) checks every cell/label/colour and `tests/pictures.mjs` plays every picture to completion in all three modes.
 
 ## Deploy
 

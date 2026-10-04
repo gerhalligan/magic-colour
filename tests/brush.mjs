@@ -3,6 +3,8 @@ import { test, done, assert } from './harness.mjs';
 import { BRUSH_SIZES, brushRadiusPx, brushRadiusMap, clampBrushSize, strokePoints, stampSpacing, computeBBoxes, Brusher } from '../src/brush.js';
 import { createGame, MODE_BRUSH, MODE_CLASSIC, MODES } from '../src/game.js';
 import { gridMap } from '../src/codec.js';
+import { store } from '../src/store.js';
+import { DEFAULT_BRUSH } from '../src/brush.js';
 
 // synthetic 120x120 picture: 6x6 blocks of 20px (ids 0..35, colour = 1 + id%3), plus a thin 6px wide vertical strip (id 36, colour 4) drawn over x 100..105
 const W = 120, H = 120, N = 37;
@@ -19,7 +21,7 @@ const oracle = (pts, r, cand, filled) => { const s = new Set(); for (const [cx, 
 console.log('brush');
 await test('brush sizes: 4 big steps, growing, clamped; radius scales gently with zoom and is capped by the view', () => {
   assert.equal(BRUSH_SIZES.length, 4); for (let i = 1; i < 4; i++) assert.ok(BRUSH_SIZES[i].px > BRUSH_SIZES[i - 1].px);
-  assert.equal(clampBrushSize(-3), 0); assert.equal(clampBrushSize(99), 3); assert.equal(clampBrushSize('2'), 2); assert.equal(clampBrushSize(NaN), 1);
+  assert.equal(clampBrushSize(-3), 0); assert.equal(clampBrushSize(99), 3); assert.equal(clampBrushSize('2'), 2); assert.equal(clampBrushSize(NaN), 0);
   const r0 = brushRadiusPx(1, 1, 400), r4 = brushRadiusPx(1, 4, 400), r9 = brushRadiusPx(1, 9, 400);
   assert.equal(r0, BRUSH_SIZES[1].px); assert.ok(r4 > r0 && r4 <= r0 * 1.8 + 1e-9 && r9 >= r4 && r9 <= r0 * 1.8 + 1e-9, `${r0} ${r4} ${r9}`);
   assert.ok(brushRadiusPx(3, 9, 300) <= 300 * 0.42 + 1e-9, 'huge brush never swallows the view');
@@ -94,5 +96,15 @@ await test('GRID: the cell map is computed (no data), cells are squares, and the
   const got = b.hit(50, 30, 12, cand, new Uint8Array(20), new Set()), want = new Set();
   for (const i of cand) { let hit = false; for (let y = 0; y < 80 && !hit; y++) for (let x = 0; x < 100; x++) if (m[y * 100 + x] === i && (x + 0.5 - 50) ** 2 + (y + 0.5 - 30) ** 2 <= 144) { hit = true; break; } if (hit) want.add(i); }
   assert.deepEqual([...got].sort((a, c) => a - c), [...want].sort((a, c) => a - c), 'cells under the brush'); assert.ok(got.size >= 2);
+});
+await test('default brush is the SMALLEST size; a later choice is remembered; the old auto-saved default is reset; big progress packs into ranges', () => {
+  assert.equal(DEFAULT_BRUSH, 0); assert.equal(BRUSH_SIZES[DEFAULT_BRUSH].id, 'small');
+  assert.equal(store.settings().brushSize, 0, 'fresh profile');
+  store.saveSettings({ mode: 'brush', modeChosen: true, brushSize: 1 }); assert.equal(store.settings().brushSize, 0, 'v1.5.0 auto-saved medium (never chosen) -> small');
+  store.saveSettings({ mode: 'brush', modeChosen: true, brushSize: 3, brushChosen: true }); assert.equal(store.settings().brushSize, 3, 'a real choice is kept');
+  store.saveSettings({ mode: 'brush', modeChosen: true, brushSize: 0, brushChosen: true }); assert.equal(store.settings().brushSize, 0);
+  const ids = []; for (let i = 0; i < 9000; i++) if (i % 50 !== 7) ids.push(i); store.saveProgress('t-big', { f: ids, s: 3 });
+  const back = store.progress('t-big'); assert.deepEqual(back.f, ids); assert.equal(back.s, 3); assert.ok(Math.abs(store.pct('t-big', 9000) - ids.length / 9000) < 1e-9);
+  store.saveProgress('t-small', { f: [1, 5, 9], s: 2 }); assert.deepEqual(store.progress('t-small'), { f: [1, 5, 9], s: 2 }); store.clearProgress('t-big'); store.clearProgress('t-small');
 });
 done('brush tests');

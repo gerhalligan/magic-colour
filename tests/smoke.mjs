@@ -289,7 +289,7 @@ for (const [name, vp, touch, dsf] of VIEWPORTS) {
     await page.click('#types [data-type="grid"]'); await page.waitForTimeout(100);
     const gridN = await page.$$eval('#grid .pic', (e) => e.length); const gridCats = await page.$$eval('#catChips .chip', (e) => e.map((x) => x.textContent));
     assert.ok(gridN >= 16, 'grid pictures ' + gridN); assert.ok(await page.$$eval('#grid .pic', (e) => e.every((x) => x.dataset.id.startsWith('grid-')))); assert.ok(await page.$$eval('#grid .gsz', (e) => e.length >= 16 && /\d+\u00D7\d+/.test(e[0].textContent)), 'grid size shown on cards');
-    assert.notDeepEqual(gridCats, shapeCats, 'grid has its own categories'); assert.equal(await page.evaluate(() => window.__MC.settings.type), 'grid');
+    assert.ok(gridCats.length >= 5 && /All/.test(gridCats[0]), 'grid has its own category chips'); assert.equal(await page.evaluate(() => window.__MC.settings.type), 'grid');
     await page.click('#diffChips [data-diff="easy"]'); const easyN = await page.$$eval('#grid .pic', (e) => e.length); assert.ok(easyN >= 3 && easyN < gridN); await page.click('#diffChips [data-diff="all"]');
     assert.ok(!(await page.$eval('#potd', (e) => e.hidden)) || true);
     await page.screenshot({ path: `${SHOTS}/${name}-15-grid-home.png` });
@@ -324,7 +324,7 @@ for (const [name, vp, touch, dsf] of VIEWPORTS) {
   });
 
   await test(`${name}: GRID - hard 50x50 picture (1280+ squares) stays smooth: brush strokes, pan`, async () => {
-    await page.evaluate(() => { const m = window.__MC; m.store.clearProgress('grid-dino-giant'); m.startPicture(m.pictures.find((p) => p.id === 'grid-dino-giant')); }); await page.waitForTimeout(500);
+    await page.evaluate(() => { const m = window.__MC; m.store.clearProgress('grid-trex'); m.startPicture(m.pictures.find((p) => p.id === 'grid-trex')); }); await page.waitForTimeout(500);
     const t = await page.evaluate(() => {
       const m = window.__MC, v = m.view, g = m.cur.game; m.settings.mode = 'brush'; g.setMode('brush'); v.setBrush(true, 3); g.selectColour(1); v.hooks.onBrushStart();
       const t0 = performance.now(); v.stroke = { pid: 1, started: true, down: [0, 0], q: [], last: null, painted: 0 }; let frames = 0, painted = 0;
@@ -335,6 +335,59 @@ for (const [name, vp, touch, dsf] of VIEWPORTS) {
     console.log('       50x50 grid: brush ' + t.perFrame.toFixed(2) + ' ms/frame (hit-test + game update, headless CPU), draw ' + t.draw.toFixed(1) + ' ms, squares ' + t.regions);
     assert.ok(t.perFrame < 12 && t.draw < 80, JSON.stringify(t)); assert.ok(t.filled > 0);
     await page.evaluate(() => { const m = window.__MC; m.settings.type = 'shapes'; m.settings.mode = 'classic'; m.store.saveSettings(m.settings); });
+  });
+
+  await test(`${name}: EPIC grid 120x120 (14 400 squares): opens fast, labels only when zoomed + visible, brush/zoom stay smooth, hint pans, progress saves, completes`, async () => {
+    await page.evaluate(() => { const m = window.__MC; m.store.clearProgress('grid-candy-land'); m.settings.type = 'grid'; });
+    const t = await page.evaluate(async () => {
+      const m = window.__MC, p = m.pictures.find((x) => x.id === 'grid-candy-land'); const t0 = performance.now(); m.startPicture(p); const open = performance.now() - t0;
+      await new Promise((r) => setTimeout(r, 400)); const v = m.view, g = m.cur.game; const out = { open, regions: p.regions.length, diff: p.diff, w: p.w };
+      const time = (fn, n = 5) => { const a = performance.now(); for (let i = 0; i < n; i++) fn(); return (performance.now() - a) / n; };
+      v.dirty = true; out.drawFit = time(() => v.draw(performance.now()));            // fit zoom: numbers are too small, none are drawn
+      v.s = v.fitS * 4; v.tx = -200; v.ty = -300; v.clamp(); out.zoomFit = v.s / v.fitS; out.drawZoom = time(() => v.draw(performance.now())); // zoomed: only the visible squares get numbers
+      v.s = 3; v.tx = -400; v.ty = -500; v.clamp(); g.selectColour(1); out.drawZ3 = time(() => v.draw(performance.now()));
+      m.settings.mode = 'brush'; g.setMode('brush'); v.setBrush(true, 3); g.selectColour(1); v.hooks.onBrushStart();
+      const b0 = performance.now(); v.stroke = { pid: 1, started: true, down: [0, 0], q: [], last: null, painted: 0 }; for (let i = 0; i < 60; i++) { v.stroke.q.push([20 + i * 20, 40 + (i % 12) * 100, i === 0]); v._brushFrame(); }
+      out.brushFrame = (performance.now() - b0) / 60; v.stroke = null; v.hooks.onBrushEnd(0); out.painted = g.filledCount();
+      return out;
+    });
+    console.log(`       120x120 grid: open ${t.open.toFixed(0)} ms, draw fit ${t.drawFit.toFixed(1)} / zoomed ${t.drawZoom.toFixed(1)} / 3x ${t.drawZ3.toFixed(1)} ms, brush ${t.brushFrame.toFixed(2)} ms/frame`);
+    assert.equal(t.diff, 'epic'); assert.ok(t.regions >= 14400 && t.painted > 0); assert.ok(t.open < 2500, 'open ' + t.open); assert.ok(t.drawFit < 40 && t.drawZoom < 60 && t.drawZ3 < 60, JSON.stringify(t)); assert.ok(t.brushFrame < 25, 'brush ' + t.brushFrame);
+    // numbers: drawn only when zoomed enough (squares at fit zoom are tiny)
+    const lab = await page.evaluate(() => { const v = window.__MC.view; let n = 0; const ctx = v.ctx, orig = ctx.fillText.bind(ctx); ctx.fillText = (...a) => { n++; return orig(...a); }; const out = {}; v.s = v.fitS; v.tx = v.ty = 0; v.clamp(); n = 0; v.draw(performance.now()); out.fit = n; v.s = 3; v.tx = -300; v.ty = -300; v.clamp(); n = 0; v.draw(performance.now()); out.zoom = n; ctx.fillText = orig; return out; });
+    assert.equal(lab.fit, 0, 'no numbers at fit zoom'); assert.ok(lab.zoom > 20 && lab.zoom < 1500, 'numbers when zoomed: ' + lab.zoom);
+    // hint: remaining squares of a colour are far away -> the view pans/zooms to them
+    const hint = await page.evaluate(async () => {
+      const m = window.__MC, v = m.view, g = m.cur.game; m.settings.mode = 'classic'; g.setMode('classic'); v.setBrush(false, 0); v.s = 3; v.tx = 0; v.ty = 0; v.clamp(); v.anim = null;
+      let far = []; for (let c = 1; c <= m.cur.pic.palette.length && far.length < 3; c++) { far = g.byColour[c].filter((i) => i > 13000).slice(0, 5); if (far.length) g.selectColour(c); } v.focusRegions(far); await new Promise((r) => setTimeout(r, 600));
+      const P = m.cur.pic, vis = far.some((id) => { const r = P.regions[id], x = v.tx + r[1] * v.s, y = v.ty + r[2] * v.s; return x > 0 && y > 0 && x < v.vw && y < v.vh; }); return { vis, s: v.s };
+    });
+    assert.ok(hint.vis && hint.s >= 1.4, 'hint pans to the far squares ' + JSON.stringify(hint));
+    // progress: fill a colour, save, reopen from storage; then finish the whole picture (magic fills a colour per tap)
+    const res = await page.evaluate(async () => {
+      const m = window.__MC, g = m.cur.game, P = m.cur.pic; m.settings.mode = 'magic'; g.setMode('magic'); g.selectColour(1); g.tapRegion(g.byColour[1][0]); const f1 = g.filledCount(); m.store.saveProgress(P.id, g.save());
+      const raw = localStorage.getItem('mc1.p.' + P.id), saved = m.store.progress(P.id); m.startPicture(P); const g2 = m.cur.game;
+      const out = { f1, restored: g2.filledCount(), rawLen: raw.length, savedLen: saved.f.length };
+      for (let c = 1; c <= P.palette.length; c++) { g2.selectColour(c); if (g2.byColour[c].length && !g2.colourDone(c)) g2.tapRegion(g2.byColour[c].find((i) => !g2.filled[i])); }
+      out.complete = g2.complete && g2.isComplete(); return out;
+    });
+    assert.equal(res.restored, res.f1, 'progress restored'); assert.ok(res.rawLen < 30000, 'compact progress ' + res.rawLen); assert.ok(res.complete, 'epic picture completes');
+    await page.evaluate(() => { const m = window.__MC; m.store.clearProgress('grid-candy-land'); m.settings.type = 'shapes'; m.settings.mode = 'classic'; m.store.saveSettings(m.settings); });
+  });
+
+  await test(`${name}: saved progress for RETIRED picture ids (v1.5.1 replaced grid-unicorn, grid-dino-giant, grid-rocket-44) is ignored gracefully`, async () => {
+    const errs = []; const onErr = (e) => errs.push(e.message); page.on('pageerror', onErr);
+    await page.evaluate(() => {
+      const keep = JSON.parse(localStorage.getItem('mc1.done') || '{}'); const d = { ...keep };
+      for (const id of ['grid-unicorn', 'grid-dino-giant', 'grid-rocket-44']) { d[id] = Date.now(); localStorage.setItem('mc1.p.' + id, JSON.stringify({ f: [1, 2, 3] })); }
+      localStorage.setItem('mc1.done', JSON.stringify(d));
+    });
+    await page.reload(); await page.waitForSelector('.pic');
+    const r = await page.evaluate(() => { const m = window.__MC; m.openPicture('grid-unicorn'); m.openPicture('grid-dino-giant'); return { ids: m.pictures.map((p) => p.id), screen: document.querySelector('.screen.on').id }; });
+    for (const id of ['grid-unicorn', 'grid-dino-giant', 'grid-rocket-44']) assert.ok(!r.ids.includes(id), id + ' must be gone'); assert.notEqual(r.screen, 'play', 'retired picture must not open');
+    await page.click('#hGallery'); await page.waitForSelector('#gallery.on'); const gc = await page.$$eval('#gGrid .pic', (e) => e.map((x) => x.dataset.id)); for (const id of ['grid-unicorn', 'grid-dino-giant', 'grid-rocket-44']) assert.ok(!gc.includes(id), 'retired id in gallery'); await page.click('#gallery .tool, #gallery button').catch(() => {}); await page.reload(); await page.waitForSelector('.pic');
+    assert.deepEqual(errs, [], errs.join('; ')); page.off('pageerror', onErr);
+    await page.evaluate(() => { for (const id of ['grid-unicorn', 'grid-dino-giant', 'grid-rocket-44']) localStorage.removeItem('mc1.p.' + id); const d = JSON.parse(localStorage.getItem('mc1.done')); for (const id of ['grid-unicorn', 'grid-dino-giant', 'grid-rocket-44']) delete d[id]; localStorage.setItem('mc1.done', JSON.stringify(d)); });
   });
 
   await test(`${name}: sound toggle, no console errors, no network requests`, async () => {

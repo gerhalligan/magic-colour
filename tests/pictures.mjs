@@ -1,13 +1,14 @@
 // Validates every shipped puzzle and plays each one to completion in both modes.
 import fs from 'node:fs';
 import path from 'node:path';
+import { loadPictures } from '../tools/lib/load-pictures.mjs';
 import { test, done, assert } from './harness.mjs';
 import { validatePuzzle } from '../tools/lib/validate.mjs';
 import { mapOf } from '../src/codec.js';
 import { createGame, MODE_MAGIC, MODE_CLASSIC, MODE_BRUSH } from '../src/game.js';
 import { Brusher } from '../src/brush.js';
 const dir = path.resolve('src/pictures');
-const all = fs.readdirSync(dir).filter((f) => f.endsWith('.json')).map((f) => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')));
+const all = loadPictures(dir);
 const pics = all.filter((p) => !p.grid), gridPics = all.filter((p) => p.grid);
 console.log('pictures: ' + pics.length + ' shapes + ' + gridPics.length + ' grid');
 await test('at least 24 pictures, unique ids, all categories + difficulties covered', () => {
@@ -48,10 +49,14 @@ for (const p of all) {
 }
 
 // ---- Grid type ----
-await test('grid type: at least 16 pictures, sizes from ~16 to ~50, all easy/medium/hard, several categories', () => {
-  assert.ok(gridPics.length >= 16, 'only ' + gridPics.length);
-  const sizes = gridPics.map((p) => p.grid.w); assert.ok(Math.min(...sizes) <= 16 && Math.max(...sizes) >= 48, sizes.join());
-  const d = { easy: 0, medium: 0, hard: 0 }; gridPics.forEach((p) => d[p.diff]++); assert.ok(d.easy >= 3 && d.medium >= 3 && d.hard >= 3, JSON.stringify(d));
+await test('grid type: at least 28 pictures, sizes from ~16 to ~120, all easy/medium/hard/epic, several categories', () => {
+  assert.ok(gridPics.length >= 28, 'only ' + gridPics.length);
+  const sizes = gridPics.map((p) => p.grid.w); assert.ok(Math.min(...sizes) <= 16 && Math.max(...sizes) >= 120, sizes.join());
+  const d = { easy: 0, medium: 0, hard: 0, epic: 0 }; gridPics.forEach((p) => d[p.diff]++); assert.ok(d.easy >= 3 && d.medium >= 3 && d.hard >= 3, JSON.stringify(d));
+  // EPIC tier: big, long-to-finish scenes (the scheduled routine should keep adding these)
+  const epics = gridPics.filter((p) => p.diff === 'epic'); assert.ok(epics.length >= 12, 'only ' + epics.length + ' epic grid pictures');
+  assert.ok(epics.every((p) => p.grid.w >= 60 && p.grid.w <= 130), 'epic sizes'); assert.ok(epics.filter((p) => p.grid.w >= 120).length >= 2, 'need a few 120x120');
+  assert.ok(epics.every((p) => p.stats.regions >= 2500), 'epic pictures need at least 2500 squares to colour');
   assert.ok(new Set(gridPics.map((p) => p.cat)).size >= 5);
   for (const name of ['unicorn', 'heart', 'rainbow', 'cat', 'dog', 'rocket', 'ice-cream', 'flower', 'dino', 'robot', 'butterfly', 'castle']) assert.ok(gridPics.some((p) => p.id.includes(name)), 'missing ' + name);
   assert.ok(!all.some((p) => p.cat === 'pixel'));

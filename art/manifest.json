@@ -765,20 +765,11 @@
  },
  {
   "id": "grid-rocket-30",
-  "name": "Rocket Ship 30×30",
+  "name": "Rocket Ship",
   "cat": "space",
   "diff": "medium",
   "kind": "grid",
   "src": "art/pixel/grid-rocket-30.txt",
-  "added": "2026-10-04"
- },
- {
-  "id": "grid-rocket-44",
-  "name": "Rocket Ship 44×44",
-  "cat": "space",
-  "diff": "hard",
-  "kind": "grid",
-  "src": "art/pixel/grid-rocket-44.txt",
   "added": "2026-10-04"
  },
  {
@@ -788,15 +779,6 @@
   "diff": "medium",
   "kind": "grid",
   "src": "art/pixel/grid-unicorn-small.txt",
-  "added": "2026-10-04"
- },
- {
-  "id": "grid-unicorn",
-  "name": "Unicorn Dream",
-  "cat": "unicorns",
-  "diff": "hard",
-  "kind": "grid",
-  "src": "art/pixel/grid-unicorn.txt",
   "added": "2026-10-04"
  },
  {
@@ -818,12 +800,156 @@
   "added": "2026-10-04"
  },
  {
-  "id": "grid-dino-giant",
-  "name": "Giant Dino",
+  "id": "grid-unicorn-dream",
+  "name": "Unicorn Dream",
+  "cat": "unicorns",
+  "diff": "hard",
+  "kind": "grid",
+  "src": "art/pixel/grid-unicorn-dream.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-trex",
+  "name": "Mighty T-Rex",
   "cat": "dinosaurs",
   "diff": "hard",
   "kind": "grid",
-  "src": "art/pixel/grid-dino-giant.txt",
+  "src": "art/pixel/grid-trex.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-space-rocket",
+  "name": "Rocket in Space",
+  "cat": "space",
+  "diff": "hard",
+  "kind": "grid",
+  "src": "art/pixel/grid-space-rocket.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-unicorn-castle",
+  "name": "Unicorn Castle",
+  "cat": "unicorns",
+  "diff": "epic",
+  "kind": "grid",
+  "src": "art/pixel/grid-unicorn-castle.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-rainbow-valley",
+  "name": "Rainbow Valley",
+  "cat": "nature",
+  "diff": "epic",
+  "kind": "grid",
+  "src": "art/pixel/grid-rainbow-valley.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-fire-dragon",
+  "name": "Fire Dragon",
+  "cat": "fantasy",
+  "diff": "epic",
+  "kind": "grid",
+  "src": "art/pixel/grid-fire-dragon.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-coral-reef",
+  "name": "Coral Reef",
+  "cat": "animals",
+  "diff": "epic",
+  "kind": "grid",
+  "src": "art/pixel/grid-coral-reef.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-galaxy-voyage",
+  "name": "Galaxy Voyage",
+  "cat": "space",
+  "diff": "epic",
+  "kind": "grid",
+  "src": "art/pixel/grid-galaxy-voyage.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-jungle-friends",
+  "name": "Jungle Friends",
+  "cat": "animals",
+  "diff": "epic",
+  "kind": "grid",
+  "src": "art/pixel/grid-jungle-friends.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-grand-mandala",
+  "name": "Grand Mandala",
+  "cat": "fantasy",
+  "diff": "epic",
+  "kind": "grid",
+  "src": "art/pixel/grid-grand-mandala.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-city-lights",
+  "name": "City Lights",
+  "cat": "vehicles",
+  "diff": "epic",
+  "kind": "grid",
+  "src": "art/pixel/grid-city-lights.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-happy-farm",
+  "name": "Happy Farm",
+  "cat": "animals",
+  "diff": "epic",
+  "kind": "grid",
+  "src": "art/pixel/grid-happy-farm.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-fairy-garden",
+  "name": "Fairy Garden",
+  "cat": "fantasy",
+  "diff": "epic",
+  "kind": "grid",
+  "src": "art/pixel/grid-fairy-garden.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-snowy-village",
+  "name": "Snowy Village",
+  "cat": "nature",
+  "diff": "epic",
+  "kind": "grid",
+  "src": "art/pixel/grid-snowy-village.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-pirate-bay",
+  "name": "Pirate Bay",
+  "cat": "vehicles",
+  "diff": "epic",
+  "kind": "grid",
+  "src": "art/pixel/grid-pirate-bay.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-dino-valley",
+  "name": "Dino Valley",
+  "cat": "dinosaurs",
+  "diff": "epic",
+  "kind": "grid",
+  "src": "art/pixel/grid-dino-valley.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-candy-land",
+  "name": "Candy Land",
+  "cat": "food",
+  "diff": "epic",
+  "kind": "grid",
+  "src": "art/pixel/grid-candy-land.txt",
   "added": "2026-10-04"
  }
 ]

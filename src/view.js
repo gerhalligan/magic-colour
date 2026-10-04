@@ -56,7 +56,7 @@ export class PuzzleView {
     let X0 = 1e9, Y0 = 1e9, X1 = -1, Y1 = -1, sum = 0;
     for (const id of ids) { const o = id * 4; if (bb[o + 2] < 0) continue; X0 = Math.min(X0, bb[o]); Y0 = Math.min(Y0, bb[o + 1]); X1 = Math.max(X1, bb[o + 2]); Y1 = Math.max(Y1, bb[o + 3]); sum += (bb[o + 2] - bb[o] + 1) * (bb[o + 3] - bb[o + 1] + 1); const c = this.col32(id); for (let y = bb[o + 1]; y <= bb[o + 3]; y++) for (let x = bb[o], p = y * w + x; x <= bb[o + 2]; x++, p++) if (m[p] === id) img[p] = c; }
     if (X1 < 0) return;
-    if ((X1 - X0 + 1) * (Y1 - Y0 + 1) <= Math.max(60000, sum * 3)) this.fctx.putImageData(this.img, 0, 0, X0, Y0, X1 - X0 + 1, Y1 - Y0 + 1);
+    if (ids.length > 150 || (X1 - X0 + 1) * (Y1 - Y0 + 1) <= Math.max(60000, sum * 3)) this.fctx.putImageData(this.img, 0, 0, X0, Y0, X1 - X0 + 1, Y1 - Y0 + 1);
     else for (const id of ids) { const o = id * 4; if (bb[o + 2] >= 0) this.fctx.putImageData(this.img, 0, 0, bb[o], bb[o + 1], bb[o + 2] - bb[o] + 1, bb[o + 3] - bb[o + 1] + 1); }
     this.dirty = true; this.kick();
   }
@@ -113,7 +113,8 @@ export class PuzzleView {
     if (ids.some(vis)) return;
     let best = ids[0], ba = 0; for (const id of ids) if (P.regions[id][4] > ba) { ba = P.regions[id][4]; best = id; }
     const r = P.regions[best], o = best * 4, bw = this.bb[o + 2] - this.bb[o] + 1, bh = this.bb[o + 3] - this.bb[o + 1] + 1;
-    const s1 = Math.min(this.maxS, Math.max(this.s, Math.min(this.vw, this.vh) / (Math.max(bw, bh) * 2.6), this.fitS * 2));
+    let s1 = Math.min(this.maxS, Math.max(this.s, Math.min(this.vw, this.vh) / (Math.max(bw, bh) * 2.6), this.fitS * 2));
+    if (P.grid) s1 = Math.min(this.maxS, Math.max(this.s, 1.5 * (P.grid.cs / 14))); // numbers readable, with plenty of surrounding squares
     const cx = (this.bb[o] + this.bb[o + 2]) / 2, cy = (this.bb[o + 1] + this.bb[o + 3]) / 2;
     let tx = this.vw / 2 - cx * s1, ty = this.vh / 2 - cy * s1; void r;
     const pw = P.w * s1, ph = P.h * s1;
@@ -330,7 +331,25 @@ export class PuzzleView {
     const P = this.puzzle; ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     ctx.stroke(this.outline); ctx.strokeRect(0, 0, P.w, P.h);
   }
+  /** labels of a Grid picture: only the squares that are on screen (visible column/row range), one font setting, no work at all when zoomed out too far to read */
+  _gridLabels(ctx, now) {
+    const P = this.puzzle, s = this.s, g = this.game, sel = g.selected, { w: gw, h: gh, cs } = P.grid, rad = (cs / 2) * s;
+    const fs = Math.min(rad * 1.45, rad * 1.8 / 0.62, 30), fs2 = Math.min(rad * 1.45, (rad * 1.8) / (0.62 * 2), 30);
+    if (fs2 < 8.5 && fs < 8.5) return;
+    const c0 = Math.max(0, Math.floor((-this.tx) / (cs * s))), c1 = Math.min(gw - 1, Math.floor((this.vw - this.tx) / (cs * s))), r0 = Math.max(0, Math.floor((-this.ty) / (cs * s))), r1 = Math.min(gh - 1, Math.floor((this.vh - this.ty) / (cs * s)));
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; let lastFont = '';
+    for (let y = r0; y <= r1; y++) for (let x = c0; x <= c1; x++) {
+      const i = y * gw + x; if (g.filled[i]) continue; const r = P.regions[i]; if (r[0] === 0) continue;
+      const dg = r[0] > 9 ? 2 : 1, f = dg === 1 ? fs : fs2; if (f < 8.5) continue;
+      let px = this.tx + r[1] * s, py = this.ty + r[2] * s;
+      const wg = this.wiggle.size ? this.wiggle.get(i) : undefined; if (wg !== undefined) px += Math.sin((now - wg) / 45) * 5 * (1 - (now - wg) / 900);
+      if (r[0] === sel) { ctx.fillStyle = P.palette[sel - 1]; ctx.globalAlpha = 0.55; ctx.beginPath(); ctx.arc(px, py, Math.min(rad * 0.95, f * 0.95 + 3), 0, 6.2832); ctx.fill(); ctx.globalAlpha = 1; }
+      const font = `800 ${f}px "Trebuchet MS", system-ui, sans-serif`; if (font !== lastFont) { ctx.font = font; lastFont = font; }
+      ctx.fillStyle = r[0] === sel ? '#1d1f33' : '#585d7a'; ctx.fillText(String(r[0]), px, py + f * 0.04);
+    }
+  }
   _labels(ctx, now) {
+    if (this.puzzle.grid) return this._gridLabels(ctx, now);
     const P = this.puzzle, s = this.s, g = this.game, sel = g.selected;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     for (let i = 0; i < P.regions.length; i++) {

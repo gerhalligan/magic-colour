@@ -25,6 +25,6 @@ export const I = {
   star: s(`<path fill="currentColor" d="m24 5 5.8 12 13.2 1.8-9.6 9.2 2.3 13L24 34.8 12.3 41l2.3-13L5 18.8 18.2 17z"/>`),
 };
 export const CAT = { all: ['\u{1F308}', 'All'], animals: ['\u{1F43E}', 'Animals'], unicorns: ['\u{1F984}', 'Unicorns'], dinosaurs: ['\u{1F995}', 'Dinosaurs'], vehicles: ['\u{1F697}', 'Vehicles'], space: ['\u{1F680}', 'Space'], fantasy: ['\u{1F3F0}', 'Fantasy'], food: ['\u{1F370}', 'Food'], nature: ['\u{1F338}', 'Nature'] };
-export const DIFF = { easy: 1, medium: 2, hard: 3 };
+export const DIFF = { easy: 1, medium: 2, hard: 3, epic: 4 };
 // Category stickers awarded when a picture in that category is finished (one per category).
 export const STICKER = { animals: '\u{1F43E}', unicorns: '\u{1F984}', dinosaurs: '\u{1F995}', vehicles: '\u{1F6A2}', space: '\u{1F30C}', fantasy: '\u{1F3F0}', food: '\u{1F36D}', nature: '\u{1F338}' };

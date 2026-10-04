@@ -34,13 +34,15 @@ export function validatePuzzle(p) {
 /** Grid puzzles: every cell is its own square region (colour 0 cells are paper). The map is computed by the app (no map data). */
 function validateGrid(p) {
   const bad = [], { w, h } = p, { w: gw, h: gh, cs } = p.grid;
-  if (!['easy', 'medium', 'hard'].includes(p.diff)) bad.push('unknown difficulty ' + p.diff);
+  if (!['easy', 'medium', 'hard', 'epic'].includes(p.diff)) bad.push('unknown difficulty ' + p.diff);
   if (w !== gw * cs || h !== gh * cs) bad.push('grid size does not match the picture size');
   if (p.regions.length !== gw * gh) bad.push(`regions ${p.regions.length} != cells ${gw * gh}`);
-  if (Math.max(gw, gh) < 10 || Math.max(gw, gh) > 60) bad.push(`grid ${gw}x${gh} out of range`);
+  if (Math.max(gw, gh) < 10 || Math.max(gw, gh) > 130) bad.push(`grid ${gw}x${gh} out of range`);
   const numbered = p.regions.filter((r) => r[0] > 0).length;
-  if (numbered < 30 || numbered > 1800) bad.push(`numbered cells ${numbered} not in 30..1800`);
-  if (p.palette.length < 3 || p.palette.length > 16) bad.push(`colours ${p.palette.length} not in 3..16`);
+  const epic = p.diff === 'epic', maxCells = epic ? 15000 : 1800, maxCols = epic ? 24 : 16;
+  if (numbered < (epic ? 2500 : 30) || numbered > maxCells) bad.push(`numbered cells ${numbered} not in ${epic ? 2500 : 30}..${maxCells}`);
+  if (epic && Math.max(gw, gh) < 56) bad.push('epic grids start at about 60x60');
+  if (p.palette.length < 3 || p.palette.length > maxCols) bad.push(`colours ${p.palette.length} not in 3..${maxCols}`);
   const used = new Set();
   p.regions.forEach((r, i) => {
     const [c, lx, ly, rad] = r; if (c > 0) used.add(c);
