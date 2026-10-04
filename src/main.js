@@ -23,24 +23,30 @@ app.innerHTML = `
 <section id="home" class="screen on">
   <header class="top">
     <h1><span class="logo">\u2728</span> Magic Colour</h1>
+    <div class="types" id="types" role="tablist" aria-label="Picture type">
+      <button class="type" data-type="shapes" role="tab" aria-label="Shapes: colour pictures made of pretty shapes">${I.shapes}<b>Shapes</b><small id="nShapes"></small></button>
+      <button class="type" data-type="grid" role="tab" aria-label="Grid: colour square numbered pixel pictures">${I.grid}<b>Grid</b><small id="nGrid"></small></button>
+    </div>
     <div class="grow"></div>
     <button class="tbtn" id="hSurprise" aria-label="Surprise me">${I.dice}<span>Surprise</span></button>
     <button class="tbtn" id="hGallery" aria-label="My gallery">${I.gallery}<span>Gallery</span></button>
     <button class="tbtn icon" id="hSound" aria-label="Sound"></button>
   </header>
-  <div class="types" id="types" role="tablist" aria-label="Picture type">
-    <button class="type" data-type="shapes" role="tab" aria-label="Shapes: colour pictures made of pretty shapes">${I.shapes}<span><b>Shapes</b><small id="nShapes"></small></span></button>
-    <button class="type" data-type="grid" role="tab" aria-label="Grid: colour square numbered pixel pictures">${I.grid}<span><b>Grid</b><small id="nGrid"></small></span></button>
+  <div class="filters" id="filters">
+    <div class="chips" id="catChips" aria-label="Categories"></div>
+    <div class="chips small" id="diffChips" aria-label="Levels"></div>
   </div>
-  <div id="continue" class="continue" hidden></div>
-  <div class="chips" id="catChips"></div>
-  <div class="chips small" id="diffChips"></div>
-  <div id="potd" class="potd" hidden></div>
-  <section id="stickers" class="stickers" aria-label="My stickers" hidden>
-    <p class="stickers-label">\u{1F3C5} My stickers</p>
-    <div class="stickers-row" id="stickerRow"></div>
-  </section>
-  <main class="grid" id="grid"></main>
+  <div class="hscroll" id="hscroll">
+    <div class="strips" id="strips" hidden>
+      <div id="continue" class="continue" hidden></div>
+      <div id="potd" class="potd" hidden></div>
+    </div>
+    <main class="grid" id="grid"></main>
+    <section id="stickers" class="stickers" aria-label="My stickers" hidden>
+      <p class="stickers-label">\u{1F3C5} My stickers</p>
+      <div class="stickers-row" id="stickerRow"></div>
+    </section>
+  </div>
 </section>
 <section id="gallery" class="screen">
   <header class="top">
@@ -91,7 +97,8 @@ soundIcons();
 // ---------- home ----------
 function renderTypes() {
   for (const b of app.querySelectorAll('#types .type')) { const on = b.dataset.type === settings.type; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); }
-  $('#nShapes').textContent = ofType('shapes').length + ' pictures'; $('#nGrid').textContent = ofType('grid').length + ' pictures';
+  $('#nShapes').textContent = ofType('shapes').length; $('#nGrid').textContent = ofType('grid').length;
+  for (const [t, id] of [['shapes', '#nShapes'], ['grid', '#nGrid']]) $(id).parentElement.title = ofType(t).length + ' pictures';
 }
 function renderChips() {
   renderTypes();
@@ -127,7 +134,9 @@ function unfinishedLast() {
   if (!(pct > 0 && pct < 1)) return null;
   return { p, pct };
 }
-function renderContinue() {
+function syncStrips() { $('#strips').hidden = $('#continue').hidden && $('#potd').hidden; }
+function renderContinue() { renderContinue0(); syncStrips(); }
+function renderContinue0() {
   const el = $('#continue');
   const u = unfinishedLast();
   if (!u) { el.hidden = true; el.innerHTML = ''; return; }
@@ -135,19 +144,19 @@ function renderContinue() {
   el.hidden = false;
   el.innerHTML = '<button class="cont" data-id="' + p.id + '" aria-label="Continue ' + p.name + '">'
     + '<img src="' + p.thumb + '" alt="" draggable="false">'
-    + '<span class="cont-body"><b>Continue</b><em>' + p.name + '</em>'
+    + '<span class="cont-body"><b>Continue <small>' + Math.round(pct * 100) + '%</small></b><em>' + p.name + '</em></span>'
     + '<span class="cont-meter"><i style="width:' + Math.round(pct * 100) + '%"></i></span>'
-    + '<small>' + Math.round(pct * 100) + '% coloured</small></span>'
     + '<span class="cont-go" aria-hidden="true">▶</span></button>';
 }
-function renderPotd() {
+function renderPotd() { renderPotd0(); syncStrips(); }
+function renderPotd0() {
   const el = $('#potd');
   const p = pictureOfTheDay();
   const matches = (filter.cat === 'all' || p.cat === filter.cat) && (filter.diff === 'all' || p.diff === filter.diff);
   if (!matches) { el.hidden = true; el.innerHTML = ''; return; }
   const done = !!store.done()[p.id];
   el.hidden = false;
-  el.innerHTML = '<p class="potd-label">\u2600\uFE0F Picture of the day</p>' + card(p, done, '<span class="pinb" aria-label="Pinned">\uD83D\uDCCC</span>');
+  el.innerHTML = card(p, done, '<span class="potd-label"><i class="sun">\u2600\uFE0F </i>Picture of the day</span><span class="pinb" aria-label="Pinned">\uD83D\uDCCC</span>');
 }
 function card(p, done, extra = '') {
   const pct = done ? 1 : store.pct(p.id, p.stats.regions);
@@ -188,7 +197,7 @@ function renderGallery() {
 }
 $('#types').addEventListener('click', (e) => {
   const b = e.target.closest('[data-type]'); if (!b || b.dataset.type === settings.type) return; audio.unlock(); audio.tap();
-  settings.type = b.dataset.type; store.saveSettings(settings); filter = filters[settings.type]; renderChips(); renderGrid(); $('#grid').scrollTop = 0;
+  settings.type = b.dataset.type; store.saveSettings(settings); filter = filters[settings.type]; renderChips(); renderGrid(); $('#hscroll').scrollTop = 0;
 });
 $('#catChips').addEventListener('click', (e) => { const b = e.target.closest('[data-cat]'); if (!b) return; filter.cat = b.dataset.cat; audio.tap(); renderChips(); renderGrid(); });
 $('#diffChips').addEventListener('click', (e) => { const b = e.target.closest('[data-diff]'); if (!b) return; filter.diff = b.dataset.diff; audio.tap(); renderChips(); renderGrid(); });

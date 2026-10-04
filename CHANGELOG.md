@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.0 — 2026-10-04
+Bug from Gerard (Android Chrome, tall phone, portrait): the top of the home screen took about 70% of the height, so the picture grid showed only about one row.
+- **Compact home screen**: one slim header row holds the Shapes / Grid segmented switch (with picture counts), Surprise, Gallery and Sound (icon buttons, 44 px, labels shown only on wider screens). Category and level chips are small single-line scrolling rows (invisible hit area extended for touch). Header and filters stay put; **only the picture area scrolls**.
+- **Continue** and **Picture of the day** are slim one-line strips (thumbnail, title, progress) side by side instead of tall cards. My stickers moved below the grid.
+- **Grid first**: 2 larger thumbnail columns on phones (320-480 px), 3 up to 700 px, 4+ on tablets/desktop; short landscape phones put the filters on one row and show 5-6 columns. On a 360x640 phone the fixed top block is about 20% of the height and two full rows of pictures are visible even with both strips showing.
+- **Layout test** (`npm run test:layout`, part of `npm test`): headless Chromium at 360x640, 360x560, 320x568, 390x844, 412x915, 430x932, 844x390 and 640x360 landscape, tablet and desktop; asserts first row starts above 35% of the height (40% on short landscape), 2 full thumbnail rows on portrait phones, 2 columns on phones, no overlap, no page overflow, sticky header, 44 px touch targets, filters / Surprise / Gallery / Sound still work. Screenshots go to `magic-colour-screens/layout-*.png`.
+
 ## 1.6.0 — 2026-10-04
 Daytime improve-and-add-pictures run.
 - **6 new pictures**: Fox Forest, Sunny Submarine, Fairground Carousel, Lighthouse Bay (Shapes, medium, flat-colour cartoons with ink outlines); **Hot Air Balloon Festival** (Epic Grid 100×100) and **Treehouse Village** (Epic Grid 90×90). Butterfly Mandala was tried from staged art but skipped (could not hit Hard colour count without failing reconstruction).
