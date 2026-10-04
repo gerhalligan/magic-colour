@@ -618,4 +618,106 @@ export function bigDesigns(add0) {
     const q = rng(77); for (let i = 0; i < 40; i++) { const x = 22 + Math.floor(q() * 56), y = 70 + Math.floor(q() * 8); if (g.get(x, y) !== '#7bc96f' && g.get(x, y) !== '#95e08a') continue; const [a, b] = fl[i % 3]; g.px(x, y, a).px(x, y - 1, b); }
   });
 
+  // ===== 19. Underwater Palace (96) =====
+  add('grid-underwater-palace', 'Underwater Palace', 'fantasy', 96, 96, (g) => {
+    bands(g, 0, 95, ['#0b2e4a', '#124566', '#1a5f85', '#1f759c', '#2a8bb8', '#3aa0cc']);
+    const r = rng(53); for (let i = 0; i < 70; i++) { const x = Math.floor(r() * 96), y = Math.floor(r() * 40); g.set(x, y, i % 6 ? '#9be0ff' : '#ffe066'); }
+    // soft light beams from the surface
+    for (let x = 8; x < 90; x += 14) for (let y = 0; y < 50; y++) if ((x + y * 2) % 9 < 3) { const c = g.get(x, y); if (c) g.set(x, y, '#4dabf7'); }
+    // sandy seabed
+    g.rect(0, 78, 95, 95, '#e9c78f'); for (let y = 74; y < 82; y++) for (let x = 0; x < 96; x++) {
+      const shore = 78 + Math.sin(x * 0.14) * 2.2 + Math.sin(x * 0.05 + 1) * 1.4;
+      if (y >= shore) g.set(x, y, (x + y) % 5 === 0 ? '#f6e1b5' : '#e9c78f');
+    }
+    speckle(g, (c) => c === '#e9c78f' || c === '#f6e1b5', '#d4b07a', 0.1, 11);
+    // coral clusters on the sides
+    const coral = (x, y, c, s = 1) => { const l = L(g, x, y, s); l.chain([[0, 0, 1.4], [0, -4, 1.6], [-2, -8, 1.5], [1, -11, 1.3], [-1, -14, 1.1]], c); l.disc(-3, -9, 1.8, c).disc(2, -10, 1.6, c).disc(0, -15, 1.4, '#ff6fa5'); };
+    coral(8, 76, '#e63946', 1.1); coral(18, 78, '#ff9f1c', 0.9); coral(86, 76, '#b36bff', 1.0); coral(76, 79, '#51cf66', 0.85);
+    // palace walls (teal stone, gold roofs)
+    const stone = '#7ec8c8', shade = '#5aa8a8', roof = '#ffd93d', roof2 = '#ff9f1c', gold = '#ffe066', win = '#9be0ff';
+    const tower = (x0, x1, top, h, rf) => {
+      g.rect(x0, top, x1, 78, stone); g.rect(x1 - 1, top, x1, 78, shade);
+      for (let y = top; y < 78; y += 5) g.rect(x0, y, x1, y, shade);
+      g.poly([[x0 - 2, top], [(x0 + x1) / 2, top - h], [x1 + 2, top]], rf);
+      g.rect(x0 + 2, top + 5, x0 + 3, top + 8, win); g.rect(x1 - 4, top + 5, x1 - 3, top + 8, win);
+      g.disc((x0 + x1) / 2, top - h - 2, 1.6, gold);
+    };
+    tower(14, 26, 42, 10, roof); tower(70, 82, 42, 10, roof);
+    g.rect(26, 48, 70, 78, stone); g.rect(26, 46, 70, 47, shade);
+    for (let x = 28; x < 70; x += 4) g.rect(x, 44, x + 1, 45, stone);
+    tower(34, 46, 28, 12, roof2); tower(50, 62, 28, 12, roof2);
+    // central keep with dome
+    g.rect(42, 16, 54, 78, stone); g.rect(52, 16, 54, 78, shade);
+    g.ell(48, 16, 10, 8, roof); g.ell(48, 14, 7, 5, roof2); g.disc(48, 8, 2.2, gold);
+    g.rect(44, 30, 46, 34, win); g.rect(50, 30, 52, 34, win); g.rect(45, 50, 51, 78, '#5c4030');
+    g.ell(48, 50, 3.5, 3, '#5c4030'); g.px(50, 58, gold);
+    // pearl gate arch
+    g.ell(48, 62, 8, 10, '#f1f5ff'); g.ell(48, 64, 5.5, 8, '#1f759c');
+    // mermaid + fish + bubbles
+    const fish = (x, y, c) => { g.ell(x, y, 3.2, 1.6, c); g.poly([[x - 3, y], [x - 5.5, y - 2], [x - 5.5, y + 2]], c); g.px(x + 1, y - 0.5, '#22223b'); };
+    fish(10, 30, '#ff6fa5'); fish(84, 36, '#ffd93d'); fish(22, 52, '#51cf66'); fish(72, 58, '#339af0');
+    [[20, 20], [40, 12], [60, 22], [80, 18], [30, 40], [66, 34]].forEach(([x, y], i) => { g.disc(x, y, 1.2 + (i % 3) * 0.4, '#bfe6ff'); g.disc(x - 0.4, y - 0.4, 0.5, '#ffffff'); });
+    // seaweed
+    for (let i = 0; i < 8; i++) { const x = 4 + i * 12; for (let y = 70; y < 86; y++) if ((x + y) % 3) g.set(x + Math.round(Math.sin(y * 0.4) * 1.5), y, i % 2 ? '#2f9e44' : '#51cf66'); }
+    // starfish + shells on sand
+    [[24, 86, '#e63946'], [48, 90, '#ff9f1c'], [70, 88, '#b36bff'], [36, 92, '#ff6fa5']].forEach(([x, y, c]) => { star4(g, x, y, c, '#ffd93d'); });
+    [[12, 90], [58, 92], [84, 90]].forEach(([x, y]) => { g.ell(x, y, 2.4, 1.6, '#f8f4ff'); g.ell(x, y, 1.4, 1, '#e9d5ff'); });
+  });
+
+  // ===== 20. Moon Base (104) =====
+  add('grid-moon-base', 'Moon Base', 'space', 104, 104, (g) => {
+    bands(g, 0, 70, ['#0b1026', '#141a3a', '#1c2452', '#2a3368', '#3a4480']);
+    const r = rng(61); for (let i = 0; i < 90; i++) { const x = Math.floor(r() * 104), y = Math.floor(r() * 48); g.set(x, y, i % 7 ? '#f1f5ff' : '#ffd93d'); }
+    star4(g, 12, 10, '#ffd93d', '#fff3b0'); star4(g, 88, 16, '#f1f5ff', '#cfd8ff'); star4(g, 50, 6, '#ffd93d', '#fff3b0'); star4(g, 70, 28, '#ffffff', '#cfd8ff');
+    // planet Earth in the sky
+    g.disc(18, 22, 8, '#339af0'); g.disc(16, 20, 3.2, '#51cf66'); g.disc(20, 24, 2.4, '#51cf66'); g.disc(15, 24, 1.6, '#ffffff');
+    // big moon surface (cratered grey)
+    for (let y = 58; y < 104; y++) for (let x = 0; x < 104; x++) {
+      const h = 62 + Math.sin(x * 0.08) * 3 + Math.sin(x * 0.19 + 0.6) * 2;
+      if (y >= h) g.set(x, y, (x + y) % 9 === 0 ? '#adb5bd' : '#ced4da');
+    }
+    speckle(g, (c) => c === '#ced4da' || c === '#adb5bd', '#868e96', 0.12, 19);
+    // craters
+    [[22, 78, 6], [48, 72, 4.5], [78, 82, 7], [60, 92, 5], [30, 94, 3.5]].forEach(([x, y, rad]) => {
+      g.ell(x, y, rad, rad * 0.7, '#868e96'); g.ell(x - 1, y - 1, rad * 0.55, rad * 0.4, '#495057');
+    });
+    // base domes
+    const dome = (x, y, rx, ry, body, rim, win) => {
+      g.ell(x, y, rx, ry, body); g.ell(x, y - 1, rx * 0.85, ry * 0.7, rim);
+      g.rect(x - rx + 2, y, x + rx - 2, y + 4, body);
+      g.ell(x - rx * 0.35, y - ry * 0.2, 2.2, 2.2, win); g.ell(x + rx * 0.3, y - ry * 0.15, 2, 2, win);
+    };
+    dome(52, 58, 16, 12, '#f1f5ff', '#e7f1ff', '#4dabf7');
+    dome(28, 64, 10, 8, '#dee2e6', '#ced4da', '#74c0fc');
+    dome(78, 66, 11, 8.5, '#dee2e6', '#ced4da', '#74c0fc');
+    // connecting tubes
+    g.rect(38, 62, 42, 66, '#adb5bd'); g.rect(62, 62, 68, 66, '#adb5bd');
+    g.rect(38, 63, 42, 65, '#4dabf7'); g.rect(62, 63, 68, 65, '#4dabf7');
+    // central antenna tower
+    g.rect(50, 30, 54, 58, '#868e96'); g.rect(51, 30, 53, 58, '#adb5bd');
+    g.poly([[48, 30], [52, 18], [56, 30]], '#ff6fa5');
+    g.line(52, 18, 52, 10, 1, '#ced4da'); g.disc(52, 9, 2.4, '#e63946'); g.disc(52, 9, 1.2, '#ffd93d');
+    // solar panels
+    const panel = (x0, y0, flip) => {
+      g.rect(x0, y0, x0 + 14, y0 + 8, '#1c7ed6');
+      for (let x = x0 + 2; x < x0 + 14; x += 3) g.rect(x, y0, x, y0 + 8, '#339af0');
+      for (let y = y0 + 2; y < y0 + 8; y += 3) g.rect(x0, y, x0 + 14, y, '#1864ab');
+      g.rect(x0 + (flip ? 12 : 0), y0 + 3, x0 + (flip ? 14 : 2), y0 + 5, '#adb5bd');
+    };
+    panel(8, 68, false); panel(82, 70, true);
+    // rover
+    g.rect(16, 86, 28, 90, '#ff922b'); g.rect(18, 82, 26, 86, '#ffd93d');
+    g.disc(18, 91, 2.2, '#495057'); g.disc(26, 91, 2.2, '#495057');
+    g.rect(22, 78, 23, 82, '#adb5bd'); g.disc(22.5, 77, 1.4, '#4dabf7');
+    // astronaut
+    g.disc(88, 84, 2.4, '#f1f5ff'); g.rect(86, 86, 90, 94, '#f1f5ff'); g.rect(85, 88, 86, 92, '#f1f5ff'); g.rect(90, 88, 91, 92, '#f1f5ff');
+    g.rect(87, 94, 88, 98, '#ced4da'); g.rect(89, 94, 90, 98, '#ced4da'); g.px(87, 83, '#22223b'); g.px(89, 83, '#22223b');
+    // flag
+    g.line(40, 52, 40, 40, 1, '#adb5bd'); g.poly([[40, 40], [48, 42], [40, 46]], '#e63946');
+    // landing pad lights
+    [[44, 78], [52, 80], [60, 78], [48, 84], [56, 84]].forEach(([x, y], i) => g.disc(x, y, 1.3, i % 2 ? '#ffd93d' : '#51cf66'));
+    // little satellite
+    g.rect(92, 24, 96, 28, '#ced4da'); g.rect(90, 25, 92, 27, '#339af0'); g.rect(96, 25, 98, 27, '#339af0'); g.disc(94, 26, 1.2, '#e63946');
+  });
+
 }

@@ -1087,5 +1087,78 @@
   "kind": "grid",
   "src": "art/pixel/grid-cloud-castle.txt",
   "added": "2026-10-04"
+ },
+ {
+  "id": "gingerbread-house",
+  "name": "Gingerbread House",
+  "cat": "food",
+  "diff": "hard",
+  "src": "art/source/gingerbread-house.jpg",
+  "opts": {
+   "k": 16,
+   "minArea": 40,
+   "minR": 4,
+   "ink": true
+  },
+  "added": "2026-10-04"
+ },
+ {
+  "id": "safari-jeep",
+  "name": "Safari Jeep",
+  "cat": "vehicles",
+  "diff": "hard",
+  "src": "art/source/safari-jeep.jpg",
+  "opts": {
+   "k": 16,
+   "minArea": 40,
+   "minR": 4,
+   "ink": true
+  },
+  "added": "2026-10-04"
+ },
+ {
+  "id": "flying-carpet",
+  "name": "Flying Carpet",
+  "cat": "fantasy",
+  "diff": "hard",
+  "src": "art/source/flying-carpet.jpg",
+  "opts": {
+   "k": 16,
+   "minArea": 50,
+   "minR": 4
+  },
+  "added": "2026-10-04"
+ },
+ {
+  "id": "firework-night",
+  "name": "Firework Night",
+  "cat": "nature",
+  "diff": "hard",
+  "src": "art/source/firework-night.jpg",
+  "opts": {
+   "k": 16,
+   "minArea": 40,
+   "minR": 4,
+   "ink": true
+  },
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-underwater-palace",
+  "name": "Underwater Palace",
+  "cat": "fantasy",
+  "diff": "epic",
+  "kind": "grid",
+  "src": "art/pixel/grid-underwater-palace.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-moon-base",
+  "name": "Moon Base",
+  "cat": "space",
+  "diff": "epic",
+  "kind": "grid",
+  "src": "art/pixel/grid-moon-base.txt",
+  "added": "2026-10-04"
  }
 ]

@@ -1,3 +1,9 @@
+## 1.9.0 — 2026-10-04
+Daytime improve-and-add-pictures run.
+- **6 new pictures**: Gingerbread House, Safari Jeep and Flying Carpet (Shapes, hard); Firework Night (Shapes, medium — Hard colour count could not stay under the reconstruction limit); **Underwater Palace** (Epic Grid 96×96) and **Moon Base** (Epic Grid 104×104).
+- **Filter chips scroll into view** when selected, so the active category/level chip stays visible on the slim scrolling chip rows. Finishing an **Epic** picture also shows a short “You did it!” toast with the confetti.
+- Mode rules unchanged: default remains **One by one**; Magic still needs a numbered region tap; Brush defaults to the smallest size and only paints matching numbers under the stroke.
+
 # Changelog
 
 ## 1.8.1 — 2026-10-04

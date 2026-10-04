@@ -100,11 +100,17 @@ function renderTypes() {
   $('#nShapes').textContent = ofType('shapes').length; $('#nGrid').textContent = ofType('grid').length;
   for (const [t, id] of [['shapes', '#nShapes'], ['grid', '#nGrid']]) $(id).parentElement.title = ofType(t).length + ' pictures';
 }
+function scrollChipIntoView(row) {
+  const on = row && row.querySelector('.chip.on');
+  if (on && typeof on.scrollIntoView === 'function') on.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
+}
 function renderChips() {
   renderTypes();
   const cats = ['all', ...new Set(ofType(settings.type).map((p) => p.cat))];
   $('#catChips').innerHTML = cats.map((c) => `<button class="chip${filter.cat === c ? ' on' : ''}" data-cat="${c}"><em>${(CAT[c] || ['\u2B50'])[0]}</em>${(CAT[c] || [0, c])[1]}</button>`).join('');
   $('#diffChips').innerHTML = [['all', 'Any level'], ['easy', '\u2605 Easy'], ['medium', '\u2605\u2605 Medium'], ['hard', '\u2605\u2605\u2605 Hard'], ['epic', '\u2605\u2605\u2605\u2605 Epic']].filter(([d]) => d === 'all' || ofType(settings.type).some((p) => p.diff === d)).map(([d, l]) => `<button class="chip${filter.diff === d ? ' on' : ''}" data-diff="${d}">${l}</button>`).join('');
+  scrollChipIntoView($('#catChips'));
+  scrollChipIntoView($('#diffChips'));
 }
 const NEW_MS = 7 * 864e5;
 /** Pictures with an `added` ISO date stay "new" for about a week (unfinished ones get a sparkle badge + sort to the front). */
@@ -416,6 +422,7 @@ function finish(restored) {
   const award = store.earnSticker(P.cat);
   if (restored) { view.celeb = null; showWin(true, award); return; }
   view.celebrate(); audio.win(); if (stopConfetti) stopConfetti(); stopConfetti = confetti($('#confetti'));
+  if (P.diff === 'epic') toast('You did it! \u{1F3C6} Epic finished!', 2800);
   celebTimer = setTimeout(() => showWin(false, award), 2100);
 }
 function nextPicture() {
