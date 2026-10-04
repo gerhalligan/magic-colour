@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.0 — 2026-10-04
+Daytime improve run.
+- **6 new pictures** (all hard for bigger kids): Ocean Mandala, Dragon Castle, Mermaid Lagoon, Robot Workshop, Autumn Forest, Space Carnival.
+- **Picture of the day** pin on the home screen: a stable Dublin-day featured picture with a sunny label and pin badge above the gallery grid (respects category/difficulty filters).
+- Difficulty filter chips were already present (Easy / Medium / Hard / Any level); left unchanged.
+- Mode rules unchanged: default remains **One by one**; Magic brush still needs a numbered region tap (palette alone never fills).
+
 ## 1.2.0 — 2026-10-04
 Daytime improve run.
 - **4 new pictures** (mostly hard for bigger kids): Mandala Garden (hard, intricate), Dino Jungle (hard), Unicorn Meadow (hard), Pumpkin Party (medium). Fairy Village and Space Station were tried but skipped after validation failed (soft shading / near-greyscale sources).

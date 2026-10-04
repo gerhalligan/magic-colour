@@ -474,5 +474,117 @@
    "mergeDE": 7
   },
   "added": "2026-10-04"
+ },
+ {
+  "id": "ocean-mandala",
+  "name": "Ocean Mandala",
+  "cat": "nature",
+  "diff": "hard",
+  "src": "art/source/ocean-mandala.png",
+  "opts": {
+   "k": 18,
+   "minArea": 25,
+   "minR": 3.5,
+   "mergeDE": 5,
+   "ink": true,
+   "regions": [
+    75,
+    400
+   ]
+  },
+  "added": "2026-10-04"
+ },
+ {
+  "id": "dragon-castle",
+  "name": "Dragon Castle",
+  "cat": "fantasy",
+  "diff": "hard",
+  "src": "art/source/dragon-castle.png",
+  "opts": {
+   "k": 16,
+   "minArea": 40,
+   "minR": 4,
+   "mergeDE": 5,
+   "regions": [
+    75,
+    400
+   ]
+  },
+  "added": "2026-10-04"
+ },
+ {
+  "id": "mermaid-lagoon",
+  "name": "Mermaid Lagoon",
+  "cat": "fantasy",
+  "diff": "hard",
+  "src": "art/source/mermaid-lagoon.png",
+  "opts": {
+   "k": 16,
+   "minArea": 40,
+   "minR": 4,
+   "mergeDE": 5,
+   "ink": true,
+   "regions": [
+    75,
+    400
+   ]
+  },
+  "added": "2026-10-04"
+ },
+ {
+  "id": "robot-workshop",
+  "name": "Robot Workshop",
+  "cat": "vehicles",
+  "diff": "hard",
+  "src": "art/source/robot-workshop.png",
+  "opts": {
+   "k": 14,
+   "minArea": 55,
+   "minR": 4.5,
+   "mergeDE": 9,
+   "ink": true,
+   "regions": [
+    75,
+    400
+   ]
+  },
+  "added": "2026-10-04"
+ },
+ {
+  "id": "autumn-forest",
+  "name": "Autumn Forest",
+  "cat": "nature",
+  "diff": "hard",
+  "src": "art/source/autumn-forest.png",
+  "opts": {
+   "k": 16,
+   "minArea": 40,
+   "minR": 4,
+   "mergeDE": 5,
+   "ink": true,
+   "regions": [
+    75,
+    400
+   ]
+  },
+  "added": "2026-10-04"
+ },
+ {
+  "id": "space-carnival",
+  "name": "Space Carnival",
+  "cat": "space",
+  "diff": "hard",
+  "src": "art/source/space-carnival.png",
+  "opts": {
+   "k": 16,
+   "minArea": 40,
+   "minR": 4,
+   "mergeDE": 5,
+   "regions": [
+    75,
+    400
+   ]
+  },
+  "added": "2026-10-04"
  }
 ]

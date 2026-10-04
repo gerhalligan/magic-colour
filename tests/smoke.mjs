@@ -45,10 +45,20 @@ for (const [name, vp, touch, dsf] of VIEWPORTS) {
     assert.ok(fresh.ids.length >= 1, 'expected fresh pictures with added dates');
     assert.deepEqual(fresh.badges.slice().sort(), fresh.ids.slice().sort(), 'NEW badge on each unfinished fresh picture');
     assert.ok(fresh.firstIsFresh, 'fresh pictures sort to the front');
+    const potd = await page.evaluate(() => {
+      const m = window.__MC, p = m.pictureOfTheDay();
+      const el = document.getElementById('potd');
+      const card = el && el.querySelector('.pic');
+      return { id: p && p.id, shown: !!(el && !el.hidden), cardId: card && card.dataset.id, label: el && el.querySelector('.potd-label') && el.querySelector('.potd-label').textContent };
+    });
+    assert.ok(potd.id, 'picture of the day exists');
+    assert.ok(potd.shown, 'picture of the day strip is visible on All');
+    assert.equal(potd.cardId, potd.id, 'potd card matches pick');
+    assert.ok(/Picture of the day/i.test(potd.label || ''), 'potd label');
   });
 
   await test(`${name}: open a picture, canvas renders, palette is numbered with big touch targets`, async () => {
-    await page.click('.pic[data-id="happy-fish"]'); await page.waitForSelector('#play.on'); await page.waitForTimeout(400);
+    await page.locator('#grid .pic[data-id="happy-fish"]').scrollIntoViewIfNeeded(); await page.click('#grid .pic[data-id="happy-fish"]'); await page.waitForSelector('#play.on'); await page.waitForTimeout(400);
     const info = await page.evaluate(() => { const sw = [...document.querySelectorAll('.sw')].map((b) => { const r = b.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height), r.left >= 0 && r.right <= innerWidth + 1 || true]; }); const st = document.querySelector('#stage').getBoundingClientRect(); const tools = [...document.querySelectorAll('.tool, .mode')].map((b) => { const r = b.getBoundingClientRect(); return [r.width, r.height, r.left, r.right, r.top, r.bottom]; }); return { sw, stage: [st.width, st.height], tools, ow: document.documentElement.scrollWidth, iw: innerWidth, ih: innerHeight, bodyH: document.body.scrollHeight }; });
     assert.ok(info.sw.length === 6, 'palette ' + info.sw.length); for (const [w, h] of info.sw) assert.ok(w >= 44 && h >= 44, `swatch ${w}x${h}`);
     for (const [w, h, l, r, t, b] of info.tools) { assert.ok(w >= 44 && h >= 44, `tool ${w}x${h}`); assert.ok(l >= 0 && r <= info.iw + 0.5 && t >= 0 && b <= info.ih + 0.5, 'tool off-screen'); }
@@ -146,8 +156,8 @@ for (const [name, vp, touch, dsf] of VIEWPORTS) {
     const s = await state(page); const id = await page.evaluate(() => window.__MC.cur.pic.id);
     const saved = await page.evaluate((id) => localStorage.getItem('mc1.p.' + id), id); assert.ok(saved && JSON.parse(saved).f.length === s.filled, 'saved ' + saved);
     await page.reload(); await page.waitForSelector('.pic');
-    const pct = await page.$eval('.pic[data-id="happy-fish"] .meter i', (e) => e.style.width); assert.ok(parseInt(pct) > 0, 'home shows progress ' + pct);
-    await page.click('.pic[data-id="happy-fish"]'); await page.waitForSelector('#play.on'); const s2 = await state(page); assert.equal(s2.filled, s.filled, 'restored');
+    const pct = await page.$eval('#grid .pic[data-id="happy-fish"] .meter i', (e) => e.style.width); assert.ok(parseInt(pct) > 0, 'home shows progress ' + pct);
+    await page.locator('#grid .pic[data-id="happy-fish"]').scrollIntoViewIfNeeded(); await page.click('#grid .pic[data-id="happy-fish"]'); await page.waitForSelector('#play.on'); const s2 = await state(page); assert.equal(s2.filled, s.filled, 'restored');
     assert.equal(await page.evaluate(() => window.__MC.settings.mode), 'classic', 'mode remembered');
   });
 
@@ -173,7 +183,7 @@ for (const [name, vp, touch, dsf] of VIEWPORTS) {
     await page.click('#modalCard [data-a="gallery"]'); await page.waitForSelector('#gallery.on');
     const g = await page.$$eval('#gGrid .pic.done img', (e) => e.map((i) => i.naturalWidth)); assert.ok(g.length >= 1 && g[0] > 50, 'gallery thumbnail');
     await page.screenshot({ path: `${SHOTS}/${name}-11-gallery.png` });
-    await page.click('#gBack'); await page.click('.pic[data-id="happy-fish"]'); await page.waitForSelector('#modal.on'); await page.click('#modalCard [data-a="close"]');
+    await page.click('#gBack'); await page.locator('#grid .pic[data-id="happy-fish"]').scrollIntoViewIfNeeded(); await page.click('#grid .pic[data-id="happy-fish"]'); await page.waitForSelector('#modal.on'); await page.click('#modalCard [data-a="close"]');
   });
 
   await test(`${name}: mode setting - default One by one, a real later choice is remembered, old auto-saved default is migrated`, async () => {

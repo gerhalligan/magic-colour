@@ -38,6 +38,22 @@ svg{display:block}
 .newb{position:absolute;top:8px;left:8px;z-index:2;display:inline-flex;align-items:center;gap:2px;height:28px;padding:0 10px;border-radius:14px;background:linear-gradient(90deg,var(--pink),#ff8f6b);color:#fff;font-size:12px;font-weight:900;letter-spacing:.4px;box-shadow:0 2px 0 #d44f7a;animation:popn 1.6s ease-in-out infinite}
 @keyframes popn{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 .pic.fresh{box-shadow:0 4px 0 #f5b8d0}
+.potd{flex:none;padding:4px 12px 8px}
+.potd[hidden]{display:none}
+.potd-label{margin:0 0 6px;font-weight:900;font-size:15px;color:var(--brand2);letter-spacing:.2px}
+.potd .pic{max-width:220px;min-height:180px;box-shadow:0 4px 0 #ffd28a;background:linear-gradient(180deg,#fffaf0,#fff)}
+.pinb{position:absolute;top:8px;right:8px;z-index:2;font-size:22px;filter:drop-shadow(0 1px 0 #fff)}
+.potd .pic .badge{top:40px}
+@media (orientation:landscape), (max-height:520px){
+  .potd{padding:2px 12px 4px;display:flex;align-items:center;gap:10px}
+  .potd-label{margin:0;white-space:nowrap;font-size:13px}
+  .potd .pic{display:flex;flex-direction:row;align-items:center;gap:10px;max-width:min(420px,70vw);min-height:0;padding:6px 10px;text-align:left}
+  .potd .pic img{width:56px;height:56px;aspect-ratio:1;border-radius:10px;flex:none}
+  .potd .pic .nm{margin-top:0;font-size:14px}
+  .potd .pic .stars{font-size:13px}
+  .potd .pic .newb{top:4px;left:4px;height:22px;font-size:10px;padding:0 7px}
+  .pinb{top:4px;right:4px;font-size:16px}
+}
 .empty{grid-column:1/-1;text-align:center;font-size:20px;font-weight:800;color:#8a7f6a;padding:40px 10px}
 
 /* ---- play ---- */

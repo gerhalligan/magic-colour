@@ -27,6 +27,7 @@ app.innerHTML = `
   </header>
   <div class="chips" id="catChips"></div>
   <div class="chips small" id="diffChips"></div>
+  <div id="potd" class="potd" hidden></div>
   <main class="grid" id="grid"></main>
 </section>
 <section id="gallery" class="screen">
@@ -86,6 +87,26 @@ function isFresh(p) {
   const t = Date.parse(p.added);
   return Number.isFinite(t) && (Date.now() - t) < NEW_MS;
 }
+/** Stable Dublin-day pick so every device shows the same featured picture. */
+function dayKey() {
+  try { return new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Dublin' }); }
+  catch (e) { return new Date().toISOString().slice(0, 10); }
+}
+function pictureOfTheDay() {
+  const day = dayKey();
+  let h = 2166136261;
+  for (let i = 0; i < day.length; i++) h = Math.imul(h ^ day.charCodeAt(i), 16777619) >>> 0;
+  return pictures[h % pictures.length];
+}
+function renderPotd() {
+  const el = $('#potd');
+  const p = pictureOfTheDay();
+  const matches = (filter.cat === 'all' || p.cat === filter.cat) && (filter.diff === 'all' || p.diff === filter.diff);
+  if (!matches) { el.hidden = true; el.innerHTML = ''; return; }
+  const done = !!store.done()[p.id];
+  el.hidden = false;
+  el.innerHTML = '<p class="potd-label">\u2600\uFE0F Picture of the day</p>' + card(p, done, '<span class="pinb" aria-label="Pinned">\uD83D\uDCCC</span>');
+}
 function card(p, done, extra = '') {
   const pct = done ? 1 : store.pct(p.id, p.stats.regions);
   const fresh = !done && isFresh(p);
@@ -100,6 +121,7 @@ function renderGrid() {
       if (fa !== fb) return fa ? -1 : 1;
       return 0;
     });
+  renderPotd();
   $('#grid').innerHTML = list.length ? list.map((p) => card(p, !!done[p.id])).join('') : '<p class="empty">No pictures here yet \u{1F338}</p>';
 }
 function renderGallery() {
@@ -110,6 +132,7 @@ function renderGallery() {
 $('#catChips').addEventListener('click', (e) => { const b = e.target.closest('[data-cat]'); if (!b) return; filter.cat = b.dataset.cat; audio.tap(); renderChips(); renderGrid(); });
 $('#diffChips').addEventListener('click', (e) => { const b = e.target.closest('[data-diff]'); if (!b) return; filter.diff = b.dataset.diff; audio.tap(); renderChips(); renderGrid(); });
 $('#grid').addEventListener('click', (e) => { const b = e.target.closest('.pic'); if (b) openPicture(b.dataset.id); });
+$('#potd').addEventListener('click', (e) => { const b = e.target.closest('.pic'); if (b) openPicture(b.dataset.id); });
 $('#gGrid').addEventListener('click', (e) => { const b = e.target.closest('.pic'); if (b) openViewer(byId(b.dataset.id)); });
 $('#hGallery').addEventListener('click', () => { audio.unlock(); audio.tap(); renderGallery(); show('gallery'); enter(); });
 $('#gBack').addEventListener('click', () => { audio.tap(); goHome(); });
@@ -288,4 +311,4 @@ $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') clos
 // ---------- boot ----------
 renderChips(); renderGrid();
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
-window.__MC = { get cur() { return cur; }, get view() { return view; }, pictures, store, flush, openPicture, startPicture, handle, settings, isFresh, get pending() { return pending; } };
+window.__MC = { get cur() { return cur; }, get view() { return view; }, pictures, store, flush, openPicture, startPicture, handle, settings, isFresh, pictureOfTheDay, dayKey, get pending() { return pending; } };
