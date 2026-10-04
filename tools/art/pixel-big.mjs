@@ -523,4 +523,99 @@ export function bigDesigns(add0) {
     // stream at bottom edge
     for (let y = 86; y < 90; y++) for (let x = 0; x < 90; x++) { const cx = 45 + Math.sin(x * 0.15) * 8; if (Math.abs(y - 87) < 2 && Math.abs(x - cx) < 28 + (y - 86)) g.set(x, y, (x + y) % 6 === 0 ? '#bfe6ff' : '#2f9be0'); }
   });
+  // ===== 17. Volcano Island (90) =====
+  add('grid-volcano-island', 'Volcano Island', 'nature', 90, 90, (g) => {
+    bands(g, 0, 48, ['#1b1f4b', '#2a2f6a', '#3d4588', '#5a63a8', '#7a84c4']);
+    const r = rng(41); for (let i = 0; i < 55; i++) { const x = Math.floor(r() * 90), y = Math.floor(r() * 28); g.set(x, y, i % 5 ? '#f1f5ff' : '#ffd93d'); }
+    star4(g, 12, 8, '#ffd93d', '#fff3b0'); star4(g, 72, 12, '#f1f5ff', '#cfd8ff'); star4(g, 48, 5, '#ffd93d', '#fff3b0');
+    g.disc(18, 16, 5.5, '#ced4da'); g.disc(16.5, 14.5, 1.4, '#adb5bd').disc(20, 17, 1.2, '#adb5bd');
+    // ocean ring around the island
+    g.rect(0, 58, 89, 89, '#1c7ed6'); for (let y = 52; y < 62; y++) for (let x = 0; x < 90; x++) {
+      const shore = 58 + Math.sin(x * 0.18 + 0.4) * 2.2 + Math.sin(x * 0.07) * 1.4;
+      if (y >= shore) g.set(x, y, (x + y) % 7 === 0 ? '#74c0fc' : '#1c7ed6');
+    }
+    speckle(g, (c) => c === '#1c7ed6' || c === '#74c0fc', '#4dabf7', 0.08, 9);
+    // sandy beach ring
+    for (let y = 50; y < 62; y++) for (let x = 0; x < 90; x++) {
+      const cx = 45, cy = 54, d = Math.hypot(x - cx, (y - cy) * 1.4);
+      if (d > 22 && d < 30) g.set(x, y, (x + y) % 5 === 0 ? '#e9c78f' : '#f6e1b5');
+    }
+    // central volcano cone
+    g.poly([[22, 58], [45, 14], [68, 58]], '#6f5330');
+    g.poly([[28, 58], [45, 22], [62, 58]], '#8d6a3e');
+    g.poly([[34, 58], [45, 30], [56, 58]], '#a67c52');
+    // crater + lava glow
+    g.ell(45, 20, 7, 3.2, '#3d2914'); g.ell(45, 20, 4.6, 2, '#e03131');
+    g.disc(45, 18, 2.4, '#ff922b'); g.disc(45, 17, 1.4, '#ffd43b');
+    // lava rivers down the slopes
+    const lava = (pts) => { for (let i = 0; i < pts.length - 1; i++) { const [x0, y0] = pts[i], [x1, y1] = pts[i + 1], n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0))); for (let k = 0; k <= n; k++) { const t = k / n, x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t; g.disc(x, y, 1.3 + (1 - t) * 0.6, k % 3 ? '#e03131' : '#ff922b'); } } };
+    lava([[45, 22], [38, 34], [32, 46], [28, 56]]); lava([[45, 22], [52, 36], [58, 48], [62, 57]]); lava([[45, 24], [45, 40], [48, 52], [50, 58]]);
+    // palm trees on the beach
+    const palm = (x, y, s, flip) => { const l = L(g, x, y, s, flip); l.rect(-0.5, 0, 0.5, 10, '#8d5a2b').rect(0.2, 0, 0.6, 10, '#6b4423');
+      [[-6, -2], [-3, -5], [2, -5], [6, -2], [0, -6]].forEach(([dx, dy], i) => l.poly([[0, 0], [dx, dy], [dx * 0.4, dy * 0.55]], i % 2 ? '#2f9e44' : '#51cf66'));
+      l.disc(-1, 9, 1.1, '#8d5a2b').disc(1.4, 9.4, 1, '#8d5a2b'); };
+    palm(12, 52, 1.1, false); palm(78, 54, 1.0, true); palm(20, 56, 0.75, false); palm(70, 57, 0.8, true);
+    // little boats + fish in the water
+    const boat = (x, y, c) => { g.poly([[x - 4, y], [x + 4, y], [x + 2.5, y + 2.5], [x - 2.5, y + 2.5]], '#8d5a2b'); g.poly([[x, y], [x, y - 5], [x + 3.5, y - 1]], c); g.px(x, y - 5, '#f1f5ff'); };
+    boat(30, 72, '#e63946'); boat(62, 76, '#339af0');
+    [[16, 80, '#ff922b'], [40, 84, '#51cf66'], [74, 82, '#ffd93d'], [52, 70, '#ff6fa5']].forEach(([x, y, c]) => { g.ell(x, y, 2.2, 1.2, c); g.px(x + 2, y, c); g.px(x - 1, y - 1, '#22223b'); });
+    // smoke puffs above crater
+    cloud(g, 36, 8, 0.7, '#adb5bd', '#868e96'); cloud(g, 48, 4, 0.55, '#ced4da', '#adb5bd');
+    // rocks on beach
+    [[24, 58], [66, 59], [40, 60], [50, 61]].forEach(([x, y], i) => g.ell(x, y, 2.4 + (i % 2), 1.6, i % 2 ? '#868e96' : '#495057'));
+  });
+
+  // ===== 18. Castle in the Clouds (100) =====
+  add('grid-cloud-castle', 'Castle in the Clouds', 'fantasy', 100, 100, (g) => {
+    bands(g, 0, 70, ['#9ad0ff', '#b3dcff', '#cce7ff', '#e0f0ff', '#f0f7ff']);
+    g.disc(82, 14, 9, '#ffe066'); g.disc(82, 14, 7, '#fff3a0');
+    for (let k = 0; k < 12; k++) { const a = k * Math.PI / 6; g.line(82 + Math.cos(a) * 11, 14 + Math.sin(a) * 11, 82 + Math.cos(a) * 14.5, 14 + Math.sin(a) * 14.5, 1.2, '#ffe066'); }
+    // soft cloud sea floor
+    cloud(g, 2, 72, 2.2, '#ffffff', '#e7f1ff'); cloud(g, 30, 78, 2.6, '#ffffff', '#e7f1ff'); cloud(g, 58, 74, 2.4, '#ffffff', '#e7f1ff'); cloud(g, 78, 80, 2.0, '#ffffff', '#e7f1ff');
+    cloud(g, 10, 88, 2.8, '#f8fbff', '#dbe9f7'); cloud(g, 48, 90, 3.0, '#f8fbff', '#dbe9f7'); cloud(g, 82, 92, 2.5, '#f8fbff', '#dbe9f7');
+    g.rect(0, 86, 99, 99, '#eef5ff'); speckle(g, (c) => c === '#eef5ff' || c === '#f8fbff', '#d0e4ff', 0.1, 14);
+    // floating island base under the castle
+    g.ell(50, 78, 34, 10, '#7bc96f'); g.ell(50, 76, 30, 7, '#95e08a');
+    for (let x = 20; x < 80; x++) for (let y = 78; y < 92; y++) {
+      const d = Math.hypot((x - 50) / 28, (y - 78) / 10);
+      if (d < 1 && y > 78) g.set(x, y, (x + y) % 6 === 0 ? '#6b4423' : '#8d5a2b');
+    }
+    // hanging roots / rocks under island
+    [[28, 86], [40, 90], [55, 88], [68, 91], [48, 94]].forEach(([x, y], i) => { g.ell(x, y, 3 + (i % 3), 4 + (i % 2), '#6b4423'); g.ell(x, y + 2, 2, 3, '#5c4030'); });
+    // castle walls (white stone, pink roofs — different from Unicorn Castle layout)
+    const stone = '#f1f5ff', shade = '#cfd4e0', roof = '#ff6fa5', roof2 = '#b36bff', gold = '#ffd93d';
+    const tower = (x0, x1, top, h, rf, flag) => {
+      g.rect(x0, top, x1, 76, stone); g.rect(x1 - 1, top, x1, 76, shade);
+      for (let y = top; y < 76; y += 5) g.rect(x0, y, x1, y, shade);
+      g.poly([[x0 - 2, top], [(x0 + x1) / 2, top - h], [x1 + 2, top]], rf);
+      g.line((x0 + x1) / 2, top - h, (x0 + x1) / 2, top - h - 5, 1, '#7b4a2d');
+      g.poly([[(x0 + x1) / 2 + 0.5, top - h - 5], [(x0 + x1) / 2 + 5, top - h - 3.5], [(x0 + x1) / 2 + 0.5, top - h - 2]], flag);
+      g.rect(x0 + 2, top + 6, x0 + 3, top + 9, gold); g.rect(x1 - 4, top + 6, x1 - 3, top + 9, gold);
+    };
+    tower(18, 28, 42, 12, roof, gold); tower(72, 82, 42, 12, roof, '#51cf66');
+    g.rect(28, 50, 72, 76, stone); g.rect(28, 48, 72, 49, shade);
+    for (let x = 30; x < 72; x += 4) g.rect(x, 46, x + 1, 47, stone);
+    tower(36, 48, 28, 14, roof2, gold); tower(52, 64, 28, 14, roof2, '#339af0');
+    // keep (centre tall)
+    g.rect(44, 18, 56, 76, stone); g.rect(54, 18, 56, 76, shade);
+    g.poly([[42, 18], [50, 2], [58, 18]], roof);
+    g.line(50, 2, 50, -3, 1, '#7b4a2d'); g.poly([[50.5, -2], [56, 0], [50.5, 2]], gold);
+    g.ell(50, 28, 3.2, 3.8, gold); g.ell(50, 28, 1.5, 2.2, '#ff9f1c');
+    g.rect(46, 38, 48, 42, gold); g.rect(52, 38, 54, 42, gold);
+    g.rect(47, 58, 53, 76, '#8d5a2b'); g.ell(50, 58, 3.5, 3, '#8d5a2b'); g.px(52, 66, gold);
+    // rainbow bridge of clouds to the side
+    R6.forEach((c, i) => { const ro = 28 - i * 1.8, ri = ro - 1.8; g.paint((a, b) => { const d = Math.hypot(a - 22, b - 58); return d <= ro && d > ri && b < 58 && a < 48; }, c); });
+    // floating cloud platforms + tiny houses
+    cloud(g, 6, 40, 1.1, '#ffffff', '#e7f1ff'); cloud(g, 84, 46, 1.2, '#ffffff', '#e7f1ff');
+    g.rect(8, 42, 16, 46, '#ffe6f2'); g.poly([[7, 42], [12, 36], [17, 42]], '#339af0'); g.rect(10, 43, 11, 44, gold);
+    g.rect(86, 48, 94, 52, '#e6f4ff'); g.poly([[85, 48], [90, 42], [95, 48]], '#e63946'); g.rect(88, 49, 89, 50, gold);
+    // birds + sparkles
+    const bird = (x, y, c) => { g.px(x, y, c).px(x + 1, y - 1, c).px(x + 2, y, c).px(x + 1, y, '#22223b'); };
+    bird(30, 16, '#e63946'); bird(60, 10, '#339af0'); bird(74, 28, '#ff9f1c');
+    star4(g, 10, 18, '#ffd93d', '#fff3b0'); star4(g, 92, 30, '#ffffff', '#cfd8ff'); star4(g, 40, 8, '#ffd93d', '#fff3b0');
+    // flowers on the island grass
+    const fl = [['#ff6fa5', '#ffd93d'], ['#b36bff', '#ffd93d'], ['#339af0', '#ffffff']];
+    const q = rng(77); for (let i = 0; i < 40; i++) { const x = 22 + Math.floor(q() * 56), y = 70 + Math.floor(q() * 8); if (g.get(x, y) !== '#7bc96f' && g.get(x, y) !== '#95e08a') continue; const [a, b] = fl[i % 3]; g.px(x, y, a).px(x, y - 1, b); }
+  });
+
 }

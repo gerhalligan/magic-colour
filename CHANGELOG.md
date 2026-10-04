@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.8.0 — 2026-10-04
+Daytime improve-and-add-pictures run.
+- **6 new pictures**: Pumpkin Carriage (Shapes, hard); Treasure Cave, Sleepy Panda and Butterfly Mandala (Shapes, medium); **Volcano Island** (Epic Grid 90×90) and **Castle in the Clouds** (Epic Grid 100×100). Flower Mandala was tried from staged art but skipped (too similar in outline to Ocean Mandala — duplicate check).
+- **Progress cheers**: friendly offline toasts at about 50% ("Halfway!") and 90% ("Almost done!"), once per picture — no spam on undo or when reopening a picture already past those points.
+- Mode rules unchanged: default remains **One by one**; Magic still needs a numbered region tap; Brush defaults to the smallest size and only paints matching numbers under the stroke.
+
 ## 1.7.0 — 2026-10-04
 Bug from Gerard (Android Chrome, tall phone, portrait): the top of the home screen took about 70% of the height, so the picture grid showed only about one row.
 - **Compact home screen**: one slim header row holds the Shapes / Grid segmented switch (with picture counts), Surprise, Gallery and Sound (icon buttons, 44 px, labels shown only on wider screens). Category and level chips are small single-line scrolling rows (invisible hit area extended for touch). Header and filters stay put; **only the picture area scrolls**.

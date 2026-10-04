@@ -202,6 +202,71 @@ for (const [name, vp, touch, dsf] of VIEWPORTS) {
     assert.equal(await page.evaluate(() => window.__MC.settings.mode), 'classic', 'mode remembered');
   });
 
+  await test(`${name}: Halfway and Almost done toasts fire once at ~50% and ~90%`, async () => {
+    await page.evaluate(() => {
+      const m = window.__MC;
+      const p = m.pictures.find((x) => x.id === 'sunny-flower');
+      const ids = [];
+      for (let i = 0; i < p.regions.length; i++) if (p.regions[i][0] > 0) ids.push(i);
+      const half = Math.ceil(ids.length * 0.5) - 1;
+      m.store.saveProgress('sunny-flower', { f: ids.slice(0, Math.max(1, half)), s: 1 });
+    });
+    await page.goto(FILE); await page.waitForSelector('.pic');
+    await page.locator('#grid .pic[data-id="sunny-flower"]').scrollIntoViewIfNeeded();
+    await page.click('#grid .pic[data-id="sunny-flower"]'); await page.waitForSelector('#play.on');
+    const seeded = await page.evaluate(() => {
+      const m = window.__MC, g = m.cur.game;
+      return { prog: g.progress(), half: m.cur.milestones.half, almost: m.cur.milestones.almost };
+    });
+    assert.ok(seeded.prog < 0.5, 'seeded below half ' + seeded.prog);
+    assert.equal(seeded.half, false);
+    const mid = await page.evaluate(() => {
+      const m = window.__MC, g = m.cur.game, P = m.cur.pic;
+      const id = P.regions.findIndex((r, i) => r[0] > 0 && !g.filled[i]);
+      const c = P.regions[id][0];
+      g.selectColour(c);
+      const res = g.tapRegion(id);
+      m.handle(res, { id });
+      const t = document.getElementById('toast');
+      return { text: t.textContent, half: m.cur.milestones.half, prog: g.progress() };
+    });
+    assert.ok(mid.prog >= 0.5, 'crossed half ' + mid.prog);
+    assert.ok(mid.half, 'half flag set');
+    assert.match(mid.text, /Halfway/i);
+    const almost = await page.evaluate(() => {
+      const m = window.__MC, g = m.cur.game, P = m.cur.pic;
+      const all = [];
+      for (let i = 0; i < P.regions.length; i++) if (P.regions[i][0] > 0) all.push(i);
+      const target = Math.ceil(g.total * 0.9) - 1;
+      g.reset();
+      for (let k = 0; k < target; k++) { const id = all[k], c = P.regions[id][0]; g.filled[id] = 1; g.doneCount[c]++; }
+      m.cur.milestones = { half: true, almost: false };
+      m.view.paintAll();
+      const id = all[target], c = P.regions[id][0];
+      g.selectColour(c);
+      const res = g.tapRegion(id);
+      m.handle(res, { id });
+      const t = document.getElementById('toast');
+      return { text: t.textContent, almost: m.cur.milestones.almost, prog: g.progress() };
+    });
+    assert.ok(almost.prog >= 0.9 && almost.prog < 1, 'crossed almost ' + almost.prog);
+    assert.ok(almost.almost, 'almost flag');
+    assert.match(almost.text, /Almost done/i);
+    // leave an unfinished happy-fish open so the next smoke test (finish celebration) can continue from play
+    await page.evaluate(() => {
+      const m = window.__MC;
+      const p = m.pictures.find((x) => x.id === 'happy-fish');
+      const ids = [];
+      for (let i = 0; i < p.regions.length; i++) if (p.regions[i][0] > 0) ids.push(i);
+      m.store.clearProgress('sunny-flower');
+      m.store.unmarkDone('happy-fish');
+      m.store.saveProgress('happy-fish', { f: ids.slice(0, Math.min(4, ids.length - 1)), s: 1 });
+    });
+    await page.click('#pHome'); await page.waitForSelector('#home.on');
+    await page.locator('#grid .pic[data-id="happy-fish"]').scrollIntoViewIfNeeded();
+    await page.click('#grid .pic[data-id="happy-fish"]'); await page.waitForSelector('#play.on');
+  });
+
   await test(`${name}: finishing a picture -> celebration, gallery entry, PNG save`, async () => {
     await page.click('.mode[data-mode="magic"]');
     const K = await page.evaluate(() => window.__MC.cur.pic.palette.length);

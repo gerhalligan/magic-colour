@@ -228,7 +228,9 @@ function startPicture(p) {
   settings.lastId = p.id; store.saveSettings(settings);
   const game = createGame(p, { mode: settings.mode });
   game.restore(store.progress(p.id));
-  cur = { pic: p, game };
+  // seed milestones from restored progress so Halfway/Almost toasts fire once per picture, only on crossing
+  const prog0 = game.progress();
+  cur = { pic: p, game, milestones: { half: prog0 >= 0.5, almost: prog0 >= 0.9 } };
   if (!view) view = new PuzzleView($('#cv'), { onTap: onTapRegion, onBrushStart, onBrush, onBrushEnd });
   buildPalette(); updateModeUI(); show('play'); enter();
   view.load(p, game);
@@ -256,6 +258,14 @@ function updatePalette() {
 }
 function updateProgress() {
   const g = cur.game, pc = Math.round(g.progress() * 100); $('#pFill').style.width = pc + '%'; $('#pText').textContent = pc + '%';
+  maybeMilestoneToast();
+}
+/** Friendly offline toasts at ~50% and ~90%, once per picture (no spam on undo/restore). */
+function maybeMilestoneToast() {
+  if (!cur || cur.game.complete) return;
+  const p = cur.game.progress(), m = cur.milestones || (cur.milestones = { half: false, almost: false });
+  if (!m.half && p >= 0.5 && p < 1) { m.half = true; toast("Halfway! 🌟", 2200); }
+  else if (!m.almost && p >= 0.9 && p < 1) { m.almost = true; toast("Almost done! ✨", 2200); }
 }
 function updateModeUI() {
   for (const b of app.querySelectorAll('.mode')) { const on = b.dataset.mode === settings.mode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); }

@@ -1013,5 +1013,79 @@
   "kind": "grid",
   "src": "art/pixel/grid-treehouse-village.txt",
   "added": "2026-10-04"
+ },
+ {
+  "id": "pumpkin-carriage",
+  "name": "Pumpkin Carriage",
+  "cat": "unicorns",
+  "diff": "hard",
+  "src": "art/source/pumpkin-carriage.jpg",
+  "opts": {
+   "k": 16,
+   "minArea": 40,
+   "minR": 4,
+   "ink": true
+  },
+  "added": "2026-10-04"
+ },
+ {
+  "id": "treasure-cave",
+  "name": "Treasure Cave",
+  "cat": "fantasy",
+  "diff": "hard",
+  "src": "art/source/treasure-cave.jpg",
+  "opts": {
+   "k": 14,
+   "minArea": 55,
+   "minR": 5,
+   "ink": true
+  },
+  "added": "2026-10-04"
+ },
+ {
+  "id": "sleepy-panda",
+  "name": "Sleepy Panda",
+  "cat": "animals",
+  "diff": "medium",
+  "src": "art/source/sleepy-panda.jpg",
+  "opts": {
+   "k": 12,
+   "minArea": 70,
+   "minR": 5,
+   "ink": true
+  },
+  "added": "2026-10-04"
+ },
+ {
+  "id": "butterfly-mandala",
+  "name": "Butterfly Mandala",
+  "cat": "nature",
+  "diff": "medium",
+  "src": "art/source/butterfly-mandala.jpg",
+  "opts": {
+   "k": 10,
+   "minArea": 80,
+   "minR": 5,
+   "ink": true
+  },
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-volcano-island",
+  "name": "Volcano Island",
+  "cat": "nature",
+  "diff": "epic",
+  "kind": "grid",
+  "src": "art/pixel/grid-volcano-island.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-cloud-castle",
+  "name": "Castle in the Clouds",
+  "cat": "fantasy",
+  "diff": "epic",
+  "kind": "grid",
+  "src": "art/pixel/grid-cloud-castle.txt",
+  "added": "2026-10-04"
  }
 ]
