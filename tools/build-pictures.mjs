@@ -14,9 +14,10 @@ const manifestFile = path.join(root, 'art/manifest.json');
 const manifest = JSON.parse(fs.readFileSync(manifestFile, 'utf8'));
 fs.mkdirSync(path.join(root, 'src/pictures'), { recursive: true }); fs.mkdirSync(path.join(root, 'art/thumbs'), { recursive: true });
 let failures = 0;
-const CATS = ['animals', 'unicorns', 'dinosaurs', 'vehicles', 'space', 'fantasy', 'food', 'nature'];
+const CATS = ['animals', 'unicorns', 'dinosaurs', 'vehicles', 'space', 'fantasy', 'food', 'nature', 'pixel'];
 const rows = [];
 for (const m of manifest) {
+  if (m.kind === 'grid') continue; // Pixel Grid pictures are built by tools/pixel-grid.mjs
   if (only.length && !only.includes(m.id)) continue;
   const band = BANDS[m.diff];
   const { rgba, w, h } = await loadFlat(path.join(root, m.src), band.size, m.bg || [255, 255, 255]);

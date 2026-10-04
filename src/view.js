@@ -1,9 +1,10 @@
 // Canvas renderer + pan/zoom + tap handling for one puzzle. Fill layer = label map painted into an offscreen canvas,
 // outline = one Path2D stroked on top, numbers drawn in screen space so they stay readable at every zoom.
 import { mapOf, hexToRgb, rgb32 } from './codec.js';
+import { Brusher, computeBBoxes, brushRadiusPx, DEFAULT_BRUSH } from './brush.js';
 
 const INK = '#3b3f58';
-const WHITE32 = rgb32(255, 255, 255);
+const WHITE32 = rgb32(255, 255, 255), GREY32 = rgb32(226, 227, 236); // Pixel Grid squares that are not coloured yet are light grey
 
 export class PuzzleView {
   constructor(canvas, hooks = {}) {
@@ -14,6 +15,7 @@ export class PuzzleView {
     this.sparks = []; this.rings = []; this.wiggle = new Map(); this.overlayUntil = 0; this.overlayItems = null; this.celeb = null;
     this.dirty = true; this.raf = 0; this.lastT = 0; this.puzzle = null;
     this.outCache = null;
+    this.brush = { on: false, size: DEFAULT_BRUSH }; this.stroke = null; this.cur = null; this.spaceDown = false; this.brusher = null;
     this._bind();
   }
 
@@ -29,15 +31,12 @@ export class PuzzleView {
     this.outline = new Path2D(puzzle.outline);
     this.heavy = (puzzle.stats && puzzle.stats.outlinePoints > 2500);
     this.pal32 = puzzle.palette.map((c) => { const [r, g, b] = hexToRgb(c); return rgb32(r, g, b); });
-    // bounding boxes
-    const n = puzzle.regions.length; this.bb = new Int32Array(n * 4);
-    for (let i = 0; i < n; i++) { this.bb[i * 4] = w; this.bb[i * 4 + 1] = h; this.bb[i * 4 + 2] = -1; this.bb[i * 4 + 3] = -1; }
-    const m = this.map;
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const id = m[y * w + x], o = id * 4; if (x < this.bb[o]) this.bb[o] = x; if (y < this.bb[o + 1]) this.bb[o + 1] = y; if (x > this.bb[o + 2]) this.bb[o + 2] = x; if (y > this.bb[o + 3]) this.bb[o + 3] = y; }
+    // bounding boxes + brush hit-tester (shared with the unit tests via brush.js)
+    this.bb = computeBBoxes(this.map, w, h, puzzle.regions.length); this.brusher = new Brusher(puzzle, this.map, this.bb); this._cancelStroke(false); this.cur = null;
     this.sparks.length = 0; this.rings.length = 0; this.wiggle.clear(); this.overlayItems = null; this.celeb = null; this.outCache = null;
     this.paintAll(); this.resize(true);
   }
-  col32(id) { const r = this.puzzle.regions[id]; return r[0] > 0 && this.game.filled[id] ? this.pal32[r[0] - 1] : WHITE32; }
+  col32(id) { const r = this.puzzle.regions[id]; return r[0] > 0 && this.game.filled[id] ? this.pal32[r[0] - 1] : r[0] > 0 && this.puzzle.grid ? GREY32 : WHITE32; }
   paintAll() {
     const m = this.map, img = this.img32, rc = this.puzzle.regions.map((_, i) => this.col32(i));
     for (let p = 0; p < m.length; p++) img[p] = rc[m[p]];
@@ -49,6 +48,17 @@ export class PuzzleView {
     if (x1 < 0) return; const c = this.col32(id), m = this.map, img = this.img32;
     for (let y = y0; y <= y1; y++) for (let x = x0, p = y * w + x0; x <= x1; x++, p++) if (m[p] === id) img[p] = c;
     this.fctx.putImageData(this.img, 0, 0, x0, y0, x1 - x0 + 1, y1 - y0 + 1); this.dirty = true; this.kick();
+  }
+  /** repaint many regions with ONE canvas upload (brush strokes / undo of a stroke) */
+  paintRegions(ids) {
+    if (!ids.length) return; if (ids.length === 1) return this.paintRegion(ids[0]);
+    const { w } = this.puzzle, m = this.map, img = this.img32, bb = this.bb;
+    let X0 = 1e9, Y0 = 1e9, X1 = -1, Y1 = -1, sum = 0;
+    for (const id of ids) { const o = id * 4; if (bb[o + 2] < 0) continue; X0 = Math.min(X0, bb[o]); Y0 = Math.min(Y0, bb[o + 1]); X1 = Math.max(X1, bb[o + 2]); Y1 = Math.max(Y1, bb[o + 3]); sum += (bb[o + 2] - bb[o] + 1) * (bb[o + 3] - bb[o + 1] + 1); const c = this.col32(id); for (let y = bb[o + 1]; y <= bb[o + 3]; y++) for (let x = bb[o], p = y * w + x; x <= bb[o + 2]; x++, p++) if (m[p] === id) img[p] = c; }
+    if (X1 < 0) return;
+    if ((X1 - X0 + 1) * (Y1 - Y0 + 1) <= Math.max(60000, sum * 3)) this.fctx.putImageData(this.img, 0, 0, X0, Y0, X1 - X0 + 1, Y1 - Y0 + 1);
+    else for (const id of ids) { const o = id * 4; if (bb[o + 2] >= 0) this.fctx.putImageData(this.img, 0, 0, bb[o], bb[o + 1], bb[o + 2] - bb[o] + 1, bb[o + 3] - bb[o + 1] + 1); }
+    this.dirty = true; this.kick();
   }
   /** show coloured overlay for regions: items [{id, color:'#rrggbb'}]; ms = how long (0 = until cleared) */
   setOverlay(items, ms = 0) {
@@ -116,27 +126,89 @@ export class PuzzleView {
     return this.map[y * w + x];
   }
 
+  // ---------- brush ----------
+  setBrush(on, size) { this.brush.on = !!on; this.brush.size = size; if (!on) { this._cancelStroke(true); this.cur = null; } this.cv.style.cursor = on ? 'crosshair' : ''; this.dirty = true; this.kick(); }
+  /** brush radius on screen (CSS px) and in picture pixels at the current zoom */
+  brushRadiusScreen() { return brushRadiusPx(this.brush.size, this.s / (this.fitS || 1), Math.min(this.vw, this.vh)); }
+  brushRadiusMap() { return this.brushRadiusScreen() / this.s; }
+  /** show the brush circle for a moment in the middle of the picture (after changing size) */
+  previewBrush(ms = 1100) { if (!this.brush.on) return; this.cur = { x: this.vw / 2, y: this.vh / 2, until: performance.now() + ms }; this.dirty = true; this.kick(); }
+  setSpace(on) { this.spaceDown = !!on; this.cv.style.cursor = on ? 'grab' : this.brush.on ? 'crosshair' : ''; }
+  _armStroke(p, e) {
+    const [mx, my] = this.toMap(e.clientX, e.clientY), st = { pid: e.pointerId, started: false, down: [mx, my], q: [], last: null, painted: 0, sx: e.clientX, sy: e.clientY, timer: 0 };
+    this.stroke = st; { const r = this.cv.getBoundingClientRect(); this.cur = { x: e.clientX - r.left, y: e.clientY - r.top, until: 0 }; }
+    if (e.pointerType === 'mouse') this._startStroke(); else st.timer = setTimeout(() => { if (this.stroke === st && !st.started && this.ptrs.size === 1) this._startStroke(); }, 70);
+  }
+  _startStroke() { const st = this.stroke; if (!st || st.started) return; clearTimeout(st.timer); st.started = true; st.q.push([st.down[0], st.down[1], true]); this.setOverlay(null); if (this.hooks.onBrushStart) this.hooks.onBrushStart(); this.kick(); }
+  _strokeMove(e) {
+    const st = this.stroke; if (!st) return;
+    const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : null, list = evs && evs.length ? evs : [e], r = this.cv.getBoundingClientRect();
+    for (const ev of list) {
+      if (!st.started) { if (Math.hypot(ev.clientX - st.sx, ev.clientY - st.sy) < 3) continue; this._startStroke(); }
+      st.q.push([(ev.clientX - r.left - this.tx) / this.s, (ev.clientY - r.top - this.ty) / this.s, false]);
+    }
+    this.cur = { x: e.clientX - r.left, y: e.clientY - r.top, until: 0 }; this.bump(); this.dirty = true; this.kick();
+  }
+  /** end the current stroke; a stroke that never moved is a "dab" (tap) */
+  _endStroke(e, cancelled) {
+    const st = this.stroke; if (!st) return; clearTimeout(st.timer);
+    if (!st.started && !cancelled) this._startStroke();
+    if (st.started && e && !cancelled) { const [mx, my] = this.toMap(e.clientX, e.clientY); st.q.push([mx, my, false]); }
+    this._brushFrame(); this.stroke = null;
+    if (st.started && this.hooks.onBrushEnd) this.hooks.onBrushEnd(st.painted);
+    if (this.cur && !(e && e.pointerType === 'mouse')) this.cur.until = performance.now() + 350;
+    this.dirty = true; this.kick();
+  }
+  _cancelStroke(keep) { const st = this.stroke; if (!st) return; if (keep && st.started) this._endStroke(null, true); else { clearTimeout(st.timer); this.stroke = null; } }
+  /** process the queued stroke points once per animation frame: interpolate, hit-test, report to the game in one batch */
+  _brushFrame() {
+    const st = this.stroke, g = this.game; if (!st || !st.started || !st.q.length || !this.brusher) return;
+    const sel = g.selected, cand = sel > 0 && !g.colourDone(sel) ? g.byColour[sel] : [], r = this.brushRadiusMap(), found = new Set(); let wrong = -1;
+    const P = this.puzzle;
+    for (const [x, y, first] of st.q) {
+      if (first || !st.last) { this.brusher.hit(x, y, r, cand, g.filled, found); }
+      else this.brusher.segment(st.last[0], st.last[1], x, y, r, cand, g.filled, found);
+      st.last = [x, y];
+      const id = this.brusher.regionAt(x, y); if (id >= 0 && sel > 0 && P.regions[id][0] > 0 && P.regions[id][0] !== sel && !g.filled[id]) wrong = id;
+    }
+    st.q.length = 0; this.bump();
+    if (this.hooks.onBrush) { const n = this.hooks.onBrush([...found], { wrongId: wrong, x: st.last[0], y: st.last[1] }); if (n) st.painted += n; }
+  }
+  /** gentle "that one is a different number" cue for the brush: label wiggle + a tiny ring, no overlay */
+  nudgeRegion(id) { const r = this.puzzle.regions[id]; if (!r) return; this.wiggle.set(id, performance.now()); this.rings.push({ x: r[1], y: r[2], t: 0, dur: 0.4, r: Math.max(r[3], 8), color: '#ff8fab' }); this.kick(); }
+  /** a few sparkles for a batch of filled regions (capped so a huge brush stays smooth) */
+  sparkle(ids, color) { const step = Math.max(1, Math.ceil(ids.length / 6)); for (let i = 0; i < ids.length; i += step) this.burst(ids[i], color, 2); }
+
   // ---------- input ----------
   _bind() {
     const cv = this.cv; cv.style.touchAction = 'none';
     cv.addEventListener('pointerdown', (e) => {
       if (!this.puzzle) return; cv.setPointerCapture(e.pointerId); this.anim = null;
-      this.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, t: performance.now(), type: e.pointerType });
-      this.tapOk = this.ptrs.size === 1; this.dragged = false;
-      if (this.ptrs.size === 2) this._pinchInit();
+      const mouse = e.pointerType === 'mouse', pan = mouse && (e.button === 1 || e.button === 2 || (this.spaceDown && e.button === 0));
+      if (mouse && e.button !== 0 && !pan) return;
+      this.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, t: performance.now(), type: e.pointerType, pan });
+      this.tapOk = this.ptrs.size === 1 && !pan; this.dragged = pan;
+      if (this.ptrs.size >= 2) { this._cancelStroke(true); this.tapOk = false; this._pinchInit(); }
+      else if (this.brush.on && !pan) this._armStroke(this.ptrs.get(e.pointerId), e);
     });
+    cv.addEventListener('mousedown', (e) => { if (e.button === 1) e.preventDefault(); });
     cv.addEventListener('pointermove', (e) => {
-      const p = this.ptrs.get(e.pointerId); if (!p) return;
+      const p = this.ptrs.get(e.pointerId);
+      if (e.pointerType === 'mouse' && this.brush.on && !(this.stroke && this.stroke.pid === e.pointerId)) { const r = cv.getBoundingClientRect(); this.cur = { x: e.clientX - r.left, y: e.clientY - r.top, until: 0 }; this.dirty = true; this.kick(); }
+      if (!p) return;
       const px = p.x, py = p.y; p.x = e.clientX; p.y = e.clientY;
       if (this.ptrs.size >= 2) { this._pinchMove(); this.tapOk = false; return; }
-      const slop = p.type === 'mouse' ? 4 : 9;
+      if (this.stroke && this.stroke.pid === e.pointerId) { this._strokeMove(e); return; }
+      const slop = p.pan ? 0 : p.type === 'mouse' ? 4 : 9;
       if (!this.dragged && Math.hypot(p.x - p.sx, p.y - p.sy) > slop) { this.dragged = true; this.tapOk = false; }
       if (this.dragged) { this.tx += p.x - px; this.ty += p.y - py; this.clamp(); this.bump(); this.dirty = true; this.kick(); }
     });
+    cv.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse' && !this.stroke && this.cur && !this.cur.until) { this.cur = null; this.dirty = true; this.kick(); } });
     const up = (e) => {
       const p = this.ptrs.get(e.pointerId); if (!p) return;
       this.ptrs.delete(e.pointerId);
-      if (e.type === 'pointerup' && this.tapOk && this.ptrs.size === 0 && performance.now() - p.t < 700) {
+      if (this.stroke && this.stroke.pid === e.pointerId) this._endStroke(e, e.type !== 'pointerup');
+      else if (e.type === 'pointerup' && this.tapOk && !this.brush.on && this.ptrs.size === 0 && performance.now() - p.t < 700) {
         const [mx, my] = this.toMap(e.clientX, e.clientY); const id = this.regionAt(mx, my);
         if (this.hooks.onTap) this.hooks.onTap(id, mx, my);
       }
@@ -149,7 +221,6 @@ export class PuzzleView {
       const r = cv.getBoundingClientRect(); const f = Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0018));
       this.zoomAt(f, e.clientX - r.left, e.clientY - r.top);
     }, { passive: false });
-    cv.addEventListener('dblclick', (e) => { if (!this.puzzle || e.pointerType === 'touch') return; });
     cv.addEventListener('contextmenu', (e) => e.preventDefault());
     new ResizeObserver(() => this.resize(false)).observe(cv);
   }
@@ -186,6 +257,7 @@ export class PuzzleView {
   frame(t) {
     this.raf = 0; const now = performance.now(), dt = Math.min(0.05, (now - (this.lastT || now)) / 1000); this.lastT = now;
     let busy = false;
+    if (this.stroke && this.stroke.started) { this._brushFrame(); busy = true; }
     if (this.anim) {
       const a = this.anim, k = Math.min(1, (now - a.t0) / a.dur), e = 1 - Math.pow(1 - k, 3);
       this.s = a.s0 + (a.s1 - a.s0) * e; this.tx = a.tx0 + (a.tx1 - a.tx0) * e; this.ty = a.ty0 + (a.ty1 - a.ty0) * e; this.clamp();
@@ -198,6 +270,7 @@ export class PuzzleView {
       this.celeb.next = now + 110; const P = this.puzzle;
       for (let i = 0; i < 2; i++) { const a = Math.random() * Math.PI * 2; this.sparks.push({ x: Math.random() * P.w, y: Math.random() * P.h, vx: Math.cos(a) * 10, vy: Math.sin(a) * 10 - 10, t: 0, life: 0.7 + Math.random() * 0.5, size: 6 + Math.random() * 10, color: ['#ffffff', '#ffd93d', '#ff8fc7', '#7ee0ff'][(Math.random() * 4) | 0], world: true }); }
     }
+    if (this.cur && this.cur.until) { if (now > this.cur.until) { this.cur = null; this.dirty = true; } else busy = true; }
     if (this.overlayUntil && now > this.overlayUntil) { this.setOverlay(null); this.overlayUntil = 0; }
     if (this.sparks.length || this.rings.length || this.wiggle.size || this.overlayItems || (this.celeb && now - this.celeb.t0 < 6000)) { busy = true; this.dirty = true; }
     if (this.moving && now > this.moving) { this.moving = 0; if (this.heavy) { this.outCache = null; this.dirty = true; } }
@@ -218,7 +291,7 @@ export class PuzzleView {
     // celebration: outline fades to a soft line, shine sweeps across
     let oa = 1, ce = 0;
     if (this.celeb) { ce = (now - this.celeb.t0) / 1000; oa = Math.max(0.28, 1 - ce / 0.9); }
-    const lw = Math.max(2.0, 1.5 / s);
+    const lw = P.grid ? Math.max(1.3, 1.1 / s) : Math.max(2.0, 1.5 / s);
     ctx.globalAlpha = oa;
     if (this.heavy && this.moving && this.outCache && this.outCache.ok) {
       const c = this.outCache, k = s / c.s; ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -236,12 +309,22 @@ export class PuzzleView {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     if (!this.celeb) this._labels(ctx, now);
     this._effects(ctx, now);
+    if (this.brush.on && this.cur && !this.celeb) this._brushCircle(ctx);
     if (this.celeb && ce < 2) { // shine band
       const x0 = this.tx, y0 = this.ty, W = P.w * s, H = P.h * s; ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, W, H); ctx.clip();
       const k = Math.min(1, Math.max(0, (ce - 0.25) / 1.3)); const cx = x0 - W * 0.3 + k * W * 1.6;
       const gr = ctx.createLinearGradient(cx - W * 0.18, 0, cx + W * 0.18, 0); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.5, 'rgba(255,255,255,0.75)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
       ctx.fillStyle = gr; ctx.translate(x0 + W / 2, y0 + H / 2); ctx.rotate(-0.35); ctx.fillRect(-W, -H, 2 * W, 2 * H); ctx.restore();
     }
+  }
+  _brushCircle(ctx) {
+    const c = this.cur, r = this.brushRadiusScreen(), sel = this.game ? this.game.selected : 0, col = sel ? this.puzzle.palette[sel - 1] : '#7b5cff';
+    ctx.save(); ctx.beginPath(); ctx.arc(c.x, c.y, r, 0, 6.2832);
+    ctx.globalAlpha = 0.2; ctx.fillStyle = col; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.stroke();
+    ctx.lineWidth = 2.5; ctx.strokeStyle = sel ? col : '#7b5cff'; ctx.stroke();
+    ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(43,45,66,.55)'; ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.arc(c.x, c.y, r + 2.5, 0, 6.2832); ctx.stroke();
+    ctx.restore();
   }
   _stroke(ctx, lw) {
     const P = this.puzzle; ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.lineJoin = 'round'; ctx.lineCap = 'round';

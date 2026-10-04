@@ -1,7 +1,10 @@
 // Pure game logic for one picture (no DOM): palette selection, magic brush vs one-by-one (classic) mode, undo, hint, completion, save/restore.
-// In BOTH modes the player must select a colour and then tap a region of that number; magic brush then fills every region of that number at once.
+// Three modes. In Magic / One by one the player selects a colour and taps a region of that number (Magic then fills every region of that number).
+// In Brush mode the player selects a colour and drags: the brush fills ONLY the regions it covers whose number matches the selected colour.
 export const MODE_MAGIC = 'magic';
 export const MODE_CLASSIC = 'classic';
+export const MODE_BRUSH = 'brush';
+export const MODES = [MODE_MAGIC, MODE_CLASSIC, MODE_BRUSH];
 
 export function createGame(puzzle, { mode = MODE_CLASSIC } = {}) {
   const regions = puzzle.regions, n = regions.length, K = puzzle.palette.length;
@@ -12,7 +15,7 @@ export function createGame(puzzle, { mode = MODE_CLASSIC } = {}) {
   const doneCount = new Uint16Array(K + 1);
   const undoStack = [];
   const g = {
-    puzzle, mode, selected: 0, filled, byColour, undoStack, complete: false, total: toDo, doneCount,
+    puzzle, mode, selected: 0, _stroke: null, filled, byColour, undoStack, complete: false, total: toDo, doneCount,
     colourOf: (id) => regions[id][0],
     remaining(c) { return byColour[c].length - doneCount[c]; },
     colourDone(c) { return byColour[c].length > 0 && doneCount[c] === byColour[c].length; },
@@ -27,6 +30,7 @@ export function createGame(puzzle, { mode = MODE_CLASSIC } = {}) {
     /** Choose a palette colour. It only selects it (never fills) in every mode; the player must still tap a matching region. */
     selectColour(c) {
       if (g.complete || c < 1 || c > K) return { type: 'noop' };
+      g.endStroke();
       g.selected = c;
       return { type: 'select', colour: c, done: g.colourDone(c) };
     },
@@ -42,6 +46,7 @@ export function createGame(puzzle, { mode = MODE_CLASSIC } = {}) {
     /** Tap a region. Right number (with that colour selected) = fills (all regions of that number in magic mode, just that region in one-by-one). Wrong number = gentle hint, never a penalty. */
     tapRegion(id) {
       if (g.complete || id < 0 || id >= n) return { type: 'noop' };
+      g.endStroke();
       const want = regions[id][0];
       if (want === 0) return { type: 'paper' };
       if (filled[id]) return { type: 'already', id, colour: want };
@@ -57,14 +62,40 @@ export function createGame(puzzle, { mode = MODE_CLASSIC } = {}) {
       undoStack.push({ ids, colour: want });
       return g._result('fill', ids, want, false);
     },
+    /** Start a brush stroke (everything painted until endStroke() is ONE undo step). */
+    beginStroke() { g.endStroke(); g._stroke = { ids: [], colour: g.selected }; },
+    /**
+     * The brush covered these region ids. Only unfilled regions whose number equals the selected colour are filled;
+     * everything else (other numbers, paper, already filled) is untouched. Returns {type:'brush', ids:[newly filled], skipped:n, wrong:[ids of other numbers]}.
+     */
+    brushPaint(covered) {
+      if (g.complete) return { type: 'noop' };
+      const sel = g.selected;
+      if (sel === 0) return { type: 'nocolour' };
+      if (g.colourDone(sel)) return { type: 'colourdone', colour: sel };
+      if (!g._stroke || g._stroke.colour !== sel) g.beginStroke();
+      const ids = [], wrong = []; let skipped = 0;
+      for (const id of covered) {
+        if (id < 0 || id >= n || filled[id]) continue;
+        const want = regions[id][0];
+        if (want === 0) continue;
+        if (want !== sel) { skipped++; wrong.push(id); continue; }
+        filled[id] = 1; doneCount[sel]++; ids.push(id); g._stroke.ids.push(id);
+      }
+      const complete = g.isComplete(); if (complete) g.complete = true;
+      return { type: 'brush', ids, colour: sel, skipped, wrong, colourDone: g.colourDone(sel), complete };
+    },
+    /** Finish the stroke: if it filled anything it becomes a single undo step. */
+    endStroke() { const s = g._stroke; g._stroke = null; if (s && s.ids.length) undoStack.push({ ids: s.ids, colour: s.colour }); return s ? s.ids.length : 0; },
     undo() {
+      g.endStroke();
       if (g.complete || !undoStack.length) return null;
       const a = undoStack.pop();
       for (const id of a.ids) { filled[id] = 0; doneCount[a.colour]--; }
       g.selected = a.colour;
       return { type: 'undo', ids: a.ids, colour: a.colour };
     },
-    canUndo() { return !g.complete && undoStack.length > 0; },
+    canUndo() { return !g.complete && (undoStack.length > 0 || !!(g._stroke && g._stroke.ids.length)); },
     /** Regions to highlight: remaining ones of the selected colour (or the next unfinished colour, which then becomes selected). */
     hint() {
       if (g.complete) return null;
@@ -76,10 +107,10 @@ export function createGame(puzzle, { mode = MODE_CLASSIC } = {}) {
     restore(s) {
       if (!s || !Array.isArray(s.f)) return;
       for (const id of s.f) if (id >= 0 && id < n && regions[id][0] > 0 && !filled[id]) { filled[id] = 1; doneCount[regions[id][0]]++; }
-      g.selected = s.s > 0 && s.s <= K ? s.s : 0; undoStack.length = 0;
+      g.selected = s.s > 0 && s.s <= K ? s.s : 0; undoStack.length = 0; g._stroke = null;
       if (g.isComplete()) g.complete = true;
     },
-    reset() { for (let i = 0; i < n; i++) filled[i] = regions[i][0] === 0 ? 1 : 0; doneCount.fill(0); undoStack.length = 0; g.complete = false; g.selected = 0; },
+    reset() { for (let i = 0; i < n; i++) filled[i] = regions[i][0] === 0 ? 1 : 0; doneCount.fill(0); undoStack.length = 0; g._stroke = null; g.complete = false; g.selected = 0; },
   };
   return g;
 }

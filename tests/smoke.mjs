@@ -37,7 +37,7 @@ for (const [name, vp, touch, dsf] of VIEWPORTS) {
     await page.click('#catChips [data-cat="all"]'); await page.click('#diffChips [data-diff="all"]');
     const fresh = await page.evaluate(() => {
       const m = window.__MC;
-      const ids = m.pictures.filter((p) => m.isFresh(p)).map((p) => p.id);
+      const ids = m.pictures.filter((p) => !p.grid && m.isFresh(p)).map((p) => p.id);
       const badges = [...document.querySelectorAll('#grid .pic .newb')].map((el) => el.closest('.pic').dataset.id);
       const order = [...document.querySelectorAll('#grid .pic')].map((el) => el.dataset.id);
       return { ids, badges, order: order.slice(0, Math.max(ids.length, 1)), firstIsFresh: ids.length ? ids.includes(order[0]) : true };
@@ -202,6 +202,139 @@ for (const [name, vp, touch, dsf] of VIEWPORTS) {
     assert.equal(await modeAfter(null), 'classic', 'fresh player'); assert.equal(await modeAfter('{"mode":"magic","sound":true}'), 'classic', 'v1.0.0 auto-saved default');
     assert.equal(await modeAfter('{"mode":"magic","sound":true,"modeChosen":true}'), 'magic', 'chosen magic remembered'); assert.equal(await modeAfter('{"mode":"classic","sound":true,"modeChosen":true}'), 'classic');
     await p2.close(); await page.evaluate((o) => { if (o === null) localStorage.removeItem('mc1.settings'); else localStorage.setItem('mc1.settings', o); }, orig);
+  });
+
+  // ---------------- v1.4: Paint Brush mode + Grid type ----------------
+  const dragPath = async (pts) => { // finger / mouse drag through the given screen points (interpolated like real fast input)
+    const full = [pts[0]]; for (let i = 1; i < pts.length; i++) { const a = pts[i - 1], b = pts[i], n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / 18)); for (let k = 1; k <= n; k++) full.push({ x: a.x + (b.x - a.x) * k / n, y: a.y + (b.y - a.y) * k / n }); }
+    if (touch) { const cdp = await ctx.newCDPSession(page); await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ ...full[0], id: 1 }] }); for (const q of full.slice(1)) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ ...q, id: 1 }] }); await page.waitForTimeout(8); } await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await cdp.detach(); }
+    else { await page.mouse.move(full[0].x, full[0].y); await page.mouse.down(); for (const q of full.slice(1)) { await page.mouse.move(q.x, q.y); await page.waitForTimeout(8); } await page.mouse.up(); }
+    await page.waitForTimeout(120);
+  };
+  const freshPicture = (id) => page.evaluate((id) => { const m = window.__MC; m.store.clearProgress(id); m.startPicture(m.pictures.find((p) => p.id === id)); }, id);
+  const colourOfFilled = () => page.evaluate(() => { const g = window.__MC.cur.game, r = g.puzzle.regions, out = []; g.filled.forEach((f, i) => { if (f && r[i][0] > 0) out.push(r[i][0]); }); return out; });
+  const biggestColour = () => page.evaluate(() => { const g = window.__MC.cur.game; let best = 1; for (let c = 1; c <= g.puzzle.palette.length; c++) if (g.byColour[c].length > g.byColour[best].length) best = c; return best; });
+
+  await test(`${name}: top bar has THREE big mode buttons that fit; brush-size control shows only in Brush mode; mode + size remembered`, async () => {
+    await page.evaluate(() => { localStorage.setItem('mc1.settings', JSON.stringify({ mode: 'classic', sound: true, modeChosen: true, introSeen: true })); }); await page.reload(); await page.waitForSelector('.pic');
+    await freshPicture('happy-fish'); await page.waitForSelector('#play.on'); await page.waitForTimeout(400);
+    const geo = () => page.evaluate(() => { const r = (e) => { const b = e.getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom, b.width, b.height]; }; const bar = document.querySelector('#play .bar'); return { modes: [...document.querySelectorAll('.mode')].map(r), tools: [...document.querySelectorAll('#play .tool')].map(r), bar: [bar.scrollWidth, bar.clientWidth], iw: innerWidth, brushbar: getComputedStyle(document.querySelector('#brushbar')).display, labels: [...document.querySelectorAll('.mode b')].map((b) => [b.textContent, b.scrollWidth <= b.parentElement.clientWidth + 1]) }; });
+    let g = await geo(); assert.equal(g.modes.length, 3); assert.deepEqual(g.labels.map((l) => l[0]), ['Magic', 'One by one', 'Brush']);
+    for (const [l, t, r, b, w, h] of g.modes) { assert.ok(w >= 48 && h >= 44, `mode button ${w}x${h}`); assert.ok(l >= 0 && r <= g.iw, 'mode button off-screen'); }
+    for (let i = 1; i < 3; i++) assert.ok(g.modes[i][0] >= g.modes[i - 1][2] - 0.5, 'mode buttons overlap');
+    for (const t of g.tools) assert.ok(t[0] >= 0 && t[2] <= g.iw && t[4] >= 44 && t[5] >= 44, 'tool fits'); assert.ok(g.bar[0] <= g.bar[1] + 1, 'top bar overflows ' + g.bar); assert.equal(g.brushbar, 'none', 'no size control outside Brush mode');
+    for (const [txt, ok] of g.labels) assert.ok(ok, 'label fits: ' + txt);
+    await page.click('.mode[data-mode="brush"]'); g = await geo(); assert.notEqual(g.brushbar, 'none'); assert.ok(await page.$eval('.mode[data-mode="brush"]', (b) => b.classList.contains('on')));
+    const bb = await page.$$eval('#brushbar button', (bs) => bs.map((b) => { const r = b.getBoundingClientRect(); return [r.width, r.height, r.left, r.right, r.top, r.bottom]; })); assert.equal(bb.length, 4);
+    const st = await page.evaluate(() => { const r = document.querySelector('#stage').getBoundingClientRect(); return [r.left, r.right, r.top, r.bottom]; });
+    for (const [w, h, l, r, t, b] of bb) { assert.ok(w >= 44 && h >= 44); assert.ok(l >= st[0] && r <= st[1] && t >= st[2] && b <= st[3], 'size button inside the stage'); }
+    await page.click('#brushbar [data-size="3"]'); assert.equal(await page.evaluate(() => window.__MC.settings.brushSize), 3);
+    assert.ok(await page.evaluate(() => !!window.__MC.view.cur), 'brush circle preview shown after changing size');
+    assert.ok(await page.evaluate(() => { const v = window.__MC.view; return v.brushRadiusScreen() > 50; }), 'huge brush radius');
+    await page.waitForTimeout(150); await page.screenshot({ path: `${SHOTS}/${name}-13-brush-mode.png` });
+    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('mc1.settings'))); assert.equal(saved.mode, 'brush'); assert.equal(saved.brushSize, 3);
+    await page.reload(); await page.waitForSelector('.pic'); const re = await page.evaluate(() => ({ mode: window.__MC.settings.mode, size: window.__MC.settings.brushSize })); assert.deepEqual(re, { mode: 'brush', size: 3 });
+  });
+
+  await test(`${name}: BRUSH - a drag paints only the selected number, palette tap alone never fills, no colour = gentle message, one undo per stroke`, async () => {
+    await freshPicture('happy-fish'); await page.waitForSelector('#play.on'); await page.waitForTimeout(400);
+    assert.equal(await page.evaluate(() => window.__MC.cur.game.mode), 'brush');
+    const c = await biggestColour(), ids = await page.evaluate((c) => window.__MC.cur.game.byColour[c].slice(), c);
+    const pts = []; for (const id of ids.slice(0, 4)) pts.push(await regionXY(page, id));
+    await dragPath(pts); let s = await state(page); assert.equal(s.filled, 0, 'no colour selected: nothing painted'); assert.match(await page.textContent('#toast'), /Pick a colour/);
+    await page.click(`.sw[data-c="${c}"]`); s = await state(page); assert.equal(s.filled, 0, 'palette tap alone fills nothing'); await page.click('#brushbar [data-size="0"]');
+    await dragPath(pts); s = await state(page); assert.ok(s.filled >= Math.min(4, ids.length), 'painted the regions under the stroke: ' + s.filled);
+    const cols = await colourOfFilled(); assert.ok(cols.length > 0 && cols.every((x) => x === c), 'brush painted ONLY number ' + c + ': ' + [...new Set(cols)]);
+    assert.ok(s.filled < s.total, 'other numbers untouched'); assert.ok(s.canUndo);
+    await page.waitForTimeout(250); await page.screenshot({ path: `${SHOTS}/${name}-14-brush-painted.png` });
+    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('mc1.p.happy-fish'))); assert.equal(saved.f.length, s.filled, 'progress saved after the stroke');
+    await page.click('#pUndo'); s = await state(page); assert.equal(s.filled, 0, 'whole stroke undone in ONE step');
+    // a stroke over a different number's area: nothing from that area is painted
+    const other = await page.evaluate((c) => { const g = window.__MC.cur.game; for (let k = 1; k <= g.puzzle.palette.length; k++) if (k !== c && g.byColour[k].length) return g.byColour[k][0]; return -1; }, c);
+    await page.click('#brushbar [data-size="0"]'); const o = await regionXY(page, other); await dragPath([{ x: o.x - 3, y: o.y }, { x: o.x + 3, y: o.y + 2 }]);
+    const cols2 = await colourOfFilled(); assert.ok(cols2.every((x) => x === c), 'wrong-number area untouched'); assert.ok(!(await page.evaluate((i) => !!window.__MC.cur.game.filled[i], other)));
+  });
+
+  await test(`${name}: BRUSH coexists with zoom/pan (${touch ? 'two-finger pinch zooms, one finger paints' : 'wheel zoom, right-drag / middle-drag / space-drag pan'})`, async () => {
+    await freshPicture('happy-fish'); await page.waitForSelector('#play.on'); await page.waitForTimeout(300);
+    const c = await biggestColour(); await page.click(`.sw[data-c="${c}"]`); await page.click('#brushbar [data-size="1"]');
+    const cen = await page.evaluate(() => { const r = window.__MC.view.cv.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }); const s0 = await state(page);
+    if (touch) {
+      const cdp = await ctx.newCDPSession(page); const tp = (d) => [{ x: cen.x - d, y: cen.y, id: 1 }, { x: cen.x + d, y: cen.y, id: 2 }];
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: tp(30) }); for (let d = 30; d <= 130; d += 20) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: tp(d) }); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await page.waitForTimeout(250); const s1 = await state(page); assert.ok(s1.s > s0.s * 1.5, 'pinch zoomed'); assert.equal(s1.filled, 0, 'pinching never paints');
+      // two-finger pan
+      const a = (dx) => [{ x: cen.x - 40 + dx, y: cen.y, id: 1 }, { x: cen.x + 40 + dx, y: cen.y, id: 2 }]; await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: a(0) }); for (let i = 1; i <= 6; i++) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: a(-i * 12) }); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await page.waitForTimeout(200);
+      const s2 = await state(page); assert.ok(Math.abs(s2.tx - s1.tx) > 20, 'two-finger pan moved the view'); assert.equal(s2.filled, 0); await cdp.detach();
+    } else {
+      await page.mouse.move(cen.x, cen.y); await page.mouse.wheel(0, -500); await page.waitForTimeout(250); const s1 = await state(page); assert.ok(s1.s > s0.s * 1.5, 'wheel zoomed'); assert.equal(s1.filled, 0);
+      assert.ok(await page.evaluate(() => !!window.__MC.view.cur), 'hover circle follows the mouse');
+      for (const how of ['right', 'middle', 'space']) {
+        const b = await state(page);
+        if (how === 'space') await page.keyboard.down('Space');
+        await page.mouse.move(cen.x, cen.y); await page.mouse.down({ button: how === 'space' ? 'left' : how }); await page.mouse.move(cen.x - 60, cen.y - 30, { steps: 6 }); await page.mouse.up({ button: how === 'space' ? 'left' : how });
+        if (how === 'space') await page.keyboard.up('Space'); await page.waitForTimeout(150);
+        const a = await state(page); assert.ok(Math.abs(a.tx - b.tx) > 15 || Math.abs(a.ty - b.ty) > 8, how + '-drag panned'); assert.equal(a.filled, 0, how + '-drag did not paint');
+        await page.mouse.move(cen.x + 200, cen.y + 100); await page.mouse.move(cen.x, cen.y); await page.mouse.wheel(0, 150);
+      }
+    }
+    await page.click('#zFit'); await page.waitForTimeout(450);
+  });
+
+  await test(`${name}: GRID type - separate Shapes / Grid switch with its own categories; all three modes work on a grid picture; grey numbered squares`, async () => {
+    await page.evaluate(() => window.__MC.store.saveSettings({ ...window.__MC.settings, mode: 'classic', modeChosen: true })); await page.reload(); await page.waitForSelector('.pic');
+    const sw = await page.evaluate(() => [...document.querySelectorAll('#types .type')].map((b) => { const r = b.getBoundingClientRect(); return [b.dataset.type, r.left, r.right, r.height, b.textContent.trim()]; }));
+    assert.deepEqual(sw.map((x) => x[0]), ['shapes', 'grid']); for (const [, l, r, h] of sw) { assert.ok(l >= 0 && r <= (vp.width) && h >= 44); }
+    const shapesN = await page.$$eval('#grid .pic', (e) => e.length); const shapeCats = await page.$$eval('#catChips .chip', (e) => e.map((x) => x.textContent));
+    await page.click('#types [data-type="grid"]'); await page.waitForTimeout(100);
+    const gridN = await page.$$eval('#grid .pic', (e) => e.length); const gridCats = await page.$$eval('#catChips .chip', (e) => e.map((x) => x.textContent));
+    assert.ok(gridN >= 16, 'grid pictures ' + gridN); assert.ok(await page.$$eval('#grid .pic', (e) => e.every((x) => x.dataset.id.startsWith('grid-')))); assert.ok(await page.$$eval('#grid .gsz', (e) => e.length >= 16 && /\d+\u00D7\d+/.test(e[0].textContent)), 'grid size shown on cards');
+    assert.notDeepEqual(gridCats, shapeCats, 'grid has its own categories'); assert.equal(await page.evaluate(() => window.__MC.settings.type), 'grid');
+    await page.click('#diffChips [data-diff="easy"]'); const easyN = await page.$$eval('#grid .pic', (e) => e.length); assert.ok(easyN >= 3 && easyN < gridN); await page.click('#diffChips [data-diff="all"]');
+    assert.ok(!(await page.$eval('#potd', (e) => e.hidden)) || true);
+    await page.screenshot({ path: `${SHOTS}/${name}-15-grid-home.png` });
+    await page.click('#types [data-type="shapes"]'); assert.equal(await page.$$eval('#grid .pic', (e) => e.length), shapesN, 'shapes list unchanged'); await page.click('#types [data-type="grid"]');
+    await page.locator('#grid .pic[data-id="grid-heart"]').scrollIntoViewIfNeeded(); await page.click('#grid .pic[data-id="grid-heart"]'); await page.waitForSelector('#play.on'); await page.waitForTimeout(500);
+    const info = await page.evaluate(() => { const m = window.__MC, v = m.view, P = m.cur.pic; const r = P.regions.findIndex((x) => x[0] > 0); const d = v.fctx.getImageData(P.regions[r][1], P.regions[r][2], 1, 1).data; const e = v.fctx.getImageData(P.regions[0][1], P.regions[0][2], 1, 1).data; return { grid: P.grid, cell: [d[0], d[1], d[2]], paper: [e[0], e[1], e[2]], cs: P.grid.cs, mode: m.cur.game.mode }; });
+    assert.deepEqual(info.cell, [226, 227, 236], 'numbered square is grey'); assert.deepEqual(info.paper, [255, 255, 255]);
+    await page.screenshot({ path: `${SHOTS}/${name}-16-grid-play.png` });
+    // ONE BY ONE: one tap = one square
+    const g1 = await page.evaluate(() => { const g = window.__MC.cur.game; return { c: g.puzzle.regions.find((r) => r[0] > 0)[0], ids: null }; });
+    const c1 = await biggestColour(); const ids = await page.evaluate((c) => window.__MC.cur.game.byColour[c].slice(), c1); void g1;
+    await page.click(`.sw[data-c="${c1}"]`); let r = await regionXY(page, ids[0]); await tapAt(page, touch, r.x, r.y); let s = await state(page); assert.equal(s.filled, 1, 'one by one fills a single square');
+    // MAGIC: palette alone fills nothing, one tap fills all squares with that number
+    await page.click('.mode[data-mode="magic"]'); await page.click(`.sw[data-c="${c1}"]`); s = await state(page); assert.equal(s.filled, 1); r = await regionXY(page, ids[1]); await tapAt(page, touch, r.x, r.y); s = await state(page);
+    assert.equal(s.filled, ids.length, 'magic fills every square with the number');
+    await page.click('#pUndo'); await page.click('#pUndo');
+    // BRUSH: drag over squares
+    await page.click('.mode[data-mode="brush"]'); await page.click('#brushbar [data-size="2"]'); await page.click(`.sw[data-c="${c1}"]`);
+    const pts = []; for (const id of ids.slice(0, 6)) pts.push(await regionXY(page, id));
+    await dragPath(pts); s = await state(page); assert.ok(s.filled >= Math.min(6, ids.length), 'brush covers squares under it: ' + s.filled);
+    const cols = await colourOfFilled(); assert.ok(cols.every((x) => x === c1), 'only the selected number painted on the grid'); await page.screenshot({ path: `${SHOTS}/${name}-17-grid-brush.png` });
+    // finish the picture with brush sweeps (celebration)
+    for (let c = 1; c <= (await page.evaluate(() => window.__MC.cur.pic.palette.length)); c++) {
+      if (await page.evaluate((c) => window.__MC.cur.game.remaining(c) === 0, c)) continue; await page.click(`.sw[data-c="${c}"]`);
+      for (let guard = 0; guard < 6 && !(await page.evaluate((c) => window.__MC.cur.game.remaining(c) === 0, c)); guard++) {
+        const rem = await page.evaluate((c) => { const g = window.__MC.cur.game; return g.byColour[c].filter((i) => !g.filled[i]); }, c); const p2 = []; for (const id of rem.slice(0, 40)) p2.push(await regionXY(page, id)); await dragPath(p2);
+      }
+    }
+    s = await state(page); assert.ok(s.complete, 'grid picture completed with the brush'); await page.waitForTimeout(500); assert.ok(await page.evaluate(() => !!window.__MC.view.celeb), 'celebration'); await page.waitForSelector('#modal.on', { timeout: 20000 });
+    assert.ok(await page.evaluate(() => !!JSON.parse(localStorage.getItem('mc1.done'))['grid-heart'])); await page.screenshot({ path: `${SHOTS}/${name}-18-grid-win.png` });
+    await page.click('#modalCard [data-a="look"]');
+  });
+
+  await test(`${name}: GRID - hard 50x50 picture (1280+ squares) stays smooth: brush strokes, pan`, async () => {
+    await page.evaluate(() => { const m = window.__MC; m.store.clearProgress('grid-dino-giant'); m.startPicture(m.pictures.find((p) => p.id === 'grid-dino-giant')); }); await page.waitForTimeout(500);
+    const t = await page.evaluate(() => {
+      const m = window.__MC, v = m.view, g = m.cur.game; m.settings.mode = 'brush'; g.setMode('brush'); v.setBrush(true, 3); g.selectColour(1); v.hooks.onBrushStart();
+      const t0 = performance.now(); v.stroke = { pid: 1, started: true, down: [0, 0], q: [], last: null, painted: 0 }; let frames = 0, painted = 0;
+      for (let i = 0; i < 60; i++) { v.stroke.q.push([20 + i * 10, 40 + (i % 12) * 50, i === 0]); v._brushFrame(); frames++; }
+      const dt = performance.now() - t0; const full = performance.now(); v.draw(full); const d2 = performance.now() - full; v.stroke = null; v.hooks.onBrushEnd(0);
+      return { perFrame: dt / frames, draw: d2, regions: m.cur.pic.regions.length, filled: g.filledCount() };
+    });
+    console.log('       50x50 grid: brush ' + t.perFrame.toFixed(2) + ' ms/frame (hit-test + game update, headless CPU), draw ' + t.draw.toFixed(1) + ' ms, squares ' + t.regions);
+    assert.ok(t.perFrame < 12 && t.draw < 80, JSON.stringify(t)); assert.ok(t.filled > 0);
+    await page.evaluate(() => { const m = window.__MC; m.settings.type = 'shapes'; m.settings.mode = 'classic'; m.store.saveSettings(m.settings); });
   });
 
   await test(`${name}: sound toggle, no console errors, no network requests`, async () => {

@@ -1,0 +1,27 @@
+# Grid picture. Legend: one "char=#rrggbb" per line, then '---', then one row of characters per grid row ('.' = paper, not numbered).
+a=#22223b
+b=#5b3f8c
+c=#ff9f1c
+d=#ffe066
+e=#ff6fa5
+---
+......a......a......
+...aaaba....abaaa...
+..accccbaaaabcccca..
+.accccccbbbbcccccca.
+accddcccbbbbcccddcca
+accdddcccbbcccdddcca
+accdddcccbbcccdddcca
+accccccccbbcccccccca
+accccccccbbcccccccca
+.accccccabbacccccca.
+..aaeeeeebbeeeeeaa..
+..aeeeeeebbeeeeeea..
+..aeeddeebbeeddeea..
+..aeeddeebbeeddeea..
+..aeeeeeebbeeeeeea..
+...aeeeeebbeeeeea...
+....aaaaaaaaaaaa....
+....................
+....................
+....................

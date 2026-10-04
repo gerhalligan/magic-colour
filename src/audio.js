@@ -23,6 +23,10 @@ export const audio = {
   fill(c) { const f = PENTA[((c || 1) - 1) % PENTA.length]; tone(f, 0, 0.18, { type: 'triangle', vol: 0.2, slide: 1.25 }); tone(f * 1.5, 0.06, 0.14, { type: 'sine', vol: 0.1 }); },
   magic(c, count = 3) { const base = PENTA[((c || 1) - 1) % PENTA.length]; const n = Math.min(7, 3 + Math.floor(count / 3)); for (let i = 0; i < n; i++) tone(base * Math.pow(2, [0, 4, 7, 12, 16, 19, 24][i] / 12), i * 0.055, 0.22, { type: 'sine', vol: 0.15 }); tone(base * 4, n * 0.055, 0.35, { type: 'triangle', vol: 0.06 }); },
   wrong() { tone(300, 0, 0.18, { type: 'sine', vol: 0.12, slide: 0.75 }); tone(250, 0.1, 0.18, { type: 'sine', vol: 0.08, slide: 0.8 }); },
+  /** soft little sparkle for the paint brush (call sites throttle it) */
+  sparkle(c, n = 1) { const f = PENTA[(((c || 1) - 1) + 5) % PENTA.length] * 2; tone(f, 0, 0.14, { type: 'sine', vol: 0.07 }); if (n > 2) tone(f * 1.5, 0.05, 0.12, { type: 'sine', vol: 0.045 }); },
+  /** very quiet "not that number" cue for the brush */
+  nudge() { tone(330, 0, 0.12, { type: 'sine', vol: 0.05, slide: 0.85 }); },
   done() { [0, 4, 7, 12].forEach((s, i) => tone(523.25 * Math.pow(2, s / 12), i * 0.07, 0.25, { type: 'triangle', vol: 0.17 })); },
   undo() { tone(520, 0, 0.1, { type: 'triangle', vol: 0.14, slide: 0.6 }); },
   hint() { tone(880, 0, 0.12, { type: 'sine', vol: 0.15 }); tone(1174.66, 0.1, 0.2, { type: 'sine', vol: 0.15 }); },

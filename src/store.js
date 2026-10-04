@@ -9,8 +9,10 @@ export const store = {
   // Default mode is 'classic' (One by one). A saved mode is only honoured if the player really picked it (modeChosen);
   // v1.0.0 saved the old 'magic' default into settings without a choice, so those are reset to the new default.
   settings() {
-    const s = Object.assign({ mode: 'classic', sound: true }, get('settings') || {});
-    if (!s.modeChosen) s.mode = 'classic';
+    const s = Object.assign({ mode: 'classic', sound: true, brushSize: 1, type: 'shapes' }, get('settings') || {});
+    if (!s.modeChosen || !['magic', 'classic', 'brush'].includes(s.mode)) s.mode = 'classic';
+    s.brushSize = Math.min(3, Math.max(0, Math.round(+s.brushSize) || (s.brushSize === 0 ? 0 : 1)));
+    if (s.type !== 'grid') s.type = 'shapes';
     return s;
   },
   saveSettings(s) { set('settings', s); },

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.5.0 — 2026-10-04
+Request from Gerard: a paint brush, and numbered square grids.
+- **Third mode: Brush.** Top bar now has three big-icon buttons (Magic, One by one, Brush) that fit a 360 px phone. Pick a colour, drag across the picture: only areas with the selected number fill (others untouched; gentle throttled wiggle over a different number; nothing selected = friendly message). Four brush sizes (small/medium/large/huge) with a circle cursor/preview, shown only in Brush mode; radius scales gently with zoom. Strokes are interpolated (fast swipes never skip areas), hit-tested against the label map and repainted once per animation frame; a whole stroke is one undo step; progress saved at the end of each stroke; soft throttled sparkle sound; celebration when the last area is painted. Mode and brush size are remembered.
+- **Zoom/pan coexist with the brush:** one finger paints, two fingers pinch/pan; on desktop the wheel zooms, and Space+drag or right/middle-drag pans.
+- **New picture type: Grid.** A Shapes / Grid switch on the home screen (own categories and levels per type). 17 square-grid pixel pictures from 16×16 (easy) to 50×50 (hard): heart, sun, fish, ice cream, butterfly, flower, rainbow, cat, dog, robot, rocket (two sizes), unicorn (two sizes), fairy castle, dinosaur (two sizes). Every cell is its own numbered square with a grey start colour; all three modes work on them. Existing Shapes pictures are unchanged.
+- New tooling: `tools/pixel-grid.mjs` (ASCII file or built-in designs -> grid puzzle), grid validation; README explains how to add both kinds.
+- Tests: brush unit tests (radius, interpolation, hit-testing vs a pixel oracle, matching-number-only rule, stroke undo), game logic, every picture solved in all three modes, browser smoke tests incl. simulated brush drags at 390×844, 844×390, 360×640 and 1280×800.
+
 ## 1.4.0 — 2026-10-04
 Daytime improve run.
 - **5 new pictures** (mostly hard for bigger kids): Coral City (hard, underwater fantasy), Peacock Parade (hard), Dino Explorer (hard), Pirate Ship (hard), Snowflake Mandala (medium, intricate). Candy Kingdom was skipped (numbers baked into the JPG); Coral City and Peacock Parade were flattened slightly so the colour pipeline could validate.

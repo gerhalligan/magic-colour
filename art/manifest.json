@@ -672,5 +672,158 @@
    "ink": true
   },
   "added": "2026-10-04"
+ },
+ {
+  "id": "grid-heart",
+  "name": "Big Heart",
+  "cat": "fantasy",
+  "diff": "easy",
+  "kind": "grid",
+  "src": "art/pixel/grid-heart.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-sun",
+  "name": "Smiley Sun",
+  "cat": "nature",
+  "diff": "easy",
+  "kind": "grid",
+  "src": "art/pixel/grid-sun.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-fish",
+  "name": "Little Fish",
+  "cat": "animals",
+  "diff": "easy",
+  "kind": "grid",
+  "src": "art/pixel/grid-fish.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-ice-cream",
+  "name": "Ice Cream",
+  "cat": "food",
+  "diff": "easy",
+  "kind": "grid",
+  "src": "art/pixel/grid-ice-cream.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-butterfly",
+  "name": "Butterfly",
+  "cat": "animals",
+  "diff": "easy",
+  "kind": "grid",
+  "src": "art/pixel/grid-butterfly.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-flower",
+  "name": "Pretty Flower",
+  "cat": "nature",
+  "diff": "medium",
+  "kind": "grid",
+  "src": "art/pixel/grid-flower.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-rainbow",
+  "name": "Rainbow Sky",
+  "cat": "nature",
+  "diff": "medium",
+  "kind": "grid",
+  "src": "art/pixel/grid-rainbow.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-cat",
+  "name": "Cosy Cat",
+  "cat": "animals",
+  "diff": "medium",
+  "kind": "grid",
+  "src": "art/pixel/grid-cat.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-dog",
+  "name": "Happy Dog",
+  "cat": "animals",
+  "diff": "medium",
+  "kind": "grid",
+  "src": "art/pixel/grid-dog.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-robot",
+  "name": "Cute Robot",
+  "cat": "fantasy",
+  "diff": "medium",
+  "kind": "grid",
+  "src": "art/pixel/grid-robot.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-rocket-30",
+  "name": "Rocket Ship 30×30",
+  "cat": "space",
+  "diff": "medium",
+  "kind": "grid",
+  "src": "art/pixel/grid-rocket-30.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-rocket-44",
+  "name": "Rocket Ship 44×44",
+  "cat": "space",
+  "diff": "hard",
+  "kind": "grid",
+  "src": "art/pixel/grid-rocket-44.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-unicorn-small",
+  "name": "Little Unicorn",
+  "cat": "unicorns",
+  "diff": "medium",
+  "kind": "grid",
+  "src": "art/pixel/grid-unicorn-small.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-unicorn",
+  "name": "Unicorn Dream",
+  "cat": "unicorns",
+  "diff": "hard",
+  "kind": "grid",
+  "src": "art/pixel/grid-unicorn.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-castle",
+  "name": "Fairy Castle",
+  "cat": "fantasy",
+  "diff": "hard",
+  "kind": "grid",
+  "src": "art/pixel/grid-castle.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-dino",
+  "name": "Friendly Dino",
+  "cat": "dinosaurs",
+  "diff": "hard",
+  "kind": "grid",
+  "src": "art/pixel/grid-dino.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-dino-giant",
+  "name": "Giant Dino",
+  "cat": "dinosaurs",
+  "diff": "hard",
+  "kind": "grid",
+  "src": "art/pixel/grid-dino-giant.txt",
+  "added": "2026-10-04"
  }
 ]

@@ -11,8 +11,8 @@ export function renderFinal(puzzle, size = 1080, { caption = true, outline = tru
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const c = cv.getContext('2d');
   c.fillStyle = '#fffaf0'; c.fillRect(0, 0, W, H);
   const k = size / Math.max(w, h), ox = pad + (size - w * k) / 2, oy = pad + (size - h * k) / 2;
-  c.save(); c.translate(ox, oy); c.scale(k, k); c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high'; c.drawImage(fc, 0, 0);
-  if (outline) { c.strokeStyle = '#3b3f58'; c.lineWidth = 1.6; c.lineJoin = 'round'; c.lineCap = 'round'; c.stroke(new Path2D(puzzle.outline)); c.strokeRect(0, 0, w, h); }
+  c.save(); c.translate(ox, oy); c.scale(k, k); c.imageSmoothingEnabled = !puzzle.grid; c.imageSmoothingQuality = 'high'; c.drawImage(fc, 0, 0);
+  if (outline && !puzzle.grid) { c.strokeStyle = '#3b3f58'; c.lineWidth = 1.6; c.lineJoin = 'round'; c.lineCap = 'round'; c.stroke(new Path2D(puzzle.outline)); c.strokeRect(0, 0, w, h); }
   c.restore();
   if (caption) {
     c.fillStyle = '#6a5acd'; c.font = `800 ${Math.round(cap * 0.55)}px "Trebuchet MS", system-ui, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';

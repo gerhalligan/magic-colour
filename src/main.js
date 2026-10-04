@@ -1,5 +1,6 @@
 import pictures from './pictures.generated.js';
-import { createGame, textColourFor, MODE_MAGIC, MODE_CLASSIC } from './game.js';
+import { createGame, textColourFor, MODE_MAGIC, MODE_CLASSIC, MODE_BRUSH } from './game.js';
+import { BRUSH_SIZES } from './brush.js';
 import { PuzzleView } from './view.js';
 import { store } from './store.js';
 import { audio } from './audio.js';
@@ -11,7 +12,9 @@ const $ = (sel, el = document) => el.querySelector(sel);
 const app = $('#app');
 let settings = store.settings();
 audio.setMuted(!settings.sound);
-const filter = { cat: 'all', diff: 'all' };
+const filters = { shapes: { cat: 'all', diff: 'all' }, grid: { cat: 'all', diff: 'all' } };
+let filter = filters[settings.type];
+const ofType = (t) => pictures.filter((p) => (t === 'grid') === !!p.grid);
 let tipShown = false, cur = null, view = null, pending = [], toastTimer = 0, stopConfetti = null, celebTimer = 0;
 const stars = (d) => '<span class="stars" aria-label="' + d + '">' + '\u2605'.repeat(DIFF[d]) + '<i>' + '\u2605'.repeat(3 - DIFF[d]) + '</i></span>';
 const byId = (id) => pictures.find((p) => p.id === id);
@@ -25,6 +28,10 @@ app.innerHTML = `
     <button class="tbtn" id="hGallery" aria-label="My gallery">${I.gallery}<span>Gallery</span></button>
     <button class="tbtn icon" id="hSound" aria-label="Sound"></button>
   </header>
+  <div class="types" id="types" role="tablist" aria-label="Picture type">
+    <button class="type" data-type="shapes" role="tab" aria-label="Shapes: colour pictures made of pretty shapes">${I.shapes}<span><b>Shapes</b><small id="nShapes"></small></span></button>
+    <button class="type" data-type="grid" role="tab" aria-label="Grid: colour square numbered pixel pictures">${I.grid}<span><b>Grid</b><small id="nGrid"></small></span></button>
+  </div>
   <div class="chips" id="catChips"></div>
   <div class="chips small" id="diffChips"></div>
   <div id="potd" class="potd" hidden></div>
@@ -46,17 +53,19 @@ app.innerHTML = `
   <header class="bar">
     <button class="tool" id="pHome" aria-label="All pictures">${I.home}</button>
     <div class="modes" role="group" aria-label="Colouring mode">
-      <button class="mode" data-mode="magic" aria-label="Magic brush: pick a colour, tap one spot, and every spot with that number gets coloured">${I.wand}<b>Magic</b></button>
+      <button class="mode" data-mode="magic" aria-label="Magic: pick a colour, tap one spot, and every spot with that number gets coloured">${I.wand}<b>Magic</b></button>
       <button class="mode" data-mode="classic" aria-label="One by one: tap each spot">${I.finger}<b>One by one</b></button>
+      <button class="mode" data-mode="brush" aria-label="Paint brush: pick a colour, then drag across the picture to paint the spots with that number">${I.brush}<b>Brush</b></button>
     </div>
     <div class="grow"></div>
     <button class="tool" id="pUndo" aria-label="Undo">${I.undo}</button>
     <button class="tool" id="pHint" aria-label="Hint">${I.bulb}</button>
-    <button class="tool small" id="pSound" aria-label="Sound"></button>
   </header>
   <div id="stage">
     <canvas id="cv"></canvas>
     <div class="pbar"><i id="pFill"></i><b id="pText"></b></div>
+    <button class="sndbtn" id="pSound" aria-label="Sound"></button>
+    <div id="brushbar" role="group" aria-label="Brush size">${BRUSH_SIZES.map((b, i) => `<button data-size="${i}" aria-label="${b.label} brush" title="${b.label}"><i style="--d:${[10, 17, 25, 34][i]}px"></i></button>`).join('')}</div>
     <div class="zoomctl">
       <button id="zIn" aria-label="Zoom in">${I.plus}</button>
       <button id="zOut" aria-label="Zoom out">${I.minus}</button>
@@ -79,8 +88,13 @@ function setSound(on) { settings.sound = on; store.saveSettings(settings); audio
 soundIcons();
 
 // ---------- home ----------
+function renderTypes() {
+  for (const b of app.querySelectorAll('#types .type')) { const on = b.dataset.type === settings.type; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); }
+  $('#nShapes').textContent = ofType('shapes').length + ' pictures'; $('#nGrid').textContent = ofType('grid').length + ' pictures';
+}
 function renderChips() {
-  const cats = ['all', ...new Set(pictures.map((p) => p.cat))];
+  renderTypes();
+  const cats = ['all', ...new Set(ofType(settings.type).map((p) => p.cat))];
   $('#catChips').innerHTML = cats.map((c) => `<button class="chip${filter.cat === c ? ' on' : ''}" data-cat="${c}"><em>${(CAT[c] || ['\u2B50'])[0]}</em>${(CAT[c] || [0, c])[1]}</button>`).join('');
   $('#diffChips').innerHTML = [['all', 'Any level'], ['easy', '\u2605 Easy'], ['medium', '\u2605\u2605 Medium'], ['hard', '\u2605\u2605\u2605 Hard']].map(([d, l]) => `<button class="chip${filter.diff === d ? ' on' : ''}" data-diff="${d}">${l}</button>`).join('');
 }
@@ -96,11 +110,12 @@ function dayKey() {
   try { return new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Dublin' }); }
   catch (e) { return new Date().toISOString().slice(0, 10); }
 }
-function pictureOfTheDay() {
+function pictureOfTheDay(type = settings.type) {
+  const pool = ofType(type);
   const day = dayKey();
   let h = 2166136261;
   for (let i = 0; i < day.length; i++) h = Math.imul(h ^ day.charCodeAt(i), 16777619) >>> 0;
-  return pictures[h % pictures.length];
+  return pool[h % pool.length];
 }
 function renderPotd() {
   const el = $('#potd');
@@ -115,7 +130,7 @@ function card(p, done, extra = '') {
   const pct = done ? 1 : store.pct(p.id, p.stats.regions);
   const fresh = !done && isFresh(p);
   const newb = fresh ? '<span class="newb" aria-label="New">\u2728 NEW</span>' : '';
-  return `<button class="pic${done ? ' done' : ''}${fresh ? ' fresh' : ''}" data-id="${p.id}"><img src="${p.thumb}" alt="" draggable="false"><span class="nm">${p.name}</span>${stars(p.diff)}${done ? `<span class="badge">${I.tick}</span>` : pct > 0 ? `<span class="meter"><i style="width:${Math.round(pct * 100)}%"></i></span>` : ''}${newb}${extra}</button>`;
+  return `<button class="pic${done ? ' done' : ''}${fresh ? ' fresh' : ''}" data-id="${p.id}"><img src="${p.thumb}" alt="" draggable="false"><span class="nm">${p.name}</span>${stars(p.diff)}${p.grid ? `<span class="gsz">${p.grid.w}\u00D7${p.grid.h}</span>` : ''}${done ? `<span class="badge">${I.tick}</span>` : pct > 0 ? `<span class="meter"><i style="width:${Math.round(pct * 100)}%"></i></span>` : ''}${newb}${extra}</button>`;
 }
 function renderStickers() {
   const el = $('#stickers'), row = $('#stickerRow');
@@ -132,7 +147,7 @@ function renderStickers() {
 }
 function renderGrid() {
   const done = store.done();
-  const list = pictures.filter((p) => (filter.cat === 'all' || p.cat === filter.cat) && (filter.diff === 'all' || p.diff === filter.diff))
+  const list = ofType(settings.type).filter((p) => (filter.cat === 'all' || p.cat === filter.cat) && (filter.diff === 'all' || p.diff === filter.diff))
     .sort((a, b) => {
       const fa = !done[a.id] && isFresh(a), fb = !done[b.id] && isFresh(b);
       if (fa !== fb) return fa ? -1 : 1;
@@ -147,6 +162,10 @@ function renderGallery() {
   $('#gCount').textContent = ids.length + ' / ' + pictures.length;
   $('#gGrid').innerHTML = ids.length ? ids.map((id) => card(byId(id), true)).join('') : '<p class="empty">Finish a picture and it will shine here! \u2B50</p>';
 }
+$('#types').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-type]'); if (!b || b.dataset.type === settings.type) return; audio.unlock(); audio.tap();
+  settings.type = b.dataset.type; store.saveSettings(settings); filter = filters[settings.type]; renderChips(); renderGrid(); $('#grid').scrollTop = 0;
+});
 $('#catChips').addEventListener('click', (e) => { const b = e.target.closest('[data-cat]'); if (!b) return; filter.cat = b.dataset.cat; audio.tap(); renderChips(); renderGrid(); });
 $('#diffChips').addEventListener('click', (e) => { const b = e.target.closest('[data-diff]'); if (!b) return; filter.diff = b.dataset.diff; audio.tap(); renderChips(); renderGrid(); });
 $('#grid').addEventListener('click', (e) => { const b = e.target.closest('.pic'); if (b) openPicture(b.dataset.id); });
@@ -156,7 +175,7 @@ $('#hGallery').addEventListener('click', () => { audio.unlock(); audio.tap(); re
 $('#gBack').addEventListener('click', () => { audio.tap(); goHome(); });
 $('#hSound').addEventListener('click', () => setSound(!settings.sound));
 $('#pSound').addEventListener('click', () => setSound(!settings.sound));
-$('#hSurprise').addEventListener('click', () => { audio.unlock(); const done = store.done(); const pool = pictures.filter((p) => !done[p.id] && (filter.cat === 'all' || p.cat === filter.cat)); const l = pool.length ? pool : pictures; openPicture(l[(Math.random() * l.length) | 0].id, true); });
+$('#hSurprise').addEventListener('click', () => { audio.unlock(); const done = store.done(); const all = ofType(settings.type), pool = all.filter((p) => !done[p.id] && (filter.cat === 'all' || p.cat === filter.cat)); const l = pool.length ? pool : all; openPicture(l[(Math.random() * l.length) | 0].id, true); });
 let hasEntry = false;
 function enter() { if (hasEntry) return; try { history.pushState({ mc: 1 }, ''); hasEntry = true; } catch (e) { /* ignore */ } }
 function homeNow() { flush(); closeModal(); clearTimeout(celebTimer); renderGrid(); show('home'); }
@@ -175,12 +194,14 @@ function startPicture(p) {
   const game = createGame(p, { mode: settings.mode });
   game.restore(store.progress(p.id));
   cur = { pic: p, game };
-  if (!view) view = new PuzzleView($('#cv'), { onTap: onTapRegion });
+  if (!view) view = new PuzzleView($('#cv'), { onTap: onTapRegion, onBrushStart, onBrush, onBrushEnd });
   buildPalette(); updateModeUI(); show('play'); enter();
   view.load(p, game);
   requestAnimationFrame(() => { view.resize(true); });
   updatePalette(); updateProgress();
   if (game.complete) finish(true);
+  else if (!settings.introSeen) { settings.introSeen = true; store.saveSettings(settings); tipShown = true; toast('Three ways to play (top bar): \u2728 Magic \u00B7 \u261D\uFE0F One by one \u00B7 \u{1F58C}\uFE0F Brush', 5200); }
+  else if (p.grid && !tipShown) { tipShown = true; toast('Grid: every square has a number. Try the \u{1F58C}\uFE0F Brush \u2013 drag across the squares!', 4200); }
   else if (p.diff === 'hard' && !tipShown) { tipShown = true; toast('Pinch to zoom in and find the tiny spots! \u{1F50D}', 3600); }
 }
 
@@ -203,9 +224,13 @@ function updateProgress() {
 }
 function updateModeUI() {
   for (const b of app.querySelectorAll('.mode')) { const on = b.dataset.mode === settings.mode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); }
+  for (const b of app.querySelectorAll('#brushbar [data-size]')) { const on = +b.dataset.size === settings.brushSize; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); }
+  $('#play').dataset.mode = settings.mode;
   if (cur) { cur.game.setMode(settings.mode); }
-  $('#pUndo').disabled = !cur || !cur.game.canUndo();
+  if (view) view.setBrush(settings.mode === MODE_BRUSH, settings.brushSize);
+  updateUndo();
 }
+function updateUndo() { $('#pUndo').disabled = !cur || !cur.game.canUndo(); }
 $('#palette').addEventListener('click', (e) => {
   const b = e.target.closest('.sw'); if (!b || !cur) return; audio.unlock();
   const c = +b.dataset.c, g = cur.game;
@@ -222,8 +247,17 @@ $('#palette').addEventListener('click', (e) => {
 });
 app.querySelector('.modes').addEventListener('click', (e) => {
   const b = e.target.closest('.mode'); if (!b) return; audio.unlock(); settings.mode = b.dataset.mode; settings.modeChosen = true; store.saveSettings(settings); updateModeUI(); audio.tap();
-  toast(settings.mode === MODE_MAGIC ? '\u{1FA84} Magic brush: pick a colour, tap one spot \u2013 every spot with that number gets coloured!' : '\u261D\uFE0F One by one: tap each spot to colour it', 3200);
+  toast(settings.mode === MODE_MAGIC ? '\u{1FA84} Magic: pick a colour, tap one spot \u2013 every spot with that number gets coloured!' : settings.mode === MODE_BRUSH ? '\u{1F58C}\uFE0F Brush: pick a colour, then drag across the picture \u2013 it paints only the spots with that number! Two fingers zoom & move.' : '\u261D\uFE0F One by one: tap each spot to colour it', 3600);
+  if (settings.mode === MODE_BRUSH && view) view.previewBrush(1200);
 });
+$('#brushbar').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-size]'); if (!b) return; audio.unlock(); setBrushSize(+b.dataset.size);
+});
+function setBrushSize(i) {
+  i = Math.min(BRUSH_SIZES.length - 1, Math.max(0, i)); settings.brushSize = i; store.saveSettings(settings); audio.tap(); updateModeUI();
+  if (view) view.previewBrush(1100);
+  toast(BRUSH_SIZES[i].label + ' brush \u{1F58C}\uFE0F', 1100);
+}
 
 // ---------- gameplay ----------
 function flush() { const p = pending; pending = []; for (const o of p) { clearTimeout(o.t); o.fn(); } }
@@ -259,10 +293,56 @@ function handle(res, ctx = {}) {
   }
   view.dirty = true; view.kick(); updatePalette(); updateProgress(); updateModeUI();
 }
+// ---------- paint brush ----------
+let bs = null, lastSparkle = 0, lastWrong = 0, lastWrongToast = 0, lastSave = 0, lastGlow = 0;
+function onBrushStart() {
+  if (!cur) return; audio.unlock(); flush(); cur.game.beginStroke(); bs = { told: false, wrongShown: false, painted: 0 };
+}
+/** called once per animation frame with the region ids the brush covered; ONLY matching-number regions get filled (game.brushPaint enforces it) */
+function onBrush(ids, info) {
+  if (!cur || !bs) return 0;
+  const g = cur.game, P = cur.pic, now = performance.now();
+  if (g.complete) return 0;
+  const sel = g.selected;
+  if (sel === 0 || g.colourDone(sel)) {
+    if (!bs.told) {
+      bs.told = true;
+      if (sel === 0) { toast('Pick a colour first, then paint \u{1F3A8}', 2200); audio.nudge(); for (const b of $('#palette').children) { b.classList.remove('nudge'); void b.offsetWidth; b.classList.add('nudge'); } }
+      else toast('All the ' + sel + 's are done \u2705 Pick another colour', 2400);
+    }
+    return 0;
+  }
+  const res = g.brushPaint(ids);
+  if (res.type !== 'brush') return 0;
+  if (res.ids.length) {
+    bs.painted += res.ids.length; view.paintRegions(res.ids); view.sparkle(res.ids, P.palette[sel - 1]);
+    if (now - lastSparkle > 120) { lastSparkle = now; audio.sparkle(sel, res.ids.length); }
+    if (res.colourDone) { audio.done(); const b = $('#palette').children[sel - 1]; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
+    updatePalette(); updateProgress(); updateUndo();
+    if (now - lastSave > 2500) { lastSave = now; save(); }
+    if (res.complete) { g.endStroke(); save(); later(() => finish(false), 450); }
+  } else if (info && info.wrongId >= 0 && now - lastWrong > 1500) {
+    // gentle, throttled: the brush ran over a different number
+    lastWrong = now; view.nudgeRegion(info.wrongId);
+    if (!bs.wrongShown) {
+      bs.wrongShown = true; audio.nudge();
+      if (now - lastWrongToast > 9000) { lastWrongToast = now; toast('The brush only paints number ' + sel + ' \u{1F642}', 2000); }
+    }
+  }
+  return res.ids.length;
+}
+function onBrushEnd(painted) {
+  if (!cur) return; const g = cur.game; g.endStroke(); save(); updateUndo();
+  const sel = g.selected, now = performance.now();
+  if (!painted && sel && !g.colourDone(sel) && !(bs && bs.told) && now - lastGlow > 4000) { // nothing painted: softly show where that number is
+    lastGlow = now; view.setOverlay(g.byColour[sel].filter((i) => !g.filled[i]).map((id) => ({ id, color: '#ffd93d' })), 1400);
+  }
+  bs = null;
+}
 function save() { if (!cur) return; store.saveProgress(cur.pic.id, cur.game.save()); }
 $('#pUndo').addEventListener('click', () => {
   if (!cur) return; flush(); const r = cur.game.undo(); if (!r) return; audio.unlock(); audio.undo();
-  for (const id of r.ids) view.paintRegion(id);
+  view.paintRegions(r.ids);
   save(); updatePalette(); updateProgress(); updateModeUI(); view.setOverlay(null);
 });
 $('#pHint').addEventListener('click', () => {
@@ -278,7 +358,12 @@ $('#zOut').addEventListener('click', () => view && view.zoomBy(1 / 1.6));
 $('#zFit').addEventListener('click', () => view && view.fit());
 document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
 addEventListener('pagehide', save);
-addEventListener('keydown', (e) => { if (!cur || !$('#play').classList.contains('on')) return; if ((e.ctrlKey || e.metaKey) && e.key === 'z') $('#pUndo').click(); else if (/^[1-9]$/.test(e.key)) { const b = $('#palette').children[+e.key - 1]; if (b) b.click(); } });
+addEventListener('blur', () => view && view.setSpace(false));
+addEventListener('keyup', (e) => { if (e.key === ' ' && view) { view.setSpace(false); if (cur && $('#play').classList.contains('on')) e.preventDefault(); } });
+addEventListener('keydown', (e) => { if (!cur || !$('#play').classList.contains('on')) return;
+  if (e.key === ' ') { e.preventDefault(); if (view) view.setSpace(true); return; }
+  if (settings.mode === MODE_BRUSH && (e.key === '[' || e.key === ']')) { setBrushSize(settings.brushSize + (e.key === ']' ? 1 : -1)); return; }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') $('#pUndo').click(); else if (/^[1-9]$/.test(e.key)) { const b = $('#palette').children[+e.key - 1]; if (b) b.click(); } });
 
 // ---------- completion ----------
 function finish(restored) {
@@ -289,9 +374,9 @@ function finish(restored) {
   celebTimer = setTimeout(() => showWin(false, award), 2100);
 }
 function nextPicture() {
-  const done = store.done(), i = pictures.findIndex((p) => p.id === cur.pic.id);
-  for (let k = 1; k <= pictures.length; k++) { const p = pictures[(i + k) % pictures.length]; if (!done[p.id]) return p; }
-  return pictures[(i + 1) % pictures.length];
+  const done = store.done(), same = ofType(cur.pic.grid ? 'grid' : 'shapes'), i = same.findIndex((p) => p.id === cur.pic.id);
+  for (let k = 1; k <= same.length; k++) { const p = same[(i + k) % same.length]; if (!done[p.id]) return p; }
+  return same[(i + 1) % same.length];
 }
 function showWin(restored, award) {
   const P = cur.pic, share = canShareFiles();
@@ -331,4 +416,4 @@ $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') clos
 // ---------- boot ----------
 renderChips(); renderGrid();
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
-window.__MC = { get cur() { return cur; }, get view() { return view; }, pictures, store, flush, openPicture, startPicture, handle, settings, isFresh, pictureOfTheDay, dayKey, renderStickers, STICKER, get pending() { return pending; } };
+window.__MC = { onBrush, setBrushSize, ofType, get cur() { return cur; }, get view() { return view; }, pictures, store, flush, openPicture, startPicture, handle, settings, isFresh, pictureOfTheDay, dayKey, renderStickers, STICKER, get pending() { return pending; } };
