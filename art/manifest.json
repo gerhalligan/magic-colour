@@ -405,5 +405,74 @@
    "k": 13,
    "mergeDE": 9
   }
+ },
+ {
+  "id": "mandala-garden",
+  "name": "Mandala Garden",
+  "cat": "nature",
+  "diff": "hard",
+  "src": "art/source/mandala-garden.png",
+  "opts": {
+   "k": 16,
+   "minArea": 42,
+   "minR": 4,
+   "mergeDE": 5,
+   "ink": true,
+   "regions": [
+    75,
+    400
+   ]
+  },
+  "added": "2026-10-04"
+ },
+ {
+  "id": "dino-jungle",
+  "name": "Dino Jungle",
+  "cat": "dinosaurs",
+  "diff": "hard",
+  "src": "art/source/dino-jungle.png",
+  "opts": {
+   "k": 14,
+   "minArea": 45,
+   "minR": 4,
+   "mergeDE": 5,
+   "regions": [
+    75,
+    400
+   ]
+  },
+  "added": "2026-10-04"
+ },
+ {
+  "id": "unicorn-meadow",
+  "name": "Unicorn Meadow",
+  "cat": "unicorns",
+  "diff": "hard",
+  "src": "art/source/unicorn-meadow.png",
+  "opts": {
+   "k": 14,
+   "minArea": 55,
+   "minR": 4.5,
+   "mergeDE": 6,
+   "regions": [
+    75,
+    400
+   ]
+  },
+  "added": "2026-10-04"
+ },
+ {
+  "id": "pumpkin-party",
+  "name": "Pumpkin Party",
+  "cat": "nature",
+  "diff": "hard",
+  "src": "art/source/pumpkin-party.png",
+  "opts": {
+   "k": 16,
+   "minArea": 35,
+   "minR": 3.5,
+   "mergeDE": 7
+  },
+  "added": "2026-10-04"
  }
 ]

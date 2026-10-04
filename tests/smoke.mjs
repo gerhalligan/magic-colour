@@ -35,6 +35,16 @@ for (const [name, vp, touch, dsf] of VIEWPORTS) {
     await page.click('#catChips [data-cat="space"]'); const sp = await page.$$eval('#grid .pic', (e) => e.length); assert.ok(sp >= 2 && sp < n);
     await page.click('#diffChips [data-diff="easy"]'); const sp2 = await page.$$eval('#grid .pic', (e) => e.length); assert.ok(sp2 >= 1 && sp2 <= sp);
     await page.click('#catChips [data-cat="all"]'); await page.click('#diffChips [data-diff="all"]');
+    const fresh = await page.evaluate(() => {
+      const m = window.__MC;
+      const ids = m.pictures.filter((p) => m.isFresh(p)).map((p) => p.id);
+      const badges = [...document.querySelectorAll('#grid .pic .newb')].map((el) => el.closest('.pic').dataset.id);
+      const order = [...document.querySelectorAll('#grid .pic')].map((el) => el.dataset.id);
+      return { ids, badges, order: order.slice(0, Math.max(ids.length, 1)), firstIsFresh: ids.length ? ids.includes(order[0]) : true };
+    });
+    assert.ok(fresh.ids.length >= 1, 'expected fresh pictures with added dates');
+    assert.deepEqual(fresh.badges.slice().sort(), fresh.ids.slice().sort(), 'NEW badge on each unfinished fresh picture');
+    assert.ok(fresh.firstIsFresh, 'fresh pictures sort to the front');
   });
 
   await test(`${name}: open a picture, canvas renders, palette is numbered with big touch targets`, async () => {

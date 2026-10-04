@@ -5,7 +5,7 @@ import { quantize, fillUnknown, cleanRegions, components, labelDistance, regionS
 export const BANDS = { // difficulty -> targets
   easy: { size: 400, k: 6, regions: [8, 25], colours: [5, 6], minArea: 450, minR: 9 },
   medium: { size: 512, k: 9, regions: [20, 84], colours: [7, 10], minArea: 220, minR: 6.5 },
-  hard: { size: 640, k: 14, regions: [75, 260], colours: [12, 16], minArea: 90, minR: 5 },
+  hard: { size: 640, k: 14, regions: [75, 420], colours: [8, 20], minArea: 90, minR: 5 },
 };
 
 /** difficulty is graded from what the finished puzzle actually contains (number of regions to colour) */
@@ -64,7 +64,7 @@ export function buildPuzzle(rgba, w, h, meta, opts = {}) {
     const e = (Math.abs(c[0] - rgba[p * 4]) + Math.abs(c[1] - rgba[p * 4 + 1]) + Math.abs(c[2] - rgba[p * 4 + 2])) / 3; err += e; if (e > 60) bad++;
   }
   const stats = { regions: regions.filter((r) => r[0]).length, colours: palette.length, meanErr: +(err / (w * h)).toFixed(2), badFrac: +(bad / (w * h)).toFixed(4), minArea, outlinePoints: outline.points };
-  return { puzzle: { id: meta.id, name: meta.name, cat: meta.cat, diff: opts.keepDiff ? meta.diff : gradeOf(stats.regions, stats.colours), wanted: meta.diff, w, h, palette, regions, map: encodeMap(lab, w, h), outline: outline.d, stats }, lab, pal };
+  return { puzzle: { id: meta.id, name: meta.name, cat: meta.cat, diff: opts.keepDiff ? meta.diff : gradeOf(stats.regions, stats.colours), wanted: meta.diff, ...(meta.added ? { added: meta.added } : {}), w, h, palette, regions, map: encodeMap(lab, w, h), outline: outline.d, stats }, lab, pal };
 }
 
 /** 128px palette-PNG thumbnail of the finished picture, as a data URL */

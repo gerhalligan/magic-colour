@@ -1,5 +1,5 @@
 import { decodeMap, rgb2lab, dE } from './segment.mjs';
-export const LIMITS = { easy: { regions: [8, 25], colours: [4, 9] }, medium: { regions: [20, 84], colours: [5, 17] }, hard: { regions: [75, 260], colours: [11, 17] } };
+export const LIMITS = { easy: { regions: [8, 25], colours: [4, 9] }, medium: { regions: [20, 84], colours: [5, 17] }, hard: { regions: [75, 420], colours: [8, 24] } };
 /** returns an array of problem strings (empty = valid) */
 export function validatePuzzle(p) {
   const bad = []; const lim = LIMITS[p.diff]; const { w, h } = p;

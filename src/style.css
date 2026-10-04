@@ -35,6 +35,9 @@ svg{display:block}
 .meter{position:absolute;left:12px;right:12px;bottom:6px;height:7px;border-radius:5px;background:#eee4d0;overflow:hidden}
 .meter i{display:block;height:100%;background:linear-gradient(90deg,var(--pink),var(--sun))}
 .pic.done{background:#f4fff8}
+.newb{position:absolute;top:8px;left:8px;z-index:2;display:inline-flex;align-items:center;gap:2px;height:28px;padding:0 10px;border-radius:14px;background:linear-gradient(90deg,var(--pink),#ff8f6b);color:#fff;font-size:12px;font-weight:900;letter-spacing:.4px;box-shadow:0 2px 0 #d44f7a;animation:popn 1.6s ease-in-out infinite}
+@keyframes popn{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.pic.fresh{box-shadow:0 4px 0 #f5b8d0}
 .empty{grid-column:1/-1;text-align:center;font-size:20px;font-weight:800;color:#8a7f6a;padding:40px 10px}
 
 /* ---- play ---- */

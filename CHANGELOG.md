@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.0 — 2026-10-04
+Daytime improve run.
+- **4 new pictures** (mostly hard for bigger kids): Mandala Garden (hard, intricate), Dino Jungle (hard), Unicorn Meadow (hard), Pumpkin Party (medium). Fairy Village and Space Station were tried but skipped after validation failed (soft shading / near-greyscale sources).
+- **NEW sparkle badge** on freshly added pictures for about 7 days (`added` ISO date on picture JSON); unfinished new art sorts to the front of the home grid. Finished tick badge is unchanged.
+- Hard difficulty limits widened slightly for older-kid art (up to ~420 regions, 8–24 colours) so intricate scenes can validate.
+- Mode rules unchanged: default remains **One by one**; Magic brush still needs a numbered region tap (palette alone never fills).
+- Hard region/colour limits updated in the picture pipeline validators.
+
 ## 1.1.0 — 2026-10-04
 Feedback from Gerard.
 - **One by one is now the default mode** for new players and on first load. A mode the player really picks later is still remembered (`modeChosen` flag); the mode that 1.0.0 silently auto-saved as its default is reset to One by one.

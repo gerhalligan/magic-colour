@@ -79,13 +79,27 @@ function renderChips() {
   $('#catChips').innerHTML = cats.map((c) => `<button class="chip${filter.cat === c ? ' on' : ''}" data-cat="${c}"><em>${(CAT[c] || ['\u2B50'])[0]}</em>${(CAT[c] || [0, c])[1]}</button>`).join('');
   $('#diffChips').innerHTML = [['all', 'Any level'], ['easy', '\u2605 Easy'], ['medium', '\u2605\u2605 Medium'], ['hard', '\u2605\u2605\u2605 Hard']].map(([d, l]) => `<button class="chip${filter.diff === d ? ' on' : ''}" data-diff="${d}">${l}</button>`).join('');
 }
+const NEW_MS = 7 * 864e5;
+/** Pictures with an `added` ISO date stay "new" for about a week (unfinished ones get a sparkle badge + sort to the front). */
+function isFresh(p) {
+  if (!p || !p.added) return false;
+  const t = Date.parse(p.added);
+  return Number.isFinite(t) && (Date.now() - t) < NEW_MS;
+}
 function card(p, done, extra = '') {
   const pct = done ? 1 : store.pct(p.id, p.stats.regions);
-  return `<button class="pic${done ? ' done' : ''}" data-id="${p.id}"><img src="${p.thumb}" alt="" draggable="false"><span class="nm">${p.name}</span>${stars(p.diff)}${done ? `<span class="badge">${I.tick}</span>` : pct > 0 ? `<span class="meter"><i style="width:${Math.round(pct * 100)}%"></i></span>` : ''}${extra}</button>`;
+  const fresh = !done && isFresh(p);
+  const newb = fresh ? '<span class="newb" aria-label="New">\u2728 NEW</span>' : '';
+  return `<button class="pic${done ? ' done' : ''}${fresh ? ' fresh' : ''}" data-id="${p.id}"><img src="${p.thumb}" alt="" draggable="false"><span class="nm">${p.name}</span>${stars(p.diff)}${done ? `<span class="badge">${I.tick}</span>` : pct > 0 ? `<span class="meter"><i style="width:${Math.round(pct * 100)}%"></i></span>` : ''}${newb}${extra}</button>`;
 }
 function renderGrid() {
   const done = store.done();
-  const list = pictures.filter((p) => (filter.cat === 'all' || p.cat === filter.cat) && (filter.diff === 'all' || p.diff === filter.diff));
+  const list = pictures.filter((p) => (filter.cat === 'all' || p.cat === filter.cat) && (filter.diff === 'all' || p.diff === filter.diff))
+    .sort((a, b) => {
+      const fa = !done[a.id] && isFresh(a), fb = !done[b.id] && isFresh(b);
+      if (fa !== fb) return fa ? -1 : 1;
+      return 0;
+    });
   $('#grid').innerHTML = list.length ? list.map((p) => card(p, !!done[p.id])).join('') : '<p class="empty">No pictures here yet \u{1F338}</p>';
 }
 function renderGallery() {
@@ -274,4 +288,4 @@ $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') clos
 // ---------- boot ----------
 renderChips(); renderGrid();
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
-window.__MC = { get cur() { return cur; }, get view() { return view; }, pictures, store, flush, openPicture, startPicture, handle, settings, get pending() { return pending; } };
+window.__MC = { get cur() { return cur; }, get view() { return view; }, pictures, store, flush, openPicture, startPicture, handle, settings, isFresh, get pending() { return pending; } };
