@@ -2,3 +2,5 @@ node_modules/
 dist/
 *.log
 art/incoming/
+dist-single/*
+!dist-single/Magic-Colour.html

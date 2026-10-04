@@ -17,11 +17,13 @@ const bad = [];
 if (/type\s*=\s*["']module/.test(out)) bad.push('type=module');
 if (/import\.meta/.test(out)) bad.push('import.meta');
 if (/new\s+Worker\s*\(/.test(out)) bad.push('Worker');
-if (/\b(src|href)\s*=\s*["']https?:/i.test(out)) bad.push('external src/href');
+if (/\b(src|href)\s*=\s*["']https?:/i.test(out.replace(/<link rel="canonical" href="https?:[^">]*">/i, ''))) bad.push('external src/href');
 if (/<link[^>]+stylesheet/i.test(out)) bad.push('external css');
 if (/\b(fetch|XMLHttpRequest|WebSocket|sendBeacon)\s*\(/.test(js)) bad.push('network call');
 console.log('wrote', dest, (out.length / 1024).toFixed(0) + ' KB', bad.length ? 'PROBLEMS: ' + bad.join(',') : 'OK (classic, self-contained, no network calls)');
 const sha = crypto.createHash('sha256').update(out).digest('hex');
+// SEO / share assets next to the single file (file:// then has no missing icon / manifest requests)
+for (const f of fs.readdirSync(path.join(root, 'public'))) if (f !== 'sw.js') fs.copyFileSync(path.join(root, 'public', f), path.join(root, 'dist-single', f));
 // share copy
 fs.mkdirSync('/workspace/magic-colour-share', { recursive: true });
 fs.copyFileSync(dest, '/workspace/magic-colour-share/Magic-Colour.html');

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.8.1 — 2026-10-04
+**SEO + social share (link previews)**. Descriptive `<title>` and meta description (free, ad-free, no tracking, offline), canonical URL `https://magic-colour.games.mikai.ai/`, robots, theme-color / color-scheme, application-name and apple-mobile-web-app tags, Open Graph (`og:image` 1200x630 with alt text) and Twitter `summary_large_image` cards, favicon.ico/svg, apple-touch-icon (180), schema.org `WebApplication` + `Game` JSON-LD (free, suggestedMinAge 3). The web app manifest gained an id, lang, categories and a better name; the service worker is unchanged (cache is still versioned by the build hash, so the new page reaches returning visitors).
+New files in `public/` (copied into `docs/`, so GitHub Pages and Coolify both serve them): og-image.png (real gallery + gameplay screenshots, ~130 KB), favicon.ico/svg, apple-touch-icon.png, robots.txt, sitemap.xml, 404.html. `npm run assets` (`tools/make-assets.mjs`) regenerates them. `tools/inline.mjs` also copies them next to `dist-single/Magic-Colour.html` and allows the canonical link in its "no external href" check.
+New test `tests/seo.mjs` (`npm run test:seo`, runs after the build in `npm test`): required tags, JSON-LD, manifest, referenced files exist, og-image 1200x630 PNG < 300 KB, service worker still stamped and precaching only existing files.
+
 ## 1.8.0 — 2026-10-04
 Daytime improve-and-add-pictures run.
 - **6 new pictures**: Pumpkin Carriage (Shapes, hard); Treasure Cave, Sleepy Panda and Butterfly Mandala (Shapes, medium); **Volcano Island** (Epic Grid 90×90) and **Castle in the Clouds** (Epic Grid 100×100). Flower Mandala was tried from staged art but skipped (too similar in outline to Ocean Mandala — duplicate check).

@@ -1,6 +1,6 @@
 {
   "name": "magic-colour",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "description": "Ad-free colour-by-numbers for kids: Magic, One by one and Paint Brush modes, Pixel Grid pictures, offline, single-file build",
   "main": "index.js",
   "scripts": {
@@ -14,7 +14,9 @@
     "audit": "node tools/audit-duplicates.mjs",
     "test:smoke": "node tests/smoke.mjs",
     "test:layout": "node tests/layout.mjs",
-    "test": "npm run test:segment && npm run test:game && npm run test:brush && npm run test:pictures && npm run test:duplicates && npm run build && npm run test:layout && npm run test:smoke"
+    "test": "npm run test:segment && npm run test:game && npm run test:brush && npm run test:pictures && npm run test:duplicates && npm run build && npm run test:seo && npm run test:layout && npm run test:smoke",
+    "test:seo": "node tests/seo.mjs",
+    "assets": "node tools/make-assets.mjs"
   },
   "keywords": [],
   "author": "",
