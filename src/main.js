@@ -5,7 +5,7 @@ import { store } from './store.js';
 import { audio } from './audio.js';
 import { saveOrShare, renderFinal, canShareFiles } from './export.js';
 import { confetti } from './confetti.js';
-import { I, CAT, DIFF } from './icons.js';
+import { I, CAT, DIFF, STICKER } from './icons.js';
 
 const $ = (sel, el = document) => el.querySelector(sel);
 const app = $('#app');
@@ -28,6 +28,10 @@ app.innerHTML = `
   <div class="chips" id="catChips"></div>
   <div class="chips small" id="diffChips"></div>
   <div id="potd" class="potd" hidden></div>
+  <section id="stickers" class="stickers" aria-label="My stickers" hidden>
+    <p class="stickers-label">\u{1F3C5} My stickers</p>
+    <div class="stickers-row" id="stickerRow"></div>
+  </section>
   <main class="grid" id="grid"></main>
 </section>
 <section id="gallery" class="screen">
@@ -113,6 +117,19 @@ function card(p, done, extra = '') {
   const newb = fresh ? '<span class="newb" aria-label="New">\u2728 NEW</span>' : '';
   return `<button class="pic${done ? ' done' : ''}${fresh ? ' fresh' : ''}" data-id="${p.id}"><img src="${p.thumb}" alt="" draggable="false"><span class="nm">${p.name}</span>${stars(p.diff)}${done ? `<span class="badge">${I.tick}</span>` : pct > 0 ? `<span class="meter"><i style="width:${Math.round(pct * 100)}%"></i></span>` : ''}${newb}${extra}</button>`;
 }
+function renderStickers() {
+  const el = $('#stickers'), row = $('#stickerRow');
+  const got = store.stickers();
+  const cats = Object.keys(STICKER).filter((c) => got[c]);
+  if (!cats.length) { el.hidden = true; row.innerHTML = ''; return; }
+  el.hidden = false;
+  cats.sort((a, b) => (got[b] || 0) - (got[a] || 0));
+  row.innerHTML = cats.map((c) => {
+    const emoji = STICKER[c] || '\u2B50';
+    const label = (CAT[c] || [0, c])[1];
+    return `<span class="sticker" title="${label}" aria-label="${label} sticker"><em>${emoji}</em><b>${label}</b></span>`;
+  }).join('');
+}
 function renderGrid() {
   const done = store.done();
   const list = pictures.filter((p) => (filter.cat === 'all' || p.cat === filter.cat) && (filter.diff === 'all' || p.diff === filter.diff))
@@ -122,6 +139,7 @@ function renderGrid() {
       return 0;
     });
   renderPotd();
+  renderStickers();
   $('#grid').innerHTML = list.length ? list.map((p) => card(p, !!done[p.id])).join('') : '<p class="empty">No pictures here yet \u{1F338}</p>';
 }
 function renderGallery() {
@@ -265,19 +283,21 @@ addEventListener('keydown', (e) => { if (!cur || !$('#play').classList.contains(
 // ---------- completion ----------
 function finish(restored) {
   const P = cur.pic; store.markDone(P.id); save();
-  if (restored) { view.celeb = null; showWin(true); return; }
+  const award = store.earnSticker(P.cat);
+  if (restored) { view.celeb = null; showWin(true, award); return; }
   view.celebrate(); audio.win(); if (stopConfetti) stopConfetti(); stopConfetti = confetti($('#confetti'));
-  celebTimer = setTimeout(() => showWin(false), 2100);
+  celebTimer = setTimeout(() => showWin(false, award), 2100);
 }
 function nextPicture() {
   const done = store.done(), i = pictures.findIndex((p) => p.id === cur.pic.id);
   for (let k = 1; k <= pictures.length; k++) { const p = pictures[(i + k) % pictures.length]; if (!done[p.id]) return p; }
   return pictures[(i + 1) % pictures.length];
 }
-function showWin(restored) {
+function showWin(restored, award) {
   const P = cur.pic, share = canShareFiles();
   const card = $('#modalCard'); card.className = 'card win';
-  card.innerHTML = `<h2>${restored ? 'All done!' : 'Brilliant!'} \u{1F389}</h2><p class="sub">${P.name} is finished</p><div class="prev"></div>
+  const stickerBit = award ? `<p class="sticker-award${award.fresh ? ' fresh' : ''}"><span class="sticker-big">${STICKER[award.cat] || '\u2B50'}</span> ${award.fresh ? 'New sticker!' : 'Sticker'} <b>${(CAT[award.cat] || [0, award.cat])[1]}</b></p>` : '';
+  card.innerHTML = `<h2>${restored ? 'All done!' : 'Brilliant!'} \u{1F389}</h2><p class="sub">${P.name} is finished</p>${stickerBit}<div class="prev"></div>
     <div class="btns"><button class="big pri" data-a="save">${I.save}<span>Save picture</span></button>${share ? `<button class="big" data-a="share">${I.share}<span>Share</span></button>` : ''}
     <button class="big mint" data-a="next">${I.next}<span>Next picture</span></button><button class="big" data-a="gallery">${I.gallery}<span>My gallery</span></button>
     <button class="big ghost" data-a="again">${I.again}<span>Colour it again</span></button><button class="big ghost" data-a="look">${I.close}<span>Close</span></button></div>`;
@@ -311,4 +331,4 @@ $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') clos
 // ---------- boot ----------
 renderChips(); renderGrid();
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
-window.__MC = { get cur() { return cur; }, get view() { return view; }, pictures, store, flush, openPicture, startPicture, handle, settings, isFresh, pictureOfTheDay, dayKey, get pending() { return pending; } };
+window.__MC = { get cur() { return cur; }, get view() { return view; }, pictures, store, flush, openPicture, startPicture, handle, settings, isFresh, pictureOfTheDay, dayKey, renderStickers, STICKER, get pending() { return pending; } };

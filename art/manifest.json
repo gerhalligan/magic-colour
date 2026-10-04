@@ -586,5 +586,91 @@
    ]
   },
   "added": "2026-10-04"
+ },
+ {
+  "id": "snowflake-mandala",
+  "name": "Snowflake Mandala",
+  "cat": "nature",
+  "diff": "medium",
+  "src": "art/source/snowflake-mandala.jpg",
+  "opts": {
+   "k": 16,
+   "minArea": 70,
+   "minR": 4.5,
+   "mergeDE": 6,
+   "ink": true
+  },
+  "added": "2026-10-04"
+ },
+ {
+  "id": "pirate-ship",
+  "name": "Pirate Ship",
+  "cat": "vehicles",
+  "diff": "hard",
+  "src": "art/source/pirate-ship.jpg",
+  "opts": {
+   "k": 20,
+   "minArea": 25,
+   "minR": 3.5,
+   "mergeDE": 5,
+   "ink": true,
+   "regions": [
+    75,
+    420
+   ]
+  },
+  "added": "2026-10-04"
+ },
+ {
+  "id": "dino-explorer",
+  "name": "Dino Explorer",
+  "cat": "dinosaurs",
+  "diff": "hard",
+  "src": "art/source/dino-explorer.jpg",
+  "opts": {
+   "k": 16,
+   "minArea": 40,
+   "minR": 4,
+   "mergeDE": 5,
+   "ink": true,
+   "regions": [
+    75,
+    420
+   ]
+  },
+  "added": "2026-10-04"
+ },
+ {
+  "id": "coral-city",
+  "name": "Coral City",
+  "cat": "fantasy",
+  "diff": "hard",
+  "src": "art/source/coral-city.png",
+  "opts": {
+   "k": 18,
+   "minArea": 28,
+   "minR": 3.5,
+   "mergeDE": 5,
+   "ink": true,
+   "regions": [
+    75,
+    420
+   ]
+  },
+  "added": "2026-10-04"
+ },
+ {
+  "id": "peacock-parade",
+  "name": "Peacock Parade",
+  "cat": "animals",
+  "diff": "hard",
+  "src": "art/source/peacock-parade.png",
+  "opts": {
+   "k": 16,
+   "minArea": 35,
+   "minR": 3.8,
+   "ink": true
+  },
+  "added": "2026-10-04"
  }
 ]

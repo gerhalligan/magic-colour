@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.0 — 2026-10-04
+Daytime improve run.
+- **5 new pictures** (mostly hard for bigger kids): Coral City (hard, underwater fantasy), Peacock Parade (hard), Dino Explorer (hard), Pirate Ship (hard), Snowflake Mandala (medium, intricate). Candy Kingdom was skipped (numbers baked into the JPG); Coral City and Peacock Parade were flattened slightly so the colour pipeline could validate.
+- **Completion stickers**: finishing a picture awards a category-themed sticker (localStorage only). Earned stickers collect in a **My stickers** row on the home screen; the win card shows the sticker (with a “New sticker!” highlight the first time).
+- Mode rules unchanged: default remains **One by one**; Magic brush still needs a numbered region tap (palette alone never fills).
+
 ## 1.3.0 — 2026-10-04
 Daytime improve run.
 - **6 new pictures** (all hard for bigger kids): Ocean Mandala, Dragon Castle, Mermaid Lagoon, Robot Workshop, Autumn Forest, Space Carnival.

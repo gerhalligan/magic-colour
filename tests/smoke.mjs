@@ -177,6 +177,16 @@ for (const [name, vp, touch, dsf] of VIEWPORTS) {
     await page.waitForSelector('#modal.on', { timeout: 6000 }); await page.waitForTimeout(500);
     await page.screenshot({ path: `${SHOTS}/${name}-9-win.png` });
     const done = await page.evaluate(() => JSON.parse(localStorage.getItem('mc1.done'))); assert.ok(done['happy-fish']);
+    const stick = await page.evaluate(() => {
+      const m = window.__MC;
+      const s = JSON.parse(localStorage.getItem('mc1.stickers') || '{}');
+      const cat = m.pictures.find((p) => p.id === 'happy-fish').cat;
+      m.renderStickers();
+      const row = document.querySelector('#stickers');
+      const shown = !!(row && !row.hidden && row.querySelector('.sticker'));
+      return { cat, has: !!s[cat], shown, award: !!document.querySelector('#modalCard .sticker-award') };
+    });
+    assert.ok(stick.has, 'category sticker saved'); assert.ok(stick.award, 'win card shows sticker');
     const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#modalCard [data-a="save"]')]);
     const p = await dl.path(); const buf = fs.readFileSync(p); assert.equal(buf.slice(1, 4).toString(), 'PNG'); assert.ok(buf.length > 8000, 'png size ' + buf.length);
     fs.copyFileSync(p, `${SHOTS}/${name}-10-saved-picture.png`);

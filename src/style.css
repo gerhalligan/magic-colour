@@ -56,6 +56,25 @@ svg{display:block}
 }
 .empty{grid-column:1/-1;text-align:center;font-size:20px;font-weight:800;color:#8a7f6a;padding:40px 10px}
 
+
+/* ---- stickers ---- */
+.stickers{flex:none;padding:2px 12px 10px}
+.stickers[hidden]{display:none}
+.stickers-label{margin:0 0 6px;font-weight:900;font-size:15px;color:var(--brand2)}
+.stickers-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.stickers-row::-webkit-scrollbar{display:none}
+.sticker{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:72px;height:72px;padding:6px 8px;border-radius:18px;background:#fff;box-shadow:0 3px 0 var(--line)}
+.sticker em{font-style:normal;font-size:28px;line-height:1}
+.sticker b{font-size:11px;font-weight:800;margin-top:4px;color:#7b7160}
+.sticker-award{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 0 8px;font-weight:800;color:var(--brand2);font-size:16px}
+.sticker-award .sticker-big{font-size:34px;line-height:1;display:inline-block;animation:popn 1.2s ease-in-out 2}
+.sticker-award.fresh .sticker-big{filter:drop-shadow(0 0 6px #ffd93d)}
+@media (orientation:landscape), (max-height:520px){
+  .stickers{padding:2px 12px 4px}
+  .sticker{min-width:56px;height:56px}
+  .sticker em{font-size:22px}
+  .sticker b{font-size:10px}
+}
 /* ---- play ---- */
 #play.on{display:grid;grid-template-rows:auto minmax(0,1fr) auto}
 .bar{display:flex;align-items:center;gap:6px;padding:8px 8px 4px}

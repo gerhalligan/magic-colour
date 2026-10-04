@@ -21,4 +21,15 @@ export const store = {
   markDone(id) { const d = store.done(); d[id] = d[id] || Date.now(); set('done', d); },
   unmarkDone(id) { const d = store.done(); delete d[id]; set('done', d); },
   pct(id, total) { const p = get('p.' + id); if (!p) return 0; return total ? Math.min(1, p.f.length / total) : 0; },
+  /** Category stickers earned by finishing pictures (local only). */
+  stickers() { return get('stickers') || {}; },
+  /** Award the sticker for a category. Returns { cat, emoji, fresh } where fresh means newly earned. */
+  earnSticker(cat) {
+    if (!cat) return null;
+    const s = store.stickers();
+    const fresh = !s[cat];
+    if (fresh) { s[cat] = Date.now(); set('stickers', s); }
+    return { cat, fresh, at: s[cat] };
+  },
 };
+
