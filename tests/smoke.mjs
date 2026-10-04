@@ -57,6 +57,47 @@ for (const [name, vp, touch, dsf] of VIEWPORTS) {
     assert.ok(/Picture of the day/i.test(potd.label || ''), 'potd label');
   });
 
+  await test(`${name}: Continue card shows for an unfinished last picture and opens it`, async () => {
+    const seeded = await page.evaluate(() => {
+      const m = window.__MC;
+      const p = m.pictures.find((x) => x.id === 'sunny-flower') || m.pictures.find((x) => !x.grid);
+      if (!p) return null;
+      // leave a few regions unfilled so it is unfinished
+      const n = Math.max(1, Math.min(8, (p.stats && p.stats.regions) ? Math.floor(p.stats.regions * 0.2) : 4));
+      const ids = [];
+      for (let i = 0; i < p.regions.length && ids.length < n; i++) if (p.regions[i][0] > 0) ids.push(i);
+      m.store.saveProgress(p.id, { f: ids, s: 1 });
+      m.settings.lastId = p.id;
+      m.store.saveSettings(m.settings);
+      m.renderContinue();
+      const el = document.getElementById('continue');
+      const btn = el && el.querySelector('.cont');
+      return { id: p.id, name: p.name, shown: !!(el && !el.hidden), btnId: btn && btn.dataset.id, label: btn && btn.querySelector('b') && btn.querySelector('b').textContent };
+    });
+    assert.ok(seeded && seeded.id, 'seeded unfinished picture');
+    assert.ok(seeded.shown, 'Continue strip is visible');
+    assert.equal(seeded.btnId, seeded.id, 'Continue button targets last picture');
+    assert.ok(/Continue/i.test(seeded.label || ''), 'Continue label');
+    await page.click('#continue .cont');
+    await page.waitForSelector('#play.on');
+    const opened = await page.evaluate(() => window.__MC.cur && window.__MC.cur.pic && window.__MC.cur.pic.id);
+    assert.equal(opened, seeded.id, 'Continue opens the unfinished picture');
+    const filled = await page.evaluate(() => window.__MC.cur.game.filledCount());
+    assert.ok(filled > 0, 'restored progress');
+    // tidy without history.back() so later tests keep a clean stack
+    await page.evaluate((id) => {
+      const m = window.__MC;
+      m.flush();
+      m.store.clearProgress(id);
+      m.settings.lastId = null;
+      m.store.saveSettings(m.settings);
+      // show home without popping history (clicking #pHome would history.back())
+      document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('on', s.id === 'home'));
+      m.renderContinue();
+    }, seeded.id);
+    await page.waitForSelector('#home.on');
+  });
+
   await test(`${name}: open a picture, canvas renders, palette is numbered with big touch targets`, async () => {
     await page.locator('#grid .pic[data-id="happy-fish"]').scrollIntoViewIfNeeded(); await page.click('#grid .pic[data-id="happy-fish"]'); await page.waitForSelector('#play.on'); await page.waitForTimeout(400);
     const info = await page.evaluate(() => { const sw = [...document.querySelectorAll('.sw')].map((b) => { const r = b.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height), r.left >= 0 && r.right <= innerWidth + 1 || true]; }); const st = document.querySelector('#stage').getBoundingClientRect(); const tools = [...document.querySelectorAll('.tool, .mode')].map((b) => { const r = b.getBoundingClientRect(); return [r.width, r.height, r.left, r.right, r.top, r.bottom]; }); return { sw, stage: [st.width, st.height], tools, ow: document.documentElement.scrollWidth, iw: innerWidth, ih: innerHeight, bodyH: document.body.scrollHeight }; });

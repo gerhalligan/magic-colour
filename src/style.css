@@ -57,6 +57,28 @@ svg{display:block}
 .empty{grid-column:1/-1;text-align:center;font-size:20px;font-weight:800;color:#8a7f6a;padding:40px 10px}
 
 
+
+/* ---- continue (unfinished last picture) ---- */
+.continue{flex:none;padding:4px 12px 8px}
+.continue[hidden]{display:none}
+.cont{display:flex;align-items:center;gap:12px;width:100%;max-width:520px;padding:10px 14px;border-radius:22px;background:linear-gradient(90deg,#fff,#ffe9f3 55%,#e8f7ff);box-shadow:0 4px 0 #f5b8d0;text-align:left}
+.cont img{width:64px;height:64px;border-radius:14px;object-fit:cover;background:#f4efe6;flex:none}
+.cont-body{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.cont-body b{font-size:18px;font-weight:900;color:var(--brand2)}
+.cont-body em{font-style:normal;font-weight:800;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cont-body small{font-weight:800;color:#7b7160;font-size:12px}
+.cont-meter{display:block;height:8px;border-radius:5px;background:#eee4d0;overflow:hidden;margin:4px 0 2px}
+.cont-meter i{display:block;height:100%;background:linear-gradient(90deg,var(--pink),var(--sun))}
+.cont-go{flex:none;width:44px;height:44px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 3px 0 var(--brand2)}
+@media (orientation:landscape), (max-height:520px){
+  .continue{padding:2px 12px 4px}
+  .cont{padding:6px 10px;gap:10px}
+  .cont img{width:48px;height:48px;border-radius:10px}
+  .cont-body b{font-size:15px}
+  .cont-body em{font-size:13px}
+  .cont-go{width:36px;height:36px;font-size:14px}
+}
+
 /* ---- stickers ---- */
 .stickers{flex:none;padding:2px 12px 10px}
 .stickers[hidden]{display:none}

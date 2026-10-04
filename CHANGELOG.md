@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.0 — 2026-10-04
+Daytime improve-and-add-pictures run.
+- **6 new pictures**: Fox Forest, Sunny Submarine, Fairground Carousel, Lighthouse Bay (Shapes, medium, flat-colour cartoons with ink outlines); **Hot Air Balloon Festival** (Epic Grid 100×100) and **Treehouse Village** (Epic Grid 90×90). Butterfly Mandala was tried from staged art but skipped (could not hit Hard colour count without failing reconstruction).
+- **Continue**: on the home screen, if there is an unfinished picture in progress (localStorage), a big friendly Continue card opens that last played picture. Offline-only; no network.
+- Mode rules unchanged: default remains **One by one**; Magic still needs a numbered region tap; Brush defaults to the smallest size and only paints matching numbers under the stroke.
+
+
 ## 1.5.1 — 2026-10-04
 Request from Gerard: several Grid pictures looked identical in the gallery.
 - **Audit**: all 17 Grid and 52 Shapes pictures were compared programmatically (40×40 colour and region signatures, colour-blind outline correlation, mirrored too) and visually via thumbnail sheets. Three Grid pairs were the same art at two sizes: Little Unicorn / Unicorn Dream, Friendly Dino / Giant Dino, Rocket Ship 30×30 / 44×44. No identical Shapes pictures were found (Brick Castle and Dream Castle share a three-tower layout but differ in colours, texture, scenery and detail, so they were left).

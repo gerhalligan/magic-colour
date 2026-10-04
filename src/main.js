@@ -32,6 +32,7 @@ app.innerHTML = `
     <button class="type" data-type="shapes" role="tab" aria-label="Shapes: colour pictures made of pretty shapes">${I.shapes}<span><b>Shapes</b><small id="nShapes"></small></span></button>
     <button class="type" data-type="grid" role="tab" aria-label="Grid: colour square numbered pixel pictures">${I.grid}<span><b>Grid</b><small id="nGrid"></small></span></button>
   </div>
+  <div id="continue" class="continue" hidden></div>
   <div class="chips" id="catChips"></div>
   <div class="chips small" id="diffChips"></div>
   <div id="potd" class="potd" hidden></div>
@@ -117,6 +118,28 @@ function pictureOfTheDay(type = settings.type) {
   for (let i = 0; i < day.length; i++) h = Math.imul(h ^ day.charCodeAt(i), 16777619) >>> 0;
   return pool[h % pool.length];
 }
+function unfinishedLast() {
+  const id = settings.lastId;
+  if (!id) return null;
+  const p = byId(id);
+  if (!p || store.done()[id]) return null;
+  const pct = store.pct(id, p.stats.regions);
+  if (!(pct > 0 && pct < 1)) return null;
+  return { p, pct };
+}
+function renderContinue() {
+  const el = $('#continue');
+  const u = unfinishedLast();
+  if (!u) { el.hidden = true; el.innerHTML = ''; return; }
+  const { p, pct } = u;
+  el.hidden = false;
+  el.innerHTML = '<button class="cont" data-id="' + p.id + '" aria-label="Continue ' + p.name + '">'
+    + '<img src="' + p.thumb + '" alt="" draggable="false">'
+    + '<span class="cont-body"><b>Continue</b><em>' + p.name + '</em>'
+    + '<span class="cont-meter"><i style="width:' + Math.round(pct * 100) + '%"></i></span>'
+    + '<small>' + Math.round(pct * 100) + '% coloured</small></span>'
+    + '<span class="cont-go" aria-hidden="true">▶</span></button>';
+}
 function renderPotd() {
   const el = $('#potd');
   const p = pictureOfTheDay();
@@ -153,6 +176,7 @@ function renderGrid() {
       if (fa !== fb) return fa ? -1 : 1;
       return 0;
     });
+  renderContinue();
   renderPotd();
   renderStickers();
   $('#grid').innerHTML = list.length ? list.map((p) => card(p, !!done[p.id])).join('') : '<p class="empty">No pictures here yet \u{1F338}</p>';
@@ -170,6 +194,7 @@ $('#catChips').addEventListener('click', (e) => { const b = e.target.closest('[d
 $('#diffChips').addEventListener('click', (e) => { const b = e.target.closest('[data-diff]'); if (!b) return; filter.diff = b.dataset.diff; audio.tap(); renderChips(); renderGrid(); });
 $('#grid').addEventListener('click', (e) => { const b = e.target.closest('.pic'); if (b) openPicture(b.dataset.id); });
 $('#potd').addEventListener('click', (e) => { const b = e.target.closest('.pic'); if (b) openPicture(b.dataset.id); });
+$('#continue').addEventListener('click', (e) => { const b = e.target.closest('[data-id]'); if (b) openPicture(b.dataset.id, true); });
 $('#gGrid').addEventListener('click', (e) => { const b = e.target.closest('.pic'); if (b) openViewer(byId(b.dataset.id)); });
 $('#hGallery').addEventListener('click', () => { audio.unlock(); audio.tap(); renderGallery(); show('gallery'); enter(); });
 $('#gBack').addEventListener('click', () => { audio.tap(); goHome(); });
@@ -191,6 +216,7 @@ function openPicture(id, force) {
 }
 function startPicture(p) {
   flush(); closeModal(); clearTimeout(celebTimer); if (stopConfetti) { stopConfetti(); stopConfetti = null; }
+  settings.lastId = p.id; store.saveSettings(settings);
   const game = createGame(p, { mode: settings.mode });
   game.restore(store.progress(p.id));
   cur = { pic: p, game };
@@ -416,4 +442,4 @@ $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') clos
 // ---------- boot ----------
 renderChips(); renderGrid();
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
-window.__MC = { onBrush, setBrushSize, ofType, get cur() { return cur; }, get view() { return view; }, pictures, store, flush, openPicture, startPicture, handle, settings, isFresh, pictureOfTheDay, dayKey, renderStickers, STICKER, get pending() { return pending; } };
+window.__MC = { onBrush, setBrushSize, ofType, get cur() { return cur; }, get view() { return view; }, pictures, store, flush, openPicture, startPicture, handle, settings, isFresh, pictureOfTheDay, dayKey, renderStickers, renderContinue, unfinishedLast, STICKER, get pending() { return pending; } };

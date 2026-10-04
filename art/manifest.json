@@ -951,5 +951,67 @@
   "kind": "grid",
   "src": "art/pixel/grid-candy-land.txt",
   "added": "2026-10-04"
+ },
+ {
+  "id": "fox-forest",
+  "name": "Fox Forest",
+  "cat": "animals",
+  "diff": "hard",
+  "src": "art/source/fox-forest.jpg",
+  "opts": {
+   "k": 16,
+   "minArea": 40,
+   "ink": true
+  }
+ },
+ {
+  "id": "sunny-submarine",
+  "name": "Sunny Submarine",
+  "cat": "vehicles",
+  "diff": "hard",
+  "src": "art/source/sunny-submarine.jpg",
+  "opts": {
+   "ink": true
+  }
+ },
+ {
+  "id": "fairground-carousel",
+  "name": "Fairground Carousel",
+  "cat": "fantasy",
+  "diff": "hard",
+  "src": "art/source/fairground-carousel.jpg",
+  "opts": {
+   "minArea": 60,
+   "ink": true
+  }
+ },
+ {
+  "id": "lighthouse-bay",
+  "name": "Lighthouse Bay",
+  "cat": "nature",
+  "diff": "hard",
+  "src": "art/source/lighthouse-bay.jpg",
+  "opts": {
+   "minArea": 60,
+   "ink": true
+  }
+ },
+ {
+  "id": "grid-balloon-festival",
+  "name": "Hot Air Balloon Festival",
+  "cat": "vehicles",
+  "diff": "epic",
+  "kind": "grid",
+  "src": "art/pixel/grid-balloon-festival.txt",
+  "added": "2026-10-04"
+ },
+ {
+  "id": "grid-treehouse-village",
+  "name": "Treehouse Village",
+  "cat": "nature",
+  "diff": "epic",
+  "kind": "grid",
+  "src": "art/pixel/grid-treehouse-village.txt",
+  "added": "2026-10-04"
  }
 ]

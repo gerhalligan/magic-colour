@@ -441,4 +441,86 @@ export function bigDesigns(add0) {
     star4(g, 100, 50, '#ffd93d', '#fff3b0'); star4(g, 24, 56, '#ffffff', '#ffe0f2');
     for (let i = 0; i < 90; i++) { const x = Math.floor(r() * 118) + 1, y = 96 + Math.floor(r() * 10); if (g.get(x, y) === '#9ae38d' || g.get(x, y) === '#c4f2b8') g.px(x, y, ['#ff6b81', '#ffd93d', '#339af0', '#b36bff', '#ffffff'][i % 5]); }
   });
+
+  // ===== 15. Hot Air Balloon Festival (100) =====
+  add('grid-balloon-festival', 'Hot Air Balloon Festival', 'vehicles', 100, 100, (g) => {
+    bands(g, 0, 68, ['#7ec8f5', '#9ad6f8', '#b6e3fb', '#d4effd', '#eaf7ff']);
+    g.disc(14, 14, 8, '#ffe066'); g.disc(14, 14, 6, '#fff3a0');
+    for (let k = 0; k < 10; k++) { const a = k * Math.PI / 5; g.line(14 + Math.cos(a) * 9, 14 + Math.sin(a) * 9, 14 + Math.cos(a) * 12, 14 + Math.sin(a) * 12, 1.1, '#ffe066'); }
+    cloud(g, 40, 10, 1.4, '#ffffff', '#dbe9f7'); cloud(g, 70, 22, 1.6, '#ffffff', '#dbe9f7'); cloud(g, 88, 8, 1.1, '#ffffff', '#dbe9f7');
+    // rolling meadow + path (no city — festival in the countryside)
+    hill(g, 70, 3, 0.08, 0.5, '#6fcf63', '#95e08a'); hill(g, 80, 2.5, 0.1, 2.1, '#4fb845', '#74d06a');
+    g.rect(0, 88, 99, 99, '#3fa038'); speckle(g, (c) => c === '#3fa038' || c === '#4fb845' || c === '#6fcf63', '#2f8a2e', 0.1, 11);
+    for (let y = 86; y < 100; y++) for (let x = 0; x < 100; x++) { const cx = 50 + Math.sin(y * 0.25) * 6, hw = 4 + (y - 86) * 0.35; if (Math.abs(x - cx) < hw) g.set(x, y, (x + y) % 5 === 0 ? '#c9a46a' : '#e0c48a'); }
+    const fl = [['#ff6b81', '#ffd93d'], ['#b36bff', '#ffd93d'], ['#339af0', '#ffffff'], ['#ff9f1c', '#ffe98a']];
+    const q = rng(17); for (let i = 0; i < 70; i++) { const x = 1 + Math.floor(q() * 98), y = 78 + Math.floor(q() * 18); const c = g.get(x, y); if (c !== '#3fa038' && c !== '#4fb845' && c !== '#6fcf63' && c !== '#95e08a' && c !== '#74d06a') continue; const [a, b] = fl[i % 4]; g.px(x, y, a).px(x, y - 1, b); }
+    // many striped balloons (festival), different sizes and stripe layouts
+    const balloon = (cx, cy, s, c1, c2, c3, basket) => {
+      const l = L(g, cx, cy, s);
+      l.ell(0, 0, 8, 10, c1);
+      for (let k = -2; k <= 2; k++) l.ell(k * 2.6, 0, 1.5, 10, k % 2 === 0 ? c2 : c3);
+      l.poly([[-3.5, 8], [3.5, 8], [2.2, 12], [-2.2, 12]], c1);
+      l.line(-3, 9, -2, 14, 0.4, '#5b3a1e').line(3, 9, 2, 14, 0.4, '#5b3a1e');
+      l.rect(-2.4, 14, 2.4, 17.5, basket || '#8d5a2b');
+      l.disc(0, -8, 1.4, '#ffffff');
+    };
+    balloon(22, 28, 1.15, '#e63946', '#ffd93d', '#f1f5ff', '#8d5a2b');
+    balloon(48, 18, 1.35, '#339af0', '#ffffff', '#ff9f1c', '#6b4423');
+    balloon(74, 32, 1.05, '#51cf66', '#ffd93d', '#e63946', '#8d5a2b');
+    balloon(90, 48, 0.85, '#b36bff', '#ff6fa5', '#ffffff', '#6b4423');
+    balloon(10, 50, 0.75, '#ff9f1c', '#e63946', '#ffd93d', '#8d5a2b');
+    balloon(60, 46, 0.7, '#ff6fa5', '#339af0', '#ffffff', '#6b4423');
+    balloon(36, 42, 0.55, '#ffd93d', '#51cf66', '#e63946', '#8d5a2b');
+    // picnic blanket + tiny crowd dots
+    g.rect(40, 90, 58, 96, '#e63946'); for (let y = 90; y <= 96; y++) for (let x = 40; x <= 58; x++) if ((x + y) % 4 === 0) g.set(x, y, '#f1f5ff');
+    [[28, 92], [32, 94], [64, 92], [68, 93], [20, 95]].forEach(([x, y], i) => { g.disc(x, y, 1.6, ['#ff6fa5', '#339af0', '#ffd93d', '#51cf66', '#b36bff'][i]); g.px(x, y - 2, '#ffe0c2'); });
+    // pennant string across the sky
+    for (let x = 20; x < 88; x += 4) { g.px(x, 8, '#5b3a1e'); g.poly([[x, 8], [x + 2, 8], [x + 1, 12]], ['#e63946', '#ffd93d', '#339af0', '#51cf66'][(x / 4) % 4]); }
+  });
+
+  // ===== 16. Treehouse Village (90) =====
+  add('grid-treehouse-village', 'Treehouse Village', 'nature', 90, 90, (g) => {
+    bands(g, 0, 50, ['#7ec8f5', '#9ad6f8', '#b8e4fb', '#d6f0fd']);
+    g.disc(78, 12, 7, '#ffe066'); g.disc(78, 12, 5, '#fff3a0');
+    cloud(g, 8, 10, 1.3, '#ffffff', '#dbe9f7'); cloud(g, 40, 6, 1.1, '#ffffff', '#dbe9f7');
+    // deep forest floor + layered canopy hills
+    hill(g, 58, 3, 0.09, 0.8, '#2f7a3e', '#4aa352'); hill(g, 68, 2.5, 0.11, 2, '#246b34', '#3d8f48');
+    g.rect(0, 76, 89, 89, '#1f5a2a'); speckle(g, (c) => c === '#1f5a2a' || c === '#246b34' || c === '#2f7a3e', '#174820', 0.14, 21);
+    // three big trunks with canopy discs
+    const trunk = (x, top, bot, w) => { g.rect(x, top, x + w, bot, '#8d5a2b'); g.rect(x + w - 1, top, x + w, bot, '#6b4423'); for (let y = top; y < bot; y += 5) g.rect(x, y, x + w, y, '#a8733a'); };
+    trunk(14, 40, 82, 6); trunk(42, 34, 84, 7); trunk(68, 42, 80, 6);
+    // leafy canopies (different from fairy garden mushrooms / jungle vines)
+    [[17, 36, 16, '#3f9b3a', '#5fc153'], [45, 28, 18, '#2e8b3a', '#58c46a'], [71, 38, 15, '#3f9b3a', '#6cd37d'], [30, 44, 10, '#58c46a', '#7edc8a'], [58, 46, 9, '#2e8b3a', '#58c46a']].forEach(([cx, cy, r, c1, c2]) => {
+      g.disc(cx, cy, r, c1); g.disc(cx - r * 0.4, cy + 2, r * 0.7, c1); g.disc(cx + r * 0.45, cy + 1, r * 0.65, c2); g.disc(cx, cy - r * 0.35, r * 0.55, c2);
+      speckle(g, (c, x, y) => Math.hypot(x - cx, y - cy) < r + 2 && (c === c1 || c === c2), '#2a7a32', 0.08, cx * 3 + cy);
+    });
+    // treehouses: wooden platforms + cabins + roofs (rope bridges between them)
+    const house = (x0, y0, w, h, wall, roof, win) => {
+      g.rect(x0 - 2, y0 + h, x0 + w + 2, y0 + h + 2, '#6b4423'); // platform
+      g.rect(x0, y0, x0 + w, y0 + h, wall); g.rect(x0 + w - 1, y0, x0 + w, y0 + h, '#5c4030');
+      g.poly([[x0 - 2, y0], [x0 + w / 2, y0 - 8], [x0 + w + 2, y0]], roof);
+      g.rect(x0 + 2, y0 + 3, x0 + 4, y0 + 5, win); g.rect(x0 + w - 5, y0 + 3, x0 + w - 3, y0 + 5, win);
+      g.rect(x0 + Math.floor(w / 2) - 1, y0 + h - 5, x0 + Math.floor(w / 2) + 1, y0 + h, '#4a2f1a');
+    };
+    house(8, 48, 16, 12, '#e9c78f', '#e63946', '#9be0ff');
+    house(36, 40, 18, 14, '#f2e1c3', '#ff9f1c', '#9be0ff');
+    house(62, 50, 16, 12, '#e9c78f', '#51cf66', '#9be0ff');
+    // rope bridges
+    const bridge = (x0, y0, x1, y1) => {
+      for (let t = 0; t <= 1.001; t += 0.04) {
+        const x = Math.round(x0 + (x1 - x0) * t), y = Math.round(y0 + (y1 - y0) * t + Math.sin(t * Math.PI) * 3);
+        g.set(x, y, '#6b4423'); g.set(x, y + 1, '#8d5a2b'); if (t > 0.05 && t < 0.95 && Math.floor(t * 20) % 2 === 0) g.set(x, y + 3, '#6b4423');
+      }
+    };
+    bridge(24, 60, 36, 54); bridge(54, 54, 62, 62);
+    // ladders, lanterns, birds, mushrooms on the forest floor
+    for (let y = 62; y < 82; y += 2) { g.px(17, y, '#6b4423'); g.px(19, y, '#6b4423'); g.px(18, y + 1, '#8d5a2b'); }
+    for (let y = 56; y < 78; y += 2) { g.px(45, y, '#6b4423'); g.px(47, y, '#6b4423'); }
+    [[14, 46], [48, 38], [70, 48]].forEach(([x, y]) => { g.line(x, y, x, y - 4, 1, '#5b3a1e'); g.disc(x, y - 5, 1.8, '#ffd93d'); g.disc(x, y - 5, 1, '#ff9f1c'); });
+    [[10, 84, '#e63946'], [28, 86, '#ffd93d'], [55, 85, '#b36bff'], [80, 84, '#339af0']].forEach(([x, y, c]) => { g.ell(x, y, 3, 2.2, c); g.rect(x - 1, y, x, y + 4, '#8d5a2b'); });
+    const bird = (x, y, c) => { g.px(x, y, c).px(x + 1, y - 1, c).px(x + 2, y, c).px(x + 1, y, '#22223b'); };
+    bird(24, 22, '#e63946'); bird(56, 16, '#339af0'); bird(82, 28, '#ff9f1c');
+    // stream at bottom edge
+    for (let y = 86; y < 90; y++) for (let x = 0; x < 90; x++) { const cx = 45 + Math.sin(x * 0.15) * 8; if (Math.abs(y - 87) < 2 && Math.abs(x - cx) < 28 + (y - 86)) g.set(x, y, (x + y) % 6 === 0 ? '#bfe6ff' : '#2f9be0'); }
+  });
 }
