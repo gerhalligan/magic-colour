@@ -1,3 +1,10 @@
+## 1.10.0 — 2026-10-05
+Morning improve-and-add-pictures run.
+- **6 new pictures**: Witch's Cottage, Koala Treetop, Monster Truck and Triceratops Falls (Shapes, hard: 203, 130, 310 and 238 regions — about twice as many areas as earlier hard pictures); **Pumpkin Patch Night** (Epic Grid 100×100) and **Arctic Lights** (Epic Grid 112×112).
+- **More areas from AI ink-outline art**: new opt-in picture options `--ink-split` (fields that the ink lines separate stay separate regions: every shingle, pumpkin and leaf), `--size` (bigger working size for detailed wide art), `--ink-l` and `--merge-de`; existing pictures are unchanged.
+- **Gentle haptic tick** on Android when a spot is coloured (a little double tick when a colour is finished, a short happy buzz on the celebration; throttled while brushing). It follows the sound switch, so muting also stops the buzzing; phones without vibration simply ignore it. Offline, no network.
+- Mode rules unchanged: default remains **One by one**; Magic still needs a numbered region tap; Brush defaults to the smallest size and only paints matching numbers under the stroke.
+
 ## 1.9.0 — 2026-10-04
 Daytime improve-and-add-pictures run.
 - **6 new pictures**: Gingerbread House, Safari Jeep and Flying Carpet (Shapes, hard); Firework Night (Shapes, medium — Hard colour count could not stay under the reconstruction limit); **Underwater Palace** (Epic Grid 96×96) and **Moon Base** (Epic Grid 104×104).

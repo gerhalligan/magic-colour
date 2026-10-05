@@ -20,7 +20,7 @@ for (const m of manifest) {
   if (m.kind === 'grid') continue; // Pixel Grid pictures are built by tools/pixel-grid.mjs
   if (only.length && !only.includes(m.id)) continue;
   const band = BANDS[m.diff];
-  const { rgba, w, h } = await loadFlat(path.join(root, m.src), band.size, m.bg || [255, 255, 255]);
+  const { rgba, w, h } = await loadFlat(path.join(root, m.src), (m.opts && m.opts.size) || band.size, m.bg || [255, 255, 255]); // opts.size: bigger working size for detailed (wide) art
   const { puzzle, lab } = buildPuzzle(rgba, w, h, m, m.opts || {});
   const problems = validatePuzzle(puzzle);
   const th = await makeThumb(puzzle, lab);

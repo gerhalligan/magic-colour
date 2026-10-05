@@ -330,6 +330,7 @@ function handle(res, ctx = {}) {
       const step = res.magic ? Math.min(70, 650 / Math.max(1, ids.length)) : 0;
       ids.forEach((id, i) => { const run = () => { view.paintRegion(id); view.burst(id, col, res.magic ? 3 : 6); }; if (i === 0 || !step) run(); else later(run, i * step); });
       if (res.magic) audio.magic(res.colour, ids.length); else audio.fill(res.colour);
+      audio.haptic(res.colourDone ? 'done' : res.magic ? 'magic' : 'fill');
       if (res.colourDone) { audio.done(); const b = $('#palette').children[res.colour - 1]; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
       save();
       if (res.complete) later(() => finish(false), ids.length * step + 350);
@@ -368,6 +369,7 @@ function onBrush(ids, info) {
   if (res.ids.length) {
     bs.painted += res.ids.length; view.paintRegions(res.ids); view.sparkle(res.ids, P.palette[sel - 1]);
     if (now - lastSparkle > 120) { lastSparkle = now; audio.sparkle(sel, res.ids.length); }
+    audio.haptic(res.colourDone ? 'done' : 'brush');
     if (res.colourDone) { audio.done(); const b = $('#palette').children[sel - 1]; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
     updatePalette(); updateProgress(); updateUndo();
     if (now - lastSave > 2500) { lastSave = now; save(); }
@@ -421,7 +423,7 @@ function finish(restored) {
   const P = cur.pic; store.markDone(P.id); save();
   const award = store.earnSticker(P.cat);
   if (restored) { view.celeb = null; showWin(true, award); return; }
-  view.celebrate(); audio.win(); if (stopConfetti) stopConfetti(); stopConfetti = confetti($('#confetti'));
+  view.celebrate(); audio.win(); audio.haptic('win'); if (stopConfetti) stopConfetti(); stopConfetti = confetti($('#confetti'));
   if (P.diff === 'epic') toast('You did it! \u{1F3C6} Epic finished!', 2800);
   celebTimer = setTimeout(() => showWin(false, award), 2100);
 }

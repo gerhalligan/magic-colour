@@ -267,6 +267,26 @@ for (const [name, vp, touch, dsf] of VIEWPORTS) {
     await page.click('#grid .pic[data-id="happy-fish"]'); await page.waitForSelector('#play.on');
   });
 
+  await test(`${name}: gentle haptic tick on a fill (where supported), none when the sound is off`, async () => {
+    const r = await page.evaluate(() => {
+      const m = window.__MC, g = m.cur.game, P = m.cur.pic;
+      window.__vib = [];
+      Object.defineProperty(navigator, 'vibrate', { configurable: true, writable: true, value: (p) => { window.__vib.push(p); return true; } });
+      const wasSound = m.settings.sound;
+      if (!m.settings.sound) document.getElementById('pSound').click();
+      const fillOne = () => { const id = P.regions.findIndex((x, i) => x[0] > 0 && !g.filled[i] && g.remaining(x[0]) > 1); g.selectColour(P.regions[id][0]); m.handle(g.tapRegion(id), { id }); return id; };
+      fillOne(); const on = window.__vib.slice();
+      document.getElementById('pSound').click(); // mute
+      const before = window.__vib.length; fillOne(); const muted = window.__vib.length - before;
+      document.getElementById('pSound').click(); // sound back on
+      return { on, muted, sound: m.settings.sound, wasSound };
+    });
+    assert.ok(r.on.length >= 1, 'vibrate called on fill');
+    assert.ok(r.on.every((p) => (Array.isArray(p) ? p.reduce((a, b) => a + b, 0) : p) <= 120), 'short, gentle pattern ' + JSON.stringify(r.on));
+    assert.equal(r.muted, 0, 'no vibration while muted');
+    assert.equal(r.sound, true, 'sound back on');
+  });
+
   await test(`${name}: finishing a picture -> celebration, gallery entry, PNG save`, async () => {
     await page.click('.mode[data-mode="magic"]');
     const K = await page.evaluate(() => window.__MC.cur.pic.palette.length);
@@ -283,6 +303,7 @@ for (const [name, vp, touch, dsf] of VIEWPORTS) {
     await page.waitForSelector('#modal.on', { timeout: 6000 }); await page.waitForTimeout(500);
     await page.screenshot({ path: `${SHOTS}/${name}-9-win.png` });
     const done = await page.evaluate(() => JSON.parse(localStorage.getItem('mc1.done'))); assert.ok(done['happy-fish']);
+    assert.ok(await page.evaluate(() => (window.__vib || []).some((p) => Array.isArray(p) && p.length === 5)), 'celebration buzz on finish');
     const stick = await page.evaluate(() => {
       const m = window.__MC;
       const s = JSON.parse(localStorage.getItem('mc1.stickers') || '{}');

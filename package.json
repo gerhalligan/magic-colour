@@ -1,6 +1,6 @@
 {
   "name": "magic-colour",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "description": "Ad-free colour-by-numbers for kids: Magic, One by one and Paint Brush modes, Pixel Grid pictures, offline, single-file build",
   "main": "index.js",
   "scripts": {

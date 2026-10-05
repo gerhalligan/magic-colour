@@ -66,17 +66,18 @@ export function quantize(rgba, w, h, { k = 8, mergeDE = 10, iters = 12 } = {}) {
 }
 
 // ---------- connected components (4-connectivity, same value) ----------
-export function components(idx, w, h) {
+export function components(idx, w, h, seg = null) { // seg (optional Int32Array): pixels only connect when their seg ids match too (ink-separated fields)
   const n = w * h, lab = new Int32Array(n).fill(-1), stack = new Int32Array(n); let nc = 0;
+  const same = seg ? (p, q, v, g) => idx[q] === v && seg[q] === g : (p, q, v) => idx[q] === v;
   for (let s = 0; s < n; s++) {
     if (lab[s] >= 0) continue;
-    const v = idx[s]; let sp = 0; stack[sp++] = s; lab[s] = nc;
+    const v = idx[s], g = seg ? seg[s] : 0; let sp = 0; stack[sp++] = s; lab[s] = nc;
     while (sp) {
       const p = stack[--sp], x = p % w, y = (p / w) | 0;
-      if (x > 0 && lab[p - 1] < 0 && idx[p - 1] === v) { lab[p - 1] = nc; stack[sp++] = p - 1; }
-      if (x < w - 1 && lab[p + 1] < 0 && idx[p + 1] === v) { lab[p + 1] = nc; stack[sp++] = p + 1; }
-      if (y > 0 && lab[p - w] < 0 && idx[p - w] === v) { lab[p - w] = nc; stack[sp++] = p - w; }
-      if (y < h - 1 && lab[p + w] < 0 && idx[p + w] === v) { lab[p + w] = nc; stack[sp++] = p + w; }
+      if (x > 0 && lab[p - 1] < 0 && same(p, p - 1, v, g)) { lab[p - 1] = nc; stack[sp++] = p - 1; }
+      if (x < w - 1 && lab[p + 1] < 0 && same(p, p + 1, v, g)) { lab[p + 1] = nc; stack[sp++] = p + 1; }
+      if (y > 0 && lab[p - w] < 0 && same(p, p - w, v, g)) { lab[p - w] = nc; stack[sp++] = p - w; }
+      if (y < h - 1 && lab[p + w] < 0 && same(p, p + w, v, g)) { lab[p + w] = nc; stack[sp++] = p + w; }
     }
     nc++;
   }
@@ -145,15 +146,16 @@ export function adjacency(lab, nc, w, h) {
 }
 
 /** Re-assign pixels flagged -1 to the nearest known pixel value (multi-source BFS). */
-export function fillUnknown(idx, w, h) {
+export function fillUnknown(idx, w, h, seg = null) { // seg (optional): copied along with the colour
   const n = w * h, q = new Int32Array(n); let qh = 0, qt = 0;
   for (let p = 0; p < n; p++) if (idx[p] !== 255) q[qt++] = p;
+  const put = (t, p) => { idx[t] = idx[p]; if (seg) seg[t] = seg[p]; q[qt++] = t; };
   while (qh < qt) {
-    const p = q[qh++], x = p % w, y = (p / w) | 0, v = idx[p];
-    if (x > 0 && idx[p - 1] === 255) { idx[p - 1] = v; q[qt++] = p - 1; }
-    if (x < w - 1 && idx[p + 1] === 255) { idx[p + 1] = v; q[qt++] = p + 1; }
-    if (y > 0 && idx[p - w] === 255) { idx[p - w] = v; q[qt++] = p - w; }
-    if (y < h - 1 && idx[p + w] === 255) { idx[p + w] = v; q[qt++] = p + w; }
+    const p = q[qh++], x = p % w, y = (p / w) | 0;
+    if (x > 0 && idx[p - 1] === 255) put(p - 1, p);
+    if (x < w - 1 && idx[p + 1] === 255) put(p + 1, p);
+    if (y > 0 && idx[p - w] === 255) put(p - w, p);
+    if (y < h - 1 && idx[p + w] === 255) put(p + w, p);
   }
 }
 
@@ -170,20 +172,20 @@ class Heap { // min-heap on [key, id]
  * 2. regions smaller than minArea or with a too small inscribed circle are merged into the best neighbour.
  * Returns {idx, lab, nc} (idx = colour index per pixel, lab = region id per pixel).
  */
-export function cleanRegions(idx0, w, h, labPalette, { minArea = 150, minR = 4, thinR = 2.2, passes = 8 } = {}) {
-  const idx = Uint8Array.from(idx0);
+export function cleanRegions(idx0, w, h, labPalette, { minArea = 150, minR = 4, thinR = 2.2, passes = 8, seg: seg0 = null } = {}) {
+  const idx = Uint8Array.from(idx0), seg = seg0 ? Int32Array.from(seg0) : null; // seg: optional field ids (same colour, different seg = separate regions)
   let lab, nc;
   for (let pass = 0; pass < 3; pass++) { // thin pass
-    ({ lab, n: nc } = components(idx, w, h));
+    ({ lab, n: nc } = components(idx, w, h, seg));
     const dist = labelDistance(lab, w, h), st = regionStats(lab, nc, w, h, dist);
     let any = false;
     for (let p = 0; p < w * h; p++) if (st.maxR[lab[p]] < thinR) { idx[p] = 255; any = true; }
     if (!any) break;
     // keep at least something known
-    fillUnknown(idx, w, h);
+    fillUnknown(idx, w, h, seg);
   }
   for (let pass = 0; pass < passes; pass++) {
-    ({ lab, n: nc } = components(idx, w, h));
+    ({ lab, n: nc } = components(idx, w, h, seg));
     const dist = labelDistance(lab, w, h), st = regionStats(lab, nc, w, h, dist);
     const colorOf = new Int32Array(nc); for (let p = 0; p < w * h; p++) colorOf[lab[p]] = idx[p];
     const small = []; for (let r = 0; r < nc; r++) if (st.area[r] < minArea || st.maxR[r] < minR) small.push(r);
@@ -204,9 +206,10 @@ export function cleanRegions(idx0, w, h, labPalette, { minArea = 150, minR = 4, 
       adj[s].delete(r); adj[r] = new Map();
       if (area[s] < minArea || mr[s] < minR) heap.push(Math.min(area[s], mr[s] * 40), s);
     }
+    if (seg) { const segOf = new Int32Array(nc); for (let p = 0; p < w * h; p++) segOf[lab[p]] = seg[p]; for (let p = 0; p < w * h; p++) seg[p] = segOf[find(lab[p])]; }
     for (let p = 0; p < w * h; p++) idx[p] = color[find(lab[p])];
   }
-  ({ lab, n: nc } = components(idx, w, h));
+  ({ lab, n: nc } = components(idx, w, h, seg));
   return { idx, lab, nc };
 }
 

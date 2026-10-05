@@ -1160,5 +1160,93 @@
   "kind": "grid",
   "src": "art/pixel/grid-moon-base.txt",
   "added": "2026-10-04"
+ },
+ {
+  "id": "witch-cottage",
+  "name": "Witch's Cottage",
+  "cat": "nature",
+  "diff": "hard",
+  "src": "art/source/witch-cottage.jpg",
+  "opts": {
+   "k": 22,
+   "minArea": 50,
+   "minR": 4.5,
+   "ink": true,
+   "inkSplit": true,
+   "inkL": 24,
+   "mergeDE": 10,
+   "size": 896
+  },
+  "added": "2026-10-05"
+ },
+ {
+  "id": "koala-treetop",
+  "name": "Koala Treetop",
+  "cat": "animals",
+  "diff": "hard",
+  "src": "art/source/koala-treetop.jpg",
+  "opts": {
+   "k": 20,
+   "minArea": 50,
+   "minR": 4.5,
+   "ink": true,
+   "inkSplit": true,
+   "mergeDE": 10,
+   "size": 896
+  },
+  "added": "2026-10-05"
+ },
+ {
+  "id": "monster-truck",
+  "name": "Monster Truck",
+  "cat": "vehicles",
+  "diff": "hard",
+  "src": "art/source/monster-truck.jpg",
+  "opts": {
+   "k": 20,
+   "minArea": 60,
+   "minR": 4.5,
+   "ink": true,
+   "inkSplit": true,
+   "mergeDE": 10,
+   "size": 896
+  },
+  "added": "2026-10-05"
+ },
+ {
+  "id": "triceratops-falls",
+  "name": "Triceratops Falls",
+  "cat": "dinosaurs",
+  "diff": "hard",
+  "src": "art/source/triceratops-falls.jpg",
+  "opts": {
+   "k": 20,
+   "minArea": 50,
+   "minR": 4.5,
+   "ink": true,
+   "inkSplit": true,
+   "inkL": 40,
+   "mergeDE": 10,
+   "size": 896
+  },
+  "added": "2026-10-05"
+ },
+ {
+  "id": "grid-pumpkin-night",
+  "name": "Pumpkin Patch Night",
+  "cat": "nature",
+  "diff": "epic",
+  "kind": "grid",
+  "src": "art/pixel/grid-pumpkin-night.txt",
+  "added": "2026-10-05"
+ },
+ {
+  "id": "grid-arctic-lights",
+  "name": "Arctic Lights",
+  "cat": "animals",
+  "diff": "epic",
+  "kind": "grid",
+  "src": "art/pixel/grid-arctic-lights.txt",
+  "added": "2026-10-05"
  }
 ]

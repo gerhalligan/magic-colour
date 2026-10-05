@@ -720,4 +720,116 @@ export function bigDesigns(add0) {
     g.rect(92, 24, 96, 28, '#ced4da'); g.rect(90, 25, 92, 27, '#339af0'); g.rect(96, 25, 98, 27, '#339af0'); g.disc(94, 26, 1.2, '#e63946');
   });
 
+  // ===== 21. Pumpkin Patch Night (100) — a friendly haunted house on a hill above a jack-o'-lantern patch =====
+  add('grid-pumpkin-night', 'Pumpkin Patch Night', 'nature', 100, 100, (g) => {
+    bands(g, 0, 66, ['#140c2e', '#1f1446', '#2d1b5e', '#3f2a78', '#5a3a8f', '#7b4fa3']);
+    const r = rng(83); for (let i = 0; i < 70; i++) { const x = Math.floor(r() * 100), y = Math.floor(r() * 42); g.set(x, y, i % 5 ? '#f1f5ff' : '#ffd93d'); }
+    star4(g, 44, 8, '#ffd93d', '#fff3b0'); star4(g, 94, 6, '#f1f5ff', '#cfd8ff'); star4(g, 58, 22, '#ffd93d', '#fff3b0');
+    // big harvest moon with craters
+    g.disc(22, 20, 12, '#ffe8a3'); g.disc(18, 16, 2.6, '#f5cf73').disc(27, 24, 3.2, '#f5cf73').disc(25, 13, 1.6, '#f5cf73').disc(15, 25, 1.8, '#f5cf73');
+    // bats flying across the moon and sky
+    const bat = (x, y, s) => { const l = L(g, x, y, s); l.ell(0, 0, 1.3, 1.6, '#120a1f').poly([[-1, -0.6], [-4.5, -2.4], [-3.6, 0], [-5.4, 0.6], [-1, 1]], '#120a1f').poly([[1, -0.6], [4.5, -2.4], [3.6, 0], [5.4, 0.6], [1, 1]], '#120a1f').px(0, -2, '#120a1f'); };
+    bat(20, 18, 1.1); bat(34, 10, 0.9); bat(50, 16, 0.8); bat(10, 32, 0.8);
+    // rolling hills: far purple, then the green hill the house sits on
+    hill(g, 56, 2.5, 0.07, 1.2, '#2b2350', '#3b3168');
+    g.ell(76, 66, 36, 16, '#2f6b3a'); g.ell(76, 64, 34, 13, '#3b8a46');
+    // haunted (but friendly) house
+    const wall = '#9775c9', wshade = '#7451a8', roof = '#8c2f45', glow = '#ffd43b', frame = '#ff922b';
+    g.rect(66, 36, 90, 58, wall); g.rect(87, 36, 90, 58, wshade);
+    g.poly([[62, 38], [72, 20], [80, 25], [94, 38]], roof);
+    g.recolour((x, y, c) => c === roof && y > 22 && y % 3 === 0 && (x + y) % 5 !== 0, '#b5485f'); // shingle rows
+    g.rect(84, 20, 87, 30, '#7a4a3a'); g.rect(83, 19, 88, 20, '#5c3a2e');
+    g.rect(68, 24, 76, 37, wall); g.rect(75, 24, 76, 37, wshade); g.poly([[66, 25], [72, 9], [78, 25]], roof);
+    g.disc(72, 29, 2.4, frame); g.disc(72, 29, 1.6, glow);
+    for (const [x0, y0] of [[69, 41], [82, 41]]) { g.rect(x0, y0, x0 + 5, y0 + 6, frame); g.rect(x0 + 1, y0 + 1, x0 + 4, y0 + 5, glow); g.rect(x0 + 1, y0 + 3, x0 + 4, y0 + 3, roof); g.rect(x0 + 2.5, y0 + 1, x0 + 2.5, y0 + 5, roof); }
+    g.rect(76, 48, 80, 58, '#5c3a21'); g.ell(78, 48, 2.5, 2.2, '#5c3a21'); g.px(79, 53, glow);
+    g.line(81.5, 47, 81.5, 49, 0.6, '#22223b'); g.disc(81.5, 50.5, 1.2, glow);
+    // tiny curly flag on the tower + a smiling ghost waving hello
+    g.line(72, 9, 72, 4, 0.8, '#5c3a2e'); g.poly([[72.4, 4], [77, 5.4], [72.4, 7]], '#ff6fa5');
+    const ghost = L(g, 54, 38, 1); ghost.ell(0, 0, 4.4, 5, '#f8f9fa').rect(-4.4, 0, 4.4, 5, '#f8f9fa').disc(-3.2, 5.4, 1.2, '#f8f9fa').disc(0, 5.6, 1.2, '#f8f9fa').disc(3.2, 5.4, 1.2, '#f8f9fa').disc(5.6, 1, 1.3, '#f8f9fa');
+    ghost.px(-2, -1, '#22223b').px(1, -1, '#22223b').px(-3, 1, '#ffb3c7').px(2, 1, '#ffb3c7').rect(-1, 2, 0, 2, '#22223b');
+    // twisty tree on the left with an owl
+    const bark = '#5c3a21', bark2 = '#7a4e2d';
+    L(g, 0, 0, 1).chain([[12, 74, 3.2], [12, 62, 2.6], [10, 52, 2], [13, 44, 1.6], [11, 38, 1.1]], bark);
+    g.line(12, 56, 24, 48, 1.4, bark).line(24, 48, 28, 50, 1, bark).line(11, 50, 2, 44, 1.2, bark).line(13, 44, 20, 38, 0.9, bark).line(2, 44, 1, 40, 0.8, bark);
+    g.line(13, 70, 13, 58, 0.8, bark2);
+    const owl = L(g, 20, 47, 1); owl.ell(0, 0, 3, 3.6, '#a0653a').ell(0, 1, 1.8, 2.2, '#e0b07a').disc(-1.3, -1.6, 1.2, '#ffe066').disc(1.3, -1.6, 1.2, '#ffe066').px(-2, -2, '#22223b').px(1, -2, '#22223b').px(0, -1, '#ff922b').poly([[-3, -3], [-2.2, -5], [-1, -3.2]], '#a0653a').poly([[3, -3], [2.2, -5], [1, -3.2]], '#a0653a');
+    // the pumpkin patch field
+    for (let y = 66; y < 100; y++) for (let x = 0; x < 100; x++) { const top = 68 + Math.sin(x * 0.09 + 0.5) * 1.6; if (y >= top && !(x > 46 && y < 70)) g.set(x, y, y < top + 1 ? '#4c9a52' : '#2f6b3a'); }
+    speckle(g, (c) => c === '#2f6b3a', '#285c32', 0.14, 29);
+    // winding path from the door
+    for (let y = 58; y < 100; y++) { const cx = 78 - (y - 58) * 0.35 + Math.sin(y * 0.18) * 4, hw = 2 + (y - 58) * 0.11; for (let x = Math.floor(cx - hw); x <= Math.ceil(cx + hw); x++) g.set(x, y, (x + y) % 7 === 0 ? '#9c7a5b' : '#c49a6c'); }
+    // wooden fence
+    for (let x = 1; x < 48; x += 5) g.rect(x, 61, x + 1, 69, '#8d6e63');
+    g.rect(0, 63, 48, 63, '#a1887f'); g.rect(0, 66, 48, 66, '#a1887f');
+    // curly vines
+    for (let i = 0; i < 6; i++) { const y0 = 74 + i * 4.5; for (let x = 0; x < 100; x++) if (Math.abs(Math.sin(x * 0.21 + i) * 1.4 + y0 - (y0 + 0.5)) < 0.55 && (x + i) % 9 < 6 && g.get(x, Math.round(y0 + Math.sin(x * 0.21 + i) * 1.4)) === '#2f6b3a') g.set(x, Math.round(y0 + Math.sin(x * 0.21 + i) * 1.4), '#5cb85c'); }
+    // pumpkins (big ones are smiling jack-o'-lanterns)
+    const pumpkin = (x, y, rr, face, body = '#ff7f11') => {
+      g.ell(x, y, rr * 1.3, rr, body); g.ell(x, y, rr * 0.55, rr * 0.96, '#ff9a3c');
+      g.line(x - rr * 0.62, y - rr * 0.8, x - rr * 0.62, y + rr * 0.8, 0.6, '#d9480f'); g.line(x + rr * 0.62, y - rr * 0.8, x + rr * 0.62, y + rr * 0.8, 0.6, '#d9480f');
+      g.rect(x - 0.6, y - rr - 2, x + 0.6, y - rr + 0.4, '#5c940d'); g.ell(x + 2, y - rr - 0.8, 1.8, 1, '#51cf66', -20);
+      if (face) {
+        const e = rr * 0.42; g.poly([[x - e - 1.4, y - 0.6], [x - e, y - 3], [x - e + 1.4, y - 0.6]], '#ffe066'); g.poly([[x + e - 1.4, y - 0.6], [x + e, y - 3], [x + e + 1.4, y - 0.6]], '#ffe066');
+        g.poly([[x - rr * 0.75, y + 1], [x + rr * 0.75, y + 1], [x + rr * 0.4, y + rr * 0.6], [x - rr * 0.4, y + rr * 0.6]], '#ffe066'); g.rect(x - 0.5, y + 1, x + 0.5, y + 1.6, body);
+      }
+    };
+    pumpkin(8, 75, 3.6, false); pumpkin(36, 75, 4.2, false, '#ffa94d'); pumpkin(62, 77, 4, false); pumpkin(93, 76, 4.4, false, '#ffa94d');
+    pumpkin(20, 87, 7, true); pumpkin(50, 91, 6.4, true); pumpkin(82, 89, 7.2, true);
+    pumpkin(4, 95, 3, false, '#ffa94d'); pumpkin(35, 97, 3, false); pumpkin(66, 97, 3, false, '#ffa94d'); pumpkin(97, 97, 2.8, false);
+    // fireflies
+    [[30, 58], [40, 52], [58, 60], [92, 54], [6, 58], [46, 44]].forEach(([x, y]) => { g.px(x, y, '#d8f5a2'); });
+  });
+
+  // ===== 22. Arctic Lights (112) — northern lights over the sea ice, polar bears, an igloo and a whale =====
+  add('grid-arctic-lights', 'Arctic Lights', 'animals', 112, 112, (g) => {
+    bands(g, 0, 64, ['#06142e', '#0b1f45', '#10305e', '#173f73', '#1f4f86', '#2b5f99']);
+    const r = rng(97); for (let i = 0; i < 80; i++) { const x = Math.floor(r() * 112), y = Math.floor(r() * 44); g.set(x, y, i % 6 ? '#f1f5ff' : '#fff3b0'); }
+    star4(g, 10, 6, '#f1f5ff', '#cfd8ff'); star4(g, 100, 10, '#fff3b0', '#ffe8a3'); star4(g, 60, 4, '#f1f5ff', '#cfd8ff');
+    // northern lights: three waving ribbons, each fading from pink through green
+    const ribbon = (base, amp, f, ph, cols, len) => { for (let x = 0; x < 112; x++) { const top = Math.round(base + amp * Math.sin(x * f + ph) + amp * 0.5 * Math.sin(x * f * 2.7 + ph)); const n = len + Math.round(3 * Math.sin(x * 0.5 + ph)); for (let k = 0; k < n; k++) { const t = k / n; let i = Math.min(cols.length - 1, Math.floor(t * cols.length)); if (t * cols.length - i > 0.7 && (x + k) % 2 === 0 && i < cols.length - 1) i++; if (k > n - 3 && (x + k) % 2) continue; g.set(x, top + k, cols[i]); } } };
+    ribbon(8, 4, 0.07, 0.3, ['#da77f2', '#b197fc', '#63e6be', '#20c997'], 10);
+    ribbon(20, 5, 0.055, 2.1, ['#e599f7', '#96f2d7', '#38d9a9', '#12b886'], 13);
+    ribbon(34, 3, 0.09, 4.0, ['#b197fc', '#63e6be', '#20c997'], 8);
+    // icy mountains on the horizon
+    const mtn = (pts, c, sh) => { g.poly(pts, c); const [a, b, d] = pts; g.poly([b, d, [(b[0] + d[0]) / 2, d[1]]], sh); };
+    mtn([[-4, 64], [14, 42], [34, 64]], '#e7f5ff', '#a5d8ff'); mtn([[22, 64], [42, 48], [60, 64]], '#d0ebff', '#94c6ef');
+    mtn([[70, 64], [92, 38], [116, 64]], '#e7f5ff', '#a5d8ff'); mtn([[56, 64], [70, 52], [84, 64]], '#d0ebff', '#94c6ef');
+    g.poly([[14, 42], [11, 46], [14, 45], [17, 46]], '#ffffff'); g.poly([[92, 38], [88, 43], [92, 42], [96, 43]], '#ffffff');
+    // the sea with ripples and the lights reflected
+    g.rect(0, 64, 111, 84, '#1864ab');
+    for (let y = 65; y < 84; y += 3) for (let x = (y * 7) % 11; x < 112; x += 11) g.rect(x, y, x + 3, y, '#339af0');
+    for (let y = 66; y < 80; y += 2) for (let x = 40 + (y % 4); x < 70; x += 6) g.set(x, y, '#38d9a9');
+    // floating ice floes, one with a resting seal
+    const floe = (x, y, rx, ry) => { g.ell(x, y + 1, rx, ry, '#a5d8ff'); g.ell(x, y, rx, ry, '#f8f9fa'); };
+    floe(14, 70, 8, 2.4); floe(88, 72, 10, 2.6); floe(56, 78, 6, 2);
+    g.ell(86, 69, 5, 2, '#868e96'); g.disc(91, 68, 1.8, '#868e96'); g.px(92, 67, '#22223b'); g.poly([[80, 69], [78, 67], [78, 71]], '#868e96');
+    // a whale blowing a spout
+    g.ell(34, 75, 8, 3, '#22394f'); g.ell(34, 76.5, 6, 1.4, '#e7f5ff'); g.poly([[26, 74], [22, 71], [23, 76]], '#22394f'); g.px(38, 74, '#f8f9fa');
+    g.line(36, 72, 35, 67, 0.8, '#d0ebff').disc(33.5, 66, 1.4, '#d0ebff').disc(37, 66, 1.4, '#d0ebff');
+    // the ice shelf in front
+    for (let y = 82; y < 112; y++) for (let x = 0; x < 112; x++) { const top = 85 + Math.sin(x * 0.11) * 2 + Math.sin(x * 0.31 + 1) * 0.8; if (y >= top) g.set(x, y, y < top + 1.5 ? '#a5d8ff' : '#f1f8ff'); }
+    for (let i = 0; i < 7; i++) { const x0 = 6 + i * 16, y0 = 92 + (i % 3) * 5; g.line(x0, y0, x0 + 6, y0 + 2, 0.7, '#d0ebff').line(x0 + 6, y0 + 2, x0 + 9, y0 + 1, 0.7, '#d0ebff'); }
+    // polar bear mum and cub
+    const fur = '#fff4e0', furS = '#e6d5b8';
+    const bear = (x, y, s, flip) => { const l = L(g, x, y, s, flip);
+      l.ell(0, 0, 11, 6.5, fur).ell(0, 3, 10, 3, furS).rect(-8, 2, -5, 9, fur).rect(-3, 3, 0, 9, furS).rect(4, 2, 7, 9, fur).rect(-1, 3, 2, 9, furS);
+      l.ell(11, -3, 5, 4.2, fur).ell(15, -2, 2.6, 2, fur).disc(8.5, -6.6, 1.5, fur).disc(8.5, -6.6, 0.7, furS);
+      l.px(17, -3, '#22223b').px(12, -5, '#22223b').ell(-11, -1, 1.6, 1.4, fur); };
+    bear(30, 96, 1, false); bear(56, 100, 0.55, false);
+    // igloo (snow blocks with blue joints)
+    const inDome = (a, b) => (a - 90) ** 2 + (b - 98) ** 2 <= 13 * 13 && b <= 99;
+    g.paint(inDome, '#ffffff'); g.paint((a, b) => inDome(a, b) && a > 96, '#c5e3fa');
+    for (let k = 0; k < 4; k++) { const y = 87 + k * 3; g.paint((a, b) => inDome(a, b) && Math.floor(b) === y, '#74c0fc'); }
+    for (let k = 0; k < 4; k++) for (let j = 0; j < 7; j++) { const y = 88 + k * 3, x = 78 + j * 4 + (k % 2) * 2; if (inDome(x + 0.5, y + 0.5)) g.rect(x, y, x, y + 1, '#74c0fc'); }
+    g.paint((a, b) => (a - 90) ** 2 + (b - 98) ** 2 <= 13.8 * 13.8 && !inDome(a, b) && b <= 99, '#74c0fc');
+    g.ell(90, 98, 4.2, 5.2, '#1c3a5e'); g.rect(86, 98, 94, 99, '#1c3a5e');
+    // arctic fox, lantern and falling snow
+    const foxDraw = (l, c, c2) => l.ell(0, 0, 4, 2.4, c).disc(4, -2, 2, c).poly([[3, -3.4], [3.6, -6], [4.6, -3.6]], c).poly([[5, -3.4], [6, -5.6], [6.2, -3]], c).chain([[-4, 0, 1.4], [-7, -2, 1.8], [-8, -5, 1.3]], c2);
+    foxDraw(L(g, 70.8, 104.8, 0.8), '#adb5bd', '#adb5bd'); foxDraw(L(g, 70, 104, 0.8), '#f8f9fa', '#dee2e6');
+    const fox = L(g, 70, 104, 0.8); fox.ell(0, 0, 4, 2.4, '#f8f9fa').disc(4, -2, 2, '#f8f9fa').poly([[3, -3.4], [3.6, -6], [4.6, -3.6]], '#f8f9fa').poly([[5, -3.4], [6, -5.6], [6.2, -3]], '#f8f9fa').chain([[-4, 0, 1.4], [-7, -2, 1.8], [-8, -5, 1.3]], '#dee2e6').px(5, -2, '#22223b').px(6, -1, '#22223b');
+    g.line(104, 104, 104, 92, 0.8, '#5c3a21'); g.rect(102, 90, 106, 93, '#ffd43b'); g.rect(102, 89, 106, 89, '#5c3a21');
+    const q = rng(31); for (let i = 0; i < 60; i++) { const x = Math.floor(q() * 112), y = Math.floor(q() * 80); if (g.get(x, y) && g.get(x, y) !== '#f8f9fa') g.set(x, y, '#ffffff'); }
+  });
+
 }

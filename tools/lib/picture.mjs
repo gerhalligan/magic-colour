@@ -22,14 +22,20 @@ export function buildPuzzle(rgba, w, h, meta, opts = {}) {
   const k = opts.k || band.k;
   let minArea = opts.minArea || band.minArea; const minR = opts.minR || band.minR;
   const [rmin, rmax] = opts.regions || band.regions;
-  const q = quantize(rgba, w, h, { k, mergeDE: opts.mergeDE || 14 });
+  const q = quantize(rgba, w, h, { k, mergeDE: opts.mergeDE || 14 }); let seg = null;
   if (opts.ink) { // AI / scanned line-art: dark outline pixels are not a colour to paint - dissolve them into the fields they separate
     const ink = q.labPalette.map((l) => l[0] < (opts.inkL || 30));
-    if (ink.some(Boolean) && !ink.every(Boolean)) { for (let p = 0; p < w * h; p++) if (ink[q.idx[p]]) q.idx[p] = 255; fillUnknown(q.idx, w, h); }
+    if (ink.some(Boolean) && !ink.every(Boolean)) {
+      for (let p = 0; p < w * h; p++) if (ink[q.idx[p]]) q.idx[p] = 255;
+      if (opts.inkSplit) { // keep fields that the ink lines separate as separate regions (more, smaller areas: e.g. every shingle / pumpkin rib)
+        const known = components(q.idx, w, h).lab; seg = new Int32Array(w * h); for (let p = 0; p < w * h; p++) seg[p] = q.idx[p] === 255 ? -1 : known[p];
+      }
+      fillUnknown(q.idx, w, h, seg);
+    }
   }
   let res, tries = 0;
   for (;;) {
-    res = cleanRegions(q.idx, w, h, q.labPalette, { minArea, minR });
+    res = cleanRegions(q.idx, w, h, q.labPalette, { minArea, minR, seg });
     if (res.nc <= rmax || tries++ > 12) break;
     minArea = Math.round(minArea * 1.35);
   }

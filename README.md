@@ -32,7 +32,7 @@ Layout: `src/` game (`game.js` pure logic, `brush.js` brush radius / stroke inte
 Gerard's daughter finishes small pictures too quickly. **Future runs should add bigger, more detailed pictures, not more small ones**:
 
 * Prefer **Epic grid pictures** (60×60 up to 120×120, full-page scenes, 16–24 colours, 4 900–14 400 squares) – the Epic tier already has 14 (unicorn castle, rainbow valley, fire dragon, coral reef, galaxy voyage, jungle friends, grand mandala, city lights, happy farm, fairy garden, snowy village, pirate bay, dino valley, candy land). Add new ones to `tools/art/pixel-big.mjs` (sprite helper `L(g, x, y, scale)`, `bands`, `hill`, `speckle`, `rng`; colours are reduced to 24 automatically) and run `npm run pictures`. A new Epic picture needs a **new subject and a different layout** (the duplicate test enforces it).
-* For Shapes pictures aim for the top of the Hard range (about 300–420 regions; the validator limit is 420) instead of Easy ones.
+* For Shapes pictures aim for the top of the Hard range (about 300–420 regions; the validator limit is 420) instead of Easy ones. With AI ink-outline art, `--ink --ink-split --size 896 --k 20 --merge-de 10 --min-area 50 --min-r 4.5` roughly doubles the region count (1.10.0 pictures: 130–310 regions); simple art (big plain fields) stays lower.
 * Do not add Easy/Medium pictures unless a category has none. Never re-use art at another size.
 * Big grids are stored compactly (`cells` string, regions/outline rebuilt on first use), draw numbers only for squares that are on screen and zoomed enough to read, and save progress as ranges – keep it that way (the smoke test opens a 120×120 picture and checks speed, hint pan, saving and completion).
 
@@ -49,6 +49,9 @@ Every picture must be genuinely different: the same art re-used at a bigger size
    #   --ink            image has black outlines between colour fields (dissolved into the fields)
    #   --k 12           max colours   --min-area 120 --min-r 6   merge smaller regions / labels
    #   --id my-id       --bg ffffff   background used for transparent images
+   #   --ink-split      keep fields that the ink lines separate as separate regions (many more areas: every shingle, pumpkin, leaf)
+   #   --size 896       bigger working size (default 640 for hard) for detailed wide art   --ink-l 40  darker-than threshold for ink
+   #   --merge-de 10    keep more similar shades apart   --added 2026-10-05  date for the NEW badge
    ```
    The script quantises the colours, removes noise, segments regions, merges tiny ones, finds label positions (pole of inaccessibility via an exact distance transform), traces smooth outlines, validates the result (every region numbered, labels inside regions, region/colour counts, finished picture ≈ source) and writes `src/pictures/<id>.json`. Difficulty is **graded from the result** (≤25 regions & ≤8 colours = Easy, ≤84 = Medium, more = Hard); use `--min-area` to make a picture simpler.
 3. `npm test && npm run build`, commit `art/`, `src/pictures*`, `docs/`.

@@ -14,7 +14,17 @@ function tone(freq, t0, dur, { type = 'sine', vol = 0.25, slide = 0, attack = 0.
   g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + attack); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.05);
 }
+/** Gentle haptic ticks (Android: navigator.vibrate; silently does nothing elsewhere). Follows the sound switch: muted = no buzzing. */
+let lastBuzz = 0;
+function buzz(pattern, gap = 0) {
+  if (muted || typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') return;
+  const now = Date.now(); if (now - lastBuzz < gap) return; lastBuzz = now;
+  try { navigator.vibrate(pattern); } catch (e) { /* not allowed (no user gesture yet) */ }
+}
+const BUZZ = { fill: [12, 60], magic: [[14, 40, 14], 120], brush: [8, 220], done: [[18, 50, 18], 0], win: [[30, 70, 30, 70, 60], 0] };
 export const audio = {
+  /** haptic(kind): 'fill' | 'magic' | 'brush' (throttled) | 'done' (a colour finished) | 'win' */
+  haptic(kind) { const b = BUZZ[kind]; if (b) buzz(b[0], b[1]); },
   unlock() { ensure(); },
   setMuted(m) { muted = m; if (m && ctx && ctx.state === 'running') ctx.suspend().catch(() => {}); },
   isMuted: () => muted,
