@@ -1248,5 +1248,74 @@
   "kind": "grid",
   "src": "art/pixel/grid-arctic-lights.txt",
   "added": "2026-10-05"
+ },
+ {
+  "id": "grid-bakery-window",
+  "name": "Bakery Window",
+  "cat": "food",
+  "diff": "epic",
+  "kind": "grid",
+  "src": "art/pixel/grid-bakery-window.txt",
+  "added": "2026-10-16"
+ },
+ {
+  "id": "grid-fossil-dig",
+  "name": "Fossil Dig",
+  "cat": "dinosaurs",
+  "diff": "epic",
+  "kind": "grid",
+  "src": "art/pixel/grid-fossil-dig.txt",
+  "added": "2026-10-16"
+ },
+ {
+  "id": "unicorn-window",
+  "name": "Unicorn Window",
+  "cat": "unicorns",
+  "diff": "hard",
+  "src": "art/source/unicorn-window.png",
+  "opts": {
+   "k": 22,
+   "minArea": 50,
+   "minR": 4.5,
+   "ink": true,
+   "inkSplit": true,
+   "mergeDE": 10,
+   "size": 896
+  },
+  "added": "2026-10-16"
+ },
+ {
+  "id": "solar-system",
+  "name": "Solar System",
+  "cat": "space",
+  "diff": "hard",
+  "src": "art/source/solar-system.png",
+  "opts": {
+   "k": 22,
+   "minArea": 50,
+   "minR": 4.5,
+   "ink": true,
+   "inkSplit": true,
+   "mergeDE": 10,
+   "size": 896
+  },
+  "added": "2026-10-16"
+ },
+ {
+  "id": "autumn-hedgehog",
+  "name": "Autumn Hedgehog",
+  "cat": "animals",
+  "diff": "hard",
+  "src": "art/source/autumn-hedgehog.png",
+  "opts": {
+   "k": 22,
+   "minArea": 50,
+   "minR": 4.5,
+   "ink": true,
+   "inkSplit": true,
+   "mergeDE": 10,
+   "size": 896
+  },
+  "added": "2026-10-16"
  }
 ]

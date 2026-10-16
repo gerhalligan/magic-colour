@@ -76,10 +76,49 @@ export class Brusher {
     }
     return out;
   }
+  /**
+   * Forgiving taps: the unfilled candidate region closest to (cx,cy) that has a pixel within distance r (picture px), or -1.
+   * Distance = to the nearest pixel centre of the region, so a tap just beside a small spot still finds it.
+   */
+  nearest(cx, cy, r, candidates, filled) {
+    const { w } = this.P, bb = this.bb, map = this.map, r2 = r * r; let best = -1, bd = Infinity;
+    for (let k = 0; k < candidates.length; k++) {
+      const id = candidates[k]; if (filled[id]) continue;
+      const o = id * 4, x1 = bb[o + 2]; if (x1 < 0) continue;
+      const x0 = bb[o], y0 = bb[o + 1], y1 = bb[o + 3];
+      const dx0 = cx < x0 ? x0 - cx : cx > x1 + 1 ? cx - (x1 + 1) : 0, dy0 = cy < y0 ? y0 - cy : cy > y1 + 1 ? cy - (y1 + 1) : 0;
+      const dbox = dx0 * dx0 + dy0 * dy0; if (dbox > r2 || dbox >= bd) continue;
+      const sx0 = Math.max(x0, Math.floor(cx - r)), sx1 = Math.min(x1, Math.ceil(cx + r)), sy0 = Math.max(y0, Math.floor(cy - r)), sy1 = Math.min(y1, Math.ceil(cy + r));
+      for (let y = sy0; y <= sy1; y++) {
+        const ddy = y + 0.5 - cy, row = y * w; if (ddy * ddy > r2 || ddy * ddy >= bd) continue;
+        for (let x = sx0; x <= sx1; x++) { const ddx = x + 0.5 - cx, d = ddx * ddx + ddy * ddy; if (d <= r2 && d < bd && map[row + x] === id) { bd = d; best = id; } }
+      }
+    }
+    return best;
+  }
   /** all stamps along a segment; `first` also stamps the start point (stroke start / tap) */
   segment(x0, y0, x1, y1, r, candidates, filled, out, first = false) {
     if (first) this.hit(x0, y0, r, candidates, filled, out);
     for (const [x, y] of strokePoints(x0, y0, x1, y1, stampSpacing(r))) this.hit(x, y, r, candidates, filled, out);
     return out;
   }
+}
+
+/** Forgiving taps (Magic / One by one): how far (CSS px) beside a spot a tap may land and still colour it. A tap on paper, an already
+ * coloured spot or just outside the picture looks this far; a tap on a spot with a DIFFERENT number only looks a little (so "wrong
+ * number" still teaches), and a tap right on a matching spot is never changed. */
+export const TAP_SNAP_PX = 14, TAP_SNAP_WRONG_PX = 6;
+/**
+ * Decide which region a tap means. Returns the region id to hand to game.tapRegion (or -1 = nothing there).
+ * Only snaps when a colour is selected and not finished; it can only ever pick an unfilled region of the selected number.
+ * o: {id, mx, my, game, brusher, scale (screen px per picture px)}
+ */
+export function snapTap({ id, mx, my, game, brusher, scale }) {
+  const sel = game.selected; if (!sel || game.complete || game.colourDone(sel) || !brusher) return id;
+  const want = id >= 0 ? game.colourOf(id) : -1;
+  if (want === sel && !game.filled[id]) return id; // right on a matching spot
+  const unfilledOther = want > 0 && !game.filled[id];
+  const px = unfilledOther ? TAP_SNAP_WRONG_PX : TAP_SNAP_PX, r = px / (scale || 1);
+  const near = brusher.nearest(mx, my, r, game.byColour[sel], game.filled);
+  return near >= 0 ? near : id;
 }

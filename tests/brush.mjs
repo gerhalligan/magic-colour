@@ -1,6 +1,7 @@
 // Paint brush: size/radius, stroke interpolation, hit-testing against the label map, "only the matching number" rule, one-undo-per-stroke.
 import { test, done, assert } from './harness.mjs';
-import { BRUSH_SIZES, brushRadiusPx, brushRadiusMap, clampBrushSize, strokePoints, stampSpacing, computeBBoxes, Brusher } from '../src/brush.js';
+import { BRUSH_SIZES, brushRadiusPx, brushRadiusMap, clampBrushSize, strokePoints, stampSpacing, computeBBoxes, Brusher, snapTap, TAP_SNAP_PX, TAP_SNAP_WRONG_PX } from '../src/brush.js';
+import { MODE_MAGIC } from '../src/game.js';
 import { createGame, MODE_BRUSH, MODE_CLASSIC, MODES } from '../src/game.js';
 import { gridMap } from '../src/codec.js';
 import { store } from '../src/store.js';
@@ -106,5 +107,53 @@ await test('default brush is the SMALLEST size; a later choice is remembered; th
   const ids = []; for (let i = 0; i < 9000; i++) if (i % 50 !== 7) ids.push(i); store.saveProgress('t-big', { f: ids, s: 3 });
   const back = store.progress('t-big'); assert.deepEqual(back.f, ids); assert.equal(back.s, 3); assert.ok(Math.abs(store.pct('t-big', 9000) - ids.length / 9000) < 1e-9);
   store.saveProgress('t-small', { f: [1, 5, 9], s: 2 }); assert.deepEqual(store.progress('t-small'), { f: [1, 5, 9], s: 2 }); store.clearProgress('t-big'); store.clearProgress('t-small');
+});
+
+// ---- forgiving taps (v1.11.0): a tap just beside a spot of the selected number still colours it ----
+const nearestOracle = (cx, cy, r, cand, filled) => { let best = -1, bd = Infinity; for (const id of cand) { if (filled[id]) continue; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (map[y * W + x] === id) { const d = (x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2; if (d <= r * r && d < bd) { bd = d; best = id; } } } return best; };
+await test('TAPS: nearest() finds the closest unfilled candidate within r and matches a brute-force oracle', () => {
+  const b = brusher(); let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let t = 0; t < 60; t++) {
+    const c = 1 + (t % 4), cand = [...Array(N).keys()].filter((i) => regions[i][0] === c), filled = new Uint8Array(N); if (t % 3 === 0) filled[cand[0]] = 1;
+    const cx = rnd() * 130 - 5, cy = rnd() * 130 - 5, r = 1 + rnd() * 12;
+    const got = b.nearest(cx, cy, r, cand, filled), want = nearestOracle(cx, cy, r, cand, filled);
+    if (got !== want) { // equal distance ties may pick either; both must be at the same distance
+      const d = (id) => { let m = Infinity; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (map[y * W + x] === id) m = Math.min(m, (x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2); return m; };
+      assert.ok(got >= 0 && want >= 0 && Math.abs(d(got) - d(want)) < 1e-9, `t${t}: got ${got} want ${want}`);
+    }
+    if (got >= 0) { assert.equal(regions[got][0], c, 'only the selected number'); assert.ok(!filled[got], 'never a filled spot'); }
+  }
+  assert.equal(b.nearest(60, 60, 50, [], new Uint8Array(N)), -1, 'no candidates');
+});
+await test('TAPS: snapTap - right spot unchanged; paper/coloured spot snaps within 14 css px; a different number only within 6; nothing selected or colour done = no snap', () => {
+  assert.ok(TAP_SNAP_PX === 14 && TAP_SNAP_WRONG_PX === 6 && TAP_SNAP_WRONG_PX < TAP_SNAP_PX);
+  const b = brusher(), g = createGame(puzzle, { mode: MODE_CLASSIC }), scale = 1;
+  // block id 0 (x 0..19, y 0..19, colour 1), block 1 (x 20..39, colour 2), block 6 (y 20..39, colour 1)
+  assert.equal(snapTap({ id: 1, mx: 22, my: 5, game: g, brusher: b, scale }), 1, 'nothing selected: tap is used as it is (picks the colour)');
+  g.selectColour(1);
+  assert.equal(snapTap({ id: 0, mx: 5, my: 5, game: g, brusher: b, scale }), 0, 'right on a matching spot');
+  // a tap on a different number (colour 2) 4px from the colour-1 block: snaps (<= 6px) ...
+  assert.equal(snapTap({ id: 1, mx: 24, my: 5, game: g, brusher: b, scale }), 0);
+  // ... but 10px inside the other number it stays a gentle "wrong" tap
+  assert.equal(snapTap({ id: 1, mx: 30, my: 5, game: g, brusher: b, scale }), 1);
+  // the same 10px from an ALREADY coloured spot snaps (<= 14px)
+  g.tapRegion(0); const g2 = createGame(puzzle, { mode: MODE_CLASSIC }); g2.selectColour(2); g2.tapRegion(1); g2.selectColour(1);
+  assert.equal(snapTap({ id: 1, mx: 30, my: 5, game: g2, brusher: b, scale }), 0, 'coloured spot -> nearest matching spot');
+  assert.equal(snapTap({ id: -1, mx: -6, my: 5, game: g2, brusher: b, scale }), 0, 'just outside the picture');
+  assert.equal(snapTap({ id: -1, mx: -30, my: 5, game: g2, brusher: b, scale }), -1, 'far outside: nothing');
+  // radius is in screen px: zoomed in 4x, 10 picture px = 40 screen px is too far
+  assert.equal(snapTap({ id: 1, mx: 30, my: 5, game: g2, brusher: b, scale: 4 }), 1);
+  // never a filled spot: g has block 0 filled already -> nearest unfilled colour-1 spot is block 6 (y 20..39)
+  assert.equal(snapTap({ id: 0, mx: 5, my: 12, game: g, brusher: b, scale }), 6, 'tap on the coloured spot reaches the next unfilled one 8px away');
+  // colour finished or game complete -> unchanged
+  const g3 = createGame(puzzle, { mode: MODE_CLASSIC }); g3.selectColour(4); g3.tapRegion(36); assert.ok(g3.colourDone(4));
+  assert.equal(snapTap({ id: 35, mx: 99, my: 60, game: g3, brusher: b, scale }), 35);
+});
+await test('TAPS: a snapped tap goes through the normal game rules (one region in One by one, all in Magic, palette alone still fills nothing)', () => {
+  const b = brusher();
+  const c = createGame(puzzle, { mode: MODE_CLASSIC }); c.selectColour(1); assert.equal(c.filledCount(), 0);
+  let id = snapTap({ id: 1, mx: 23, my: 5, game: c, brusher: b, scale: 1 }); let r = c.tapRegion(id); assert.equal(r.type, 'fill'); assert.deepEqual(r.ids, [0]);
+  const m = createGame(puzzle, { mode: MODE_MAGIC }); m.selectColour(1); assert.equal(m.filledCount(), 0, 'magic: selecting alone fills nothing');
+  id = snapTap({ id: 1, mx: 23, my: 5, game: m, brusher: b, scale: 1 }); r = m.tapRegion(id); assert.equal(r.type, 'fill'); assert.equal(r.ids.length, m.byColour[1].length); assert.equal(m.undoStack.length, 1);
 });
 done('brush tests');

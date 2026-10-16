@@ -1,6 +1,6 @@
 import pictures from './pictures.generated.js';
 import { createGame, textColourFor, MODE_MAGIC, MODE_CLASSIC, MODE_BRUSH } from './game.js';
-import { BRUSH_SIZES } from './brush.js';
+import { BRUSH_SIZES, snapTap } from './brush.js';
 import { PuzzleView } from './view.js';
 import { store } from './store.js';
 import { audio } from './audio.js';
@@ -314,7 +314,10 @@ function setBrushSize(i) {
 function flush() { const p = pending; pending = []; for (const o of p) { clearTimeout(o.t); o.fn(); } }
 function later(fn, ms) { const o = { fn: () => fn() }; o.t = setTimeout(() => { pending = pending.filter((x) => x !== o); fn(); }, ms); pending.push(o); return o; }
 function onTapRegion(id, mx, my) {
-  if (!cur || id < 0) return; audio.unlock(); flush();
+  if (!cur) return;
+  // forgiving taps: a tap just beside a spot of the selected number (on paper, a coloured spot or a different number) still colours it
+  if (view && settings.mode !== MODE_BRUSH) id = snapTap({ id, mx, my, game: cur.game, brusher: view.brusher, scale: view.s });
+  if (id < 0) return; audio.unlock(); flush();
   const res = cur.game.tapRegion(id);
   handle(res, { id, mx, my });
 }

@@ -168,6 +168,33 @@ for (const [name, vp, touch, dsf] of VIEWPORTS) {
     await page.screenshot({ path: `${SHOTS}/${name}-6-classic-fill.png` });
   });
 
+  await test(`${name}: FORGIVING taps - a tap on an already coloured spot just beside a spot of the selected number colours it; a far tap fills nothing`, async () => {
+    // find two neighbouring spots A (other number) and B (unfilled), a pixel of A about 5 css px from B; colour A first, then tap that pixel with B's colour selected
+    const pt = await page.evaluate(() => {
+      const m = window.__MC, v = m.view, g = m.cur.game, P = m.cur.pic, w = P.w, h = P.h, map = v.map, d = Math.max(1, Math.round(5 / v.s));
+      for (let y = d; y < h - d; y += 2) for (let x = d; x < w - d; x += 2) {
+        const A = map[y * w + x], ca = P.regions[A][0]; if (!ca || g.filled[A]) continue;
+        for (const [dx, dy] of [[d, 0], [-d, 0], [0, d], [0, -d]]) {
+          const B = map[(y + dy) * w + x + dx], cb = P.regions[B][0]; if (!cb || cb === ca || g.filled[B]) continue;
+          // A must not be the only remaining spot of its colour... and B's colour must have no spot under the tap pixel itself
+          return { A, ca, cb, x, y };
+        }
+      }
+      return null;
+    });
+    assert.ok(pt, 'found two neighbouring spots');
+    const toClient = (x, y) => page.evaluate(([x, y]) => { const v = window.__MC.view, c = v.cv.getBoundingClientRect(); return { x: c.left + v.tx + (x + 0.5) * v.s, y: c.top + v.ty + (y + 0.5) * v.s }; }, [x, y]);
+    const a = await regionXY(page, pt.A); await page.click(`.sw[data-c="${pt.ca}"]`); await tapAt(page, touch, a.x, a.y);
+    assert.ok(await page.evaluate((A) => !!window.__MC.cur.game.filled[A], pt.A), 'spot A coloured first');
+    await page.click(`.sw[data-c="${pt.cb}"]`); const s0 = await state(page); assert.equal(s0.sel, pt.cb);
+    const far = await page.evaluate((cb) => { const m = window.__MC, v = m.view, g = m.cur.game, P = m.cur.pic, w = P.w, h = P.h, map = v.map; for (let y = 2; y < h - 2; y += 3) for (let x = 2; x < w - 2; x += 3) { const id = map[y * w + x]; if (P.regions[id][0] !== cb && v.brusher.nearest(x, y, 40 / v.s, g.byColour[cb], g.filled) < 0 && (P.regions[id][0] === 0 || g.filled[id])) return [x, y]; } return null; }, pt.cb);
+    if (far) { const f = await toClient(far[0], far[1]); await tapAt(page, touch, f.x, f.y); assert.equal((await state(page)).filled, s0.filled, 'a tap far from any matching spot fills nothing'); }
+    const q = await toClient(pt.x, pt.y); await tapAt(page, touch, q.x, q.y); const s1 = await state(page);
+    assert.equal(s1.filled, s0.filled + 1, 'the near-miss tap on the coloured spot coloured exactly one spot (One by one)');
+    assert.ok(await page.evaluate((c) => { const g = window.__MC.cur.game, u = g.undoStack[g.undoStack.length - 1]; return u && u.ids.length === 1 && g.colourOf(u.ids[0]) === c; }, pt.cb), 'the coloured spot has the selected number');
+    await page.click('#pUndo'); await page.click('#pUndo'); assert.equal((await state(page)).filled, s0.filled - 1, 'both undone');
+  });
+
   await test(`${name}: zoom + pan, numbers stay readable, tap vs drag`, async () => {
     const st0 = await state(page); const c = await page.evaluate(() => { const r = window.__MC.view.cv.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
     if (touch) { // two-finger pinch via CDP

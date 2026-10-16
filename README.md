@@ -11,6 +11,7 @@ Ad-free colour-by-numbers for young children (≈4–9). No ads, no tracking, no
   * **One by one** (default) – pick a colour, then tap each area yourself.
   * **Brush** – pick a colour, then **drag** a finger/mouse across the picture like painting. The brush colours **only** the areas it passes over that have the selected number (other numbers are untouched; a gentle, throttled wiggle shows when you brush over a different number). Brush size: 4 big buttons (small/medium/large/huge) with a circle preview; the radius grows gently when you zoom in. A whole stroke is one undo step. Keys: `[` / `]` change brush size.
 * **Zoom & pan**: pinch / two-finger drag on touch (one finger paints in Brush mode, pans in the other modes); on desktop mouse wheel zooms, and in Brush mode hold **Space** + drag, or **right/middle-button drag**, to pan (left-drag paints).
+* **Forgiving taps** (Magic / One by one): a tap just beside a spot of the selected number (on the paper, a coloured spot or just outside the picture, about 14 px; only about 6 px over a different number) still colours that spot (`snapTap` in `src/brush.js`).
 * Wrong number? A gentle wiggle and a hint, never a penalty.
 * Hint, undo, auto-save per picture, celebration + category stickers, "My gallery", save/share PNG, cute WebAudio sounds (soft sparkle while brushing, throttled) with mute.
 
@@ -55,6 +56,8 @@ Every picture must be genuinely different: the same art re-used at a bigger size
    ```
    The script quantises the colours, removes noise, segments regions, merges tiny ones, finds label positions (pole of inaccessibility via an exact distance transform), traces smooth outlines, validates the result (every region numbered, labels inside regions, region/colour counts, finished picture ≈ source) and writes `src/pictures/<id>.json`. Difficulty is **graded from the result** (≤25 regions & ≤8 colours = Easy, ≤84 = Medium, more = Hard); use `--min-area` to make a picture simpler.
 3. `npm test && npm run build`, commit `art/`, `src/pictures*`, `docs/`.
+
+No AI image generator? `tools/art/ink-scenes.mjs` draws procedural flat-colour scenes **with dark outlines** (stained glass, solar system, autumn hedgehog); run `node tools/art/ink-scenes.mjs /tmp/out <id>` and convert the PNG with the `--ink --ink-split --size 896 --k 22 --min-area 50 --min-r 4.5 --merge-de 10` options for 200–350 areas. Keep ink-scene colours lighter than the outline (CIE L above ~35) or they dissolve like ink, and keep card titles short (about 16 characters) so they stay on one line on 360 px phones.
 
 Procedural launch art lives in `tools/art/{easy,medium,hard}.mjs` (tiny SVG helpers in `lib.mjs`); `npm run pictures` re-renders and rebuilds everything deterministically.
 

@@ -832,4 +832,113 @@ export function bigDesigns(add0) {
     const q = rng(31); for (let i = 0; i < 60; i++) { const x = Math.floor(q() * 112), y = Math.floor(q() * 80); if (g.get(x, y) && g.get(x, y) !== '#f8f9fa') g.set(x, y, '#ffffff'); }
   });
 
+  // ===== 23. Bakery Window (104) — a cosy bakery shop front: striped awning, shelves of cakes, cupcakes, bread and doughnuts, a door with a cupcake sign =====
+  add('grid-bakery-window', 'Bakery Window', 'food', 104, 104, (g) => {
+    // brick wall above the awning
+    g.rect(0, 0, 103, 15, '#c8553d');
+    for (let y = 0; y < 16; y++) for (let x = 0; x < 104; x++) { const row = Math.floor(y / 4); if (y % 4 === 3 || (x + (row % 2) * 4) % 8 === 0) g.set(x, y, '#f0b8a0'); }
+    // two little upper windows with flower boxes
+    for (const x0 of [14, 76]) { g.rect(x0, 2, x0 + 13, 11, '#fff8e8'); g.rect(x0 + 1, 3, x0 + 12, 10, '#a5d8ff'); g.rect(x0 + 6, 3, x0 + 7, 10, '#fff8e8'); g.rect(x0 + 1, 6, x0 + 12, 6, '#fff8e8'); g.rect(x0 - 1, 12, x0 + 14, 14, '#8d5a2b'); for (let k = 0; k < 5; k++) g.disc(x0 + 1 + k * 3, 11, 1.2, ['#ff6b6b', '#ffd43b', '#f783ac', '#ff922b', '#ffffff'][k]); }
+    // striped awning with a scalloped edge
+    for (let y = 16; y < 25; y++) for (let x = 0; x < 104; x++) g.set(x, y, Math.floor(x / 6) % 2 ? '#fff0f5' : '#f06595');
+    g.rect(0, 16, 103, 16, '#c2255c');
+    for (let k = 0; k < 18; k++) { const cx = k * 6 + 2.5; g.paint((a, b) => b >= 25 && b < 29 && (a - cx - 0.5) ** 2 + (b - 25) ** 2 <= 9.5, k % 2 ? '#fff0f5' : '#f06595'); }
+    // shop front (mint) with a base panel
+    g.rect(0, 25, 103, 96, '#8ce99a'); g.paint((a, b) => b >= 25 && b < 29 && !g.get(Math.floor(a), Math.floor(b - 0)) , '#8ce99a');
+    for (let k = 0; k < 18; k++) { const cx = k * 6 + 2.5; g.paint((a, b) => b >= 25 && b < 29 && (a - cx - 0.5) ** 2 + (b - 25) ** 2 <= 9.5, k % 2 ? '#fff0f5' : '#f06595'); }
+    g.rect(0, 88, 103, 96, '#51cf66'); g.rect(0, 88, 103, 88, '#2f9e44');
+    // the big window: wooden frame, warm glass, three shelves
+    g.rect(5, 31, 70, 86, '#8d5a2b'); g.rect(7, 33, 68, 84, '#fff3d6');
+    for (let y = 33; y <= 84; y++) for (let x = 7; x <= 68; x++) if ((x - y) % 23 === 0 && y < 46) g.set(x, y, '#ffffff');
+    const shelf = (y) => { g.rect(7, y, 68, y + 1, '#b07a45'); g.rect(7, y + 2, 68, y + 2, '#8d5a2b'); };
+    shelf(49); shelf(67); shelf(83);
+    // shelf 1: a birthday cake, doughnuts, a croissant
+    const cake = (x, y) => { g.rect(x, y - 5, x + 14, y - 1, '#f783ac'); g.rect(x + 2, y - 10, x + 12, y - 6, '#fff0f5'); g.rect(x + 4, y - 14, x + 10, y - 11, '#f783ac'); for (let k = 0; k < 15; k += 2) g.px(x + k, y - 5, '#fff0f5'); for (let k = 2; k < 13; k += 2) g.px(x + k, y - 10, '#f06595'); for (const cx of [x + 5, x + 7, x + 9]) { g.rect(cx, y - 18, cx, y - 15, '#74c0fc'); g.px(cx, y - 19, '#ffd43b'); } };
+    cake(9, 48);
+    const donut = (x, y, ic) => { g.disc(x, y, 4.6, '#e8a85c'); g.disc(x, y - 0.4, 3.8, ic); g.disc(x, y, 1.5, '#fff3d6'); [[-2, -2, '#ffd43b'], [2, -2, '#74c0fc'], [-3, 1, '#ffffff'], [2, 2, '#51cf66'], [0, -3, '#ff6b6b']].forEach(([dx, dy, c]) => g.px(x + dx, y + dy, c)); };
+    donut(31, 44, '#f783ac'); donut(41, 44, '#8d5a2b'); donut(36, 37, '#ffffff');
+    const croissant = (x, y) => { for (let k = -3; k <= 3; k++) g.ell(x + k * 2.2, y - Math.abs(k) * 0.9 + 1, 1.8, 3.2 - Math.abs(k) * 0.4, k % 2 ? '#e8a85c' : '#f4c27a', k * 18); };
+    croissant(54, 44); croissant(62, 39);
+    // shelf 2: a row of cupcakes and a pie
+    const cupcake = (x, y, fr, top) => { g.poly([[x - 4, y - 6], [x + 5, y - 6], [x + 4, y], [x - 3, y]], '#ffc078'); for (let k = -3; k <= 3; k += 2) g.line(x + k + 0.5, y - 6, x + k * 0.7 + 0.5, y, 0.5, '#e8a85c'); g.ell(x + 0.5, y - 7.5, 5.4, 2.4, fr); g.ell(x + 0.5, y - 10, 3.8, 2.2, fr); g.disc(x + 0.5, y - 13, 1.4, top); };
+    [[11, '#ff8fab', '#e03131'], [21, '#b197fc', '#ffd43b'], [31, '#74c0fc', '#e03131'], [41, '#ffd43b', '#f06595']].forEach(([x, fr, t]) => cupcake(x, 66, fr, t));
+    g.ell(58, 63, 9, 3.4, '#e8a85c'); g.ell(58, 61.5, 8, 2.4, '#c92a2a'); for (let k = -6; k <= 6; k += 3) g.line(58 + k, 60, 58 + k + 2, 63, 0.6, '#f4c27a'); g.rect(49, 64, 67, 66, '#e8a85c'); for (let k = 50; k < 67; k += 2) g.px(k, 64, '#f4c27a');
+    // shelf 3: bread loaves, a basket of baguettes, a cookie jar
+    const loaf = (x, y) => { g.ell(x, y - 3.4, 7, 3.6, '#d9893a'); g.rect(x - 7, y - 3, x + 7, y - 1, '#d9893a'); for (const k of [-3, 0, 3]) g.line(x + k - 1, y - 6, x + k + 1, y - 3, 0.6, '#f4c27a'); };
+    loaf(16, 82); loaf(31, 82);
+    g.rect(41, 76, 53, 82, '#a0522d'); for (let x = 41; x <= 53; x++) for (let y = 76; y <= 82; y++) if ((x + y) % 3 === 0) g.set(x, y, '#8d5a2b');
+    for (const [x, t] of [[43, 69], [47, 68], [51, 70]]) { g.rect(x, t, x + 1, 76, '#e8a85c'); g.px(x, t + 2, '#f4c27a'); g.px(x + 1, t + 5, '#f4c27a'); }
+    g.rect(57, 72, 66, 82, '#d0ebff'); g.rect(56, 70, 67, 71, '#e64980'); g.rect(58, 73, 65, 81, '#e7f5ff');
+    [[59, 75], [63, 75], [61, 78], [59, 80], [64, 79]].forEach(([x, y]) => { g.disc(x + 0.5, y + 0.5, 1.7, '#d9893a'); g.px(x, y, '#5c3a21'); });
+    // the door with a round window, handle and step
+    g.rect(75, 33, 95, 96, '#8d5a2b'); g.rect(77, 35, 93, 96, '#f06595'); g.rect(79, 62, 91, 92, '#e64980'); g.rect(80, 63, 90, 91, '#f783ac');
+    g.disc(85, 46, 6.4, '#fff3d6'); g.disc(85, 46, 5.4, '#a5d8ff'); g.rect(85, 41, 85, 51, '#fff3d6'); g.rect(80, 46, 90, 46, '#fff3d6');
+    g.disc(91, 70, 1.2, '#ffd43b'); g.rect(72, 96, 98, 98, '#adb5bd');
+    // hanging round sign with a cupcake picture (no text)
+    g.rect(97, 28, 103, 28, '#495057'); g.line(99, 28, 99, 31, 0.6, '#495057'); g.disc(99.5, 37, 5.6, '#fff3d6'); g.disc(99.5, 37, 6.4, '#8d5a2b'); g.disc(99.5, 37, 5.4, '#fff3d6');
+    g.poly([[97, 38], [102, 38], [101, 42], [98, 42]], '#ffc078'); g.ell(99.5, 37, 3, 1.6, '#f783ac'); g.disc(99.5, 34.5, 1, '#e03131');
+    // flower box under the window
+    g.rect(4, 87, 71, 90, '#a0522d'); for (let x = 6; x < 70; x += 4) { g.rect(x + 1, 85, x + 1, 86, '#2f9e44'); g.disc(x + 1.5, 84.6, 1.4, ['#ff6b6b', '#ffd43b', '#ffffff', '#f783ac', '#ff922b'][(x / 4) % 5 | 0]); }
+    // pavement with tiles, autumn leaves, a pumpkin and a cat by the door
+    g.rect(0, 97, 103, 103, '#ced4da'); for (let y = 97; y < 104; y++) for (let x = 0; x < 104; x++) if (y === 100 || (x + (y > 100 ? 5 : 0)) % 10 === 0) g.set(x, y, '#adb5bd');
+    const q = rng(1016); for (let i = 0; i < 16; i++) { const x = Math.floor(q() * 100) + 2, y = 98 + Math.floor(q() * 5); if (x > 70 && x < 99) continue; g.ell(x, y, 1.6, 0.9, ['#fd7e14', '#fcc419', '#e03131'][i % 3], (i * 40) % 180); }
+    g.ell(70, 95, 4, 3, '#fd7e14'); g.ell(70, 95, 1.8, 3, '#ff922b'); g.rect(70, 91, 70, 92, '#2f9e44');
+    const cat = L(g, 100, 96, 1); cat.ell(0, -3, 3, 3.4, '#495057').disc(0, -8, 2.6, '#495057').poly([[-2.6, -9], [-2, -12], [-0.6, -10]], '#495057').poly([[0.6, -10], [2, -12], [2.6, -9]], '#495057').chain([[3, -1, 0.8], [5, -3, 0.8], [5, -6, 0.8]], '#495057').px(-1, -9, '#ffd43b').px(1, -9, '#ffd43b');
+  });
+
+  // ===== 24. Fossil Dig (112) — a cut-away of the ground: a long-neck dinosaur and explorers on top, a giant T-rex skeleton, ammonites, eggs and crystals in the rock layers =====
+  add('grid-fossil-dig', 'Fossil Dig', 'dinosaurs', 112, 112, (g) => {
+    bands(g, 0, 26, ['#74c0fc', '#91d0fd', '#a5d8ff', '#c5e6ff']);
+    g.disc(96, 8, 5.4, '#ffd43b'); g.disc(96, 8, 4, '#ffe066');
+    cloud(g, 10, 8, 1.1, '#ffffff', '#e7f5ff'); cloud(g, 52, 5, 0.9, '#ffffff', '#e7f5ff');
+    // pterosaur
+    const pt = L(g, 74, 10, 1); pt.poly([[-8, 0], [0, -2], [8, 0], [0, 2]], '#ff922b').poly([[-1, -1], [5, -4], [3, 0]], '#e8590c').px(5, -4, '#22223b');
+    // distant hills and the grass line
+    hill(g, 22, 1.6, 0.09, 0.5, '#69db7c', '#8ce99a');
+    // rock layers with wavy boundaries
+    const layers = ['#a0522d', '#c97b48', '#e0a96d', '#b5764f', '#d9b48a', '#8f5a3c', '#c49a6c'];
+    for (let y = 28; y < 112; y++) for (let x = 0; x < 112; x++) { const t = (y - 28 + Math.sin(x * 0.12 + y * 0.02) * 2.2 + Math.sin(x * 0.05 + 1.3) * 3) / 12; g.set(x, y, layers[Math.max(0, Math.min(layers.length - 1, Math.floor(t)))]); }
+    for (let x = 0; x < 112; x++) { const top = 27 + Math.round(Math.sin(x * 0.2) * 0.6); g.rect(x, top - 1, x, top + 1, '#40c057'); g.set(x, top - 2, x % 3 ? '#8ce99a' : '#40c057'); }
+    speckle(g, (c) => layers.includes(c), '#7a4a2a', 0.035, 9);
+    // pebbles
+    const q = rng(1112); for (let i = 0; i < 26; i++) { const x = 2 + q() * 108, y = 34 + q() * 74; g.ell(x, y, 1.6 + q() * 1.4, 1 + q() * 0.8, i % 2 ? '#868e96' : '#ced4da'); }
+    // roots from the grass
+    for (const [x, len] of [[8, 9], [40, 6], [104, 8]]) { g.line(x, 28, x - 2, 28 + len, 0.8, '#6f4518'); g.line(x - 1, 28 + len * 0.5, x + 3, 28 + len * 0.9, 0.6, '#6f4518'); }
+    // the giant T-rex skeleton
+    const bone = '#fff8e6', boneS = '#e9d8b4';
+    const sk = L(g, 0, 0, 1);
+    for (let i = 0; i < 30; i++) { const t = i / 29, x = 16 + t * 64, y = 72 - Math.sin(t * Math.PI * 0.9 + 0.2) * 12 + (t > 0.7 ? (t - 0.7) * 10 : 0); sk.disc(x, y, 1.6 + Math.sin(t * Math.PI) * 0.6, i % 2 ? bone : boneS); }
+    for (let i = 0; i < 9; i++) { const x = 40 + i * 4, top = 72 - Math.sin(((x - 16) / 64) * Math.PI * 0.9 + 0.2) * 12 + 2; sk.line(x, top, x - 2 + i * 0.3, top + 12 - Math.abs(i - 4) * 0.8, 0.9, bone); }
+    sk.line(48, 72, 44, 82, 1.6, bone).line(44, 82, 48, 90, 1.4, bone).line(48, 90, 52, 92, 1, bone).line(66, 70, 64, 80, 1.6, bone).line(64, 80, 68, 89, 1.4, bone).line(68, 89, 72, 91, 1, bone);
+    sk.disc(48, 72, 2.4, boneS).disc(66, 70, 2.4, boneS).disc(44, 82, 1.4, boneS).disc(64, 80, 1.4, boneS);
+    sk.line(76, 64, 79, 68, 0.8, bone).line(79, 68, 81, 67, 0.6, bone);
+    // skull
+    sk.poly([[78, 54], [92, 52], [100, 56], [100, 61], [88, 62], [80, 61]], bone).poly([[82, 62], [98, 62], [96, 66], [84, 66]], boneS);
+    sk.ell(85, 56, 2.2, 1.8, layers[2]).ell(92, 57, 1.8, 1.4, layers[2]).px(97, 56, layers[2]);
+    for (let x = 84; x < 98; x += 2) { sk.px(x, 62, '#ffffff'); sk.px(x + 1, 61, '#ffffff'); }
+    // brachiosaurus walking on the surface
+    const br = L(g, 26, 25, 1); br.ell(0, -4, 10, 4.6, '#20c997').rect(-7, -2, -5, 2, '#12b886').rect(-2, -2, 0, 2, '#20c997').rect(3, -2, 5, 2, '#12b886').rect(7, -2, 9, 2, '#20c997');
+    br.chain([[7, -6, 2.2], [11, -11, 1.8], [14, -16, 1.6], [16, -19, 1.6]], '#20c997').ell(18, -19.5, 3, 1.8, '#20c997').px(19, -20, '#22223b').chain([[-9, -4, 2], [-14, -3, 1.4], [-18, -1, 0.9]], '#20c997');
+    [[-4, -6], [0, -7], [4, -6]].forEach(([x, y]) => br.disc(x, y, 1, '#96f2d7'));
+    // explorers' tent, flag, a bucket and spade
+    g.poly([[60, 26], [68, 16], [76, 26]], '#ff922b'); g.poly([[66, 26], [68, 19], [70, 26]], '#e8590c'); g.line(68, 16, 68, 11, 0.6, '#495057'); g.poly([[68.5, 11], [73, 12.5], [68.5, 14]], '#e03131');
+    g.rect(84, 22, 88, 26, '#339af0'); g.rect(84, 22, 88, 22, '#1c7ed6'); g.line(92, 18, 95, 30, 0.7, '#8d5a2b'); g.ell(95.5, 31.5, 1.6, 2, '#adb5bd');
+    // a dug pit with a ladder down to the skeleton
+    for (let y = 26; y < 44; y++) for (let x = 90; x < 104; x++) if (x - 90 > (y - 26) * 0.2 && 104 - x > (y - 26) * 0.2) g.set(x, y, '#5c3a21');
+    for (let y = 28; y < 44; y += 3) g.rect(94, y, 100, y, '#e8a85c'); g.rect(94, 26, 94, 43, '#c97b48'); g.rect(100, 26, 100, 43, '#c97b48');
+    // ammonites
+    const ammo = (cx, cy, R) => { for (let a = 0; a < 6.28 * 2.2; a += 0.12) { const rr = R * (1 - a / (6.28 * 2.4)); g.disc(cx + Math.cos(a) * rr * 0.8, cy + Math.sin(a) * rr * 0.8, Math.max(0.7, rr * 0.28), Math.floor(a * 1.6) % 2 ? '#fff8e6' : '#e8590c'); } };
+    ammo(12, 46, 6); ammo(104, 92, 5); ammo(30, 100, 4.5);
+    // trilobite
+    const tr = L(g, 60, 102, 1); tr.ell(0, 0, 4, 5.6, '#868e96'); for (let k = -4; k <= 4; k += 2) tr.rect(-4, k, 4, k, '#adb5bd'); tr.ell(0, -5, 4.4, 1.8, '#adb5bd').rect(-1, -4, 1, 5, '#495057');
+    // a nest of dinosaur eggs
+    g.ell(84, 104, 12, 3.4, '#8f5a3c'); [[77, 101, '#e7f5ff'], [82, 100, '#d3f9d8'], [87, 100, '#fff3bf'], [92, 101, '#e7f5ff']].forEach(([x, y, c]) => { g.ell(x, y, 2.6, 3.4, c); g.px(x - 1, y - 1, '#ffffff'); });
+    // a geode of crystals
+    g.ell(18, 84, 9, 7, '#495057'); g.ell(18, 84, 7.6, 5.8, '#e5dbff');
+    [[13, 86, '#9775fa'], [16, 82, '#b197fc'], [19, 87, '#7048e8'], [22, 83, '#9775fa'], [17, 88, '#cc5de8']].forEach(([x, y, c]) => g.poly([[x - 1.4, y + 2], [x, y - 3], [x + 1.4, y + 2]], c));
+    // blue crystals and a worm
+    [[42, 50, '#66d9e8'], [45, 48, '#3bc9db'], [48, 51, '#99e9f2']].forEach(([x, y, c]) => g.poly([[x - 1.6, y + 3], [x, y - 3], [x + 1.6, y + 3]], c));
+    L(g, 70, 44, 1).chain([[0, 0, 0.9], [2, -1, 0.9], [4, 0, 0.9], [6, 1, 0.9], [8, 0, 1]], '#ff8fab').px(8, -1, '#22223b');
+  });
+
 }
