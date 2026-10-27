@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "ai.mikai.games.magiccolour",
+      "sha256_cert_fingerprints": [
+        "B4:7E:1C:01:B4:30:BB:07:37:B7:55:A0:77:8D:2B:20:81:9E:EE:86:E2:DC:84:EF:74:AE:15:CA:49:DC:D2:46"
+      ]
+    }
+  }
+]

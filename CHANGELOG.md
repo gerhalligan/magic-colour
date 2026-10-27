@@ -1,3 +1,9 @@
+## 1.11.1 — 2026-10-27
+Google Play preparation (no gameplay changes).
+- **Privacy policy page** at `/privacy.html` (no ads, no tracking, no accounts, no data collected, progress saved only on the device), listed in the sitemap.
+- **Digital Asset Links** file at `/.well-known/assetlinks.json` so the Android app (Trusted Web Activity, package `ai.mikai.games.magiccolour`) opens the game full screen without a browser bar.
+- Build tool now copies `public/` recursively (needed for the `.well-known` folder); the SEO test checks the new files.
+
 ## 1.11.0 — 2026-10-16
 Weekly (Friday) improve-and-add-pictures run — bigger, longer pictures.
 - **5 new pictures**: **Unicorn Window** (Shapes, hard: a stained-glass unicorn with a rainbow, 346 areas), **Autumn Hedgehog** (Shapes, hard: hedgehog, falling leaves, toadstools and acorns, 332 areas), **Solar System** (Shapes, hard: smiling sun, planets on their orbits, an asteroid belt, a rocket and lots of stars, 202 areas); **Bakery Window** (Epic Grid 104×104: striped awning, shelves of cakes, cupcakes, doughnuts and bread, a cat by the door) and **Fossil Dig** (Epic Grid 112×112: a cut-away of the ground with a giant T-rex skeleton, ammonites, eggs and crystals under a walking long-neck dinosaur).

@@ -45,4 +45,11 @@ const sw = fs.readFileSync(path.join(docs, 'sw.js'), 'utf8');
 assert.ok(!sw.includes('__VERSION__'), 'sw version stamped');
 for (const f of sw.match(/const FILES = \[([^\]]*)\]/)[1].match(/'[^']+'/g).map((s) => s.slice(1, -1))) if (f !== './') exists(f.replace(/^\.\//, ''));
 assert.ok(/serviceWorker[\s\S]{0,120}register\([`"']sw\.js[`"']\)/.test(html), 'sw registration kept');
+// Google Play (Trusted Web Activity) support: privacy policy page + Digital Asset Links file
+const priv = fs.readFileSync(path.join(docs, 'privacy.html'), 'utf8');
+for (const w of ['No ads', 'No tracking', 'No accounts', 'No data collected', 'only on your own device']) assert.ok(priv.includes(w), 'privacy page says: ' + w);
+const al = JSON.parse(fs.readFileSync(path.join(docs, '.well-known/assetlinks.json'), 'utf8'));
+assert.equal(al[0].target.package_name, 'ai.mikai.games.magiccolour');
+assert.ok(al[0].target.sha256_cert_fingerprints.every((f) => /^([0-9A-F]{2}:){31}[0-9A-F]{2}$/.test(f)), 'assetlinks fingerprints');
+assert.ok(fs.readFileSync(path.join(docs, 'sitemap.xml'), 'utf8').includes('privacy.html'));
 console.log('seo OK:', title);

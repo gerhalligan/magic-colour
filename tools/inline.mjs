@@ -23,14 +23,16 @@ if (/\b(fetch|XMLHttpRequest|WebSocket|sendBeacon)\s*\(/.test(js)) bad.push('net
 console.log('wrote', dest, (out.length / 1024).toFixed(0) + ' KB', bad.length ? 'PROBLEMS: ' + bad.join(',') : 'OK (classic, self-contained, no network calls)');
 const sha = crypto.createHash('sha256').update(out).digest('hex');
 // SEO / share assets next to the single file (file:// then has no missing icon / manifest requests)
-for (const f of fs.readdirSync(path.join(root, 'public'))) if (f !== 'sw.js') fs.copyFileSync(path.join(root, 'public', f), path.join(root, 'dist-single', f));
+// copy public/ recursively (privacy.html, .well-known/assetlinks.json for the Android app, icons, ...) except sw.js
+const copyTree = (from, to, top = true) => { fs.mkdirSync(to, { recursive: true }); for (const f of fs.readdirSync(from)) { if (top && f === 'sw.js') continue; const a = path.join(from, f), b = path.join(to, f); if (fs.statSync(a).isDirectory()) copyTree(a, b, false); else fs.copyFileSync(a, b); } };
+copyTree(path.join(root, 'public'), path.join(root, 'dist-single'));
 // share copy
 fs.mkdirSync('/workspace/magic-colour-share', { recursive: true });
 fs.copyFileSync(dest, '/workspace/magic-colour-share/Magic-Colour.html');
 // GitHub Pages bundle
 const docs = path.join(root, 'docs'); fs.mkdirSync(docs, { recursive: true });
 fs.copyFileSync(dest, path.join(docs, 'index.html'));
-for (const f of fs.readdirSync(path.join(root, 'public'))) if (f !== 'sw.js') fs.copyFileSync(path.join(root, 'public', f), path.join(docs, f));
+copyTree(path.join(root, 'public'), docs);
 fs.writeFileSync(path.join(docs, 'sw.js'), fs.readFileSync(path.join(root, 'public/sw.js'), 'utf8').replace('__VERSION__', pkg.version + '-' + sha.slice(0, 10)));
 fs.writeFileSync(path.join(docs, '.nojekyll'), '');
 console.log('docs/ ready, sha256', sha);
