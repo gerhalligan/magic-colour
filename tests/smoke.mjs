@@ -35,6 +35,9 @@ for (const [name, vp, touch, dsf] of VIEWPORTS) {
     await page.click('#catChips [data-cat="space"]'); const sp = await page.$$eval('#grid .pic', (e) => e.length); assert.ok(sp >= 2 && sp < n);
     await page.click('#diffChips [data-diff="easy"]'); const sp2 = await page.$$eval('#grid .pic', (e) => e.length); assert.ok(sp2 >= 1 && sp2 <= sp);
     await page.click('#catChips [data-cat="all"]'); await page.click('#diffChips [data-diff="all"]');
+    // the NEW badge lasts about a week: when no picture was added in the last 7 days, mark one as new in memory for this check (restored below)
+    const tempFresh = await page.evaluate(() => { const m = window.__MC; if (m.pictures.some((p) => !p.grid && m.isFresh(p))) return null; const p = m.pictures.filter((x) => !x.grid).slice(-1)[0]; const old = p.added; p.added = new Date().toISOString().slice(0, 10); return { id: p.id, old }; });
+    if (tempFresh) await page.click('#catChips [data-cat="all"]');
     const fresh = await page.evaluate(() => {
       const m = window.__MC;
       const ids = m.pictures.filter((p) => !p.grid && m.isFresh(p)).map((p) => p.id);
@@ -45,6 +48,7 @@ for (const [name, vp, touch, dsf] of VIEWPORTS) {
     assert.ok(fresh.ids.length >= 1, 'expected fresh pictures with added dates');
     assert.deepEqual(fresh.badges.slice().sort(), fresh.ids.slice().sort(), 'NEW badge on each unfinished fresh picture');
     assert.ok(fresh.firstIsFresh, 'fresh pictures sort to the front');
+    if (tempFresh) { await page.evaluate((t) => { const p = window.__MC.pictures.find((x) => x.id === t.id); if (t.old === undefined) delete p.added; else p.added = t.old; }, tempFresh); await page.click('#catChips [data-cat="all"]'); }
     const potd = await page.evaluate(() => {
       const m = window.__MC, p = m.pictureOfTheDay();
       const el = document.getElementById('potd');

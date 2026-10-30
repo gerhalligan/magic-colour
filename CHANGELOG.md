@@ -1,3 +1,10 @@
+## 1.12.0 — 2026-10-30
+Weekly (Friday) improve run – easier to find the spots on big pictures.
+- **Spot finder**: when a colour is picked, every spot still waiting for that number gets soft diagonal stripes in that colour (lavender stripes for very light colours such as white), so children can see at a glance where to colour – even the tiny spots in the 300-area Shapes pictures and the squares of an Epic grid at full view, where numbers are too small to show. Stripes vanish from a spot as soon as it is coloured, come back on undo, follow the selected colour (palette, tapping a spot, number keys, hint, undo) and are hidden during the celebration. It only shows *where*: picking a colour still never fills anything, Magic still needs a tap on a numbered spot, One by one still needs a tap per spot, Brush still paints only the matching number.
+- **Epic grids look like pictures at full view**: the square lines fade when squares are only a few pixels on screen (instead of a dark grey mesh), and come back fully once zoomed in far enough to read the numbers.
+- Low-end Android: the finder is its own small layer (Shapes: picture size; Grids: 4×4 texels per square, about 0.9 MB for a 120×120), rebuilt only when the colour changes and updated per coloured spot. The fill layer, saving, Continue, gallery, exported/shared PNG, home layout, Play files (`.well-known/assetlinks.json`, privacy page) and offline service worker are unchanged.
+- New browser test `tests/finder.mjs` (`npm run test:finder`, part of `npm test`) at 390×844, 360×640 and desktop: defaults (One by one, smallest brush), palette-only never fills, stripes exactly on unfilled spots of the selected number, tap/undo/keyboard/colour switch, Magic fill, Brush only-matching, save + Continue, finishing + win card + gallery, Epic grid line fade and grey squares, no errors and no network requests.
+
 ## 1.11.1 — 2026-10-27
 Google Play preparation (no gameplay changes).
 - **Privacy policy page** at `/privacy.html` (no ads, no tracking, no accounts, no data collected, progress saved only on the device), listed in the sitemap.

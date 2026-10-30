@@ -34,20 +34,72 @@ export class PuzzleView {
     // bounding boxes + brush hit-tester (shared with the unit tests via brush.js)
     this.bb = computeBBoxes(this.map, w, h, puzzle.regions.length); this.brusher = new Brusher(puzzle, this.map, this.bb); this._cancelStroke(false); this.cur = null;
     this.sparks.length = 0; this.rings.length = 0; this.wiggle.clear(); this.overlayItems = null; this.celeb = null; this.outCache = null;
+    this._hlInit();
     this.paintAll(); this.resize(true);
   }
+  // ---------- spot finder: soft stripes on the spots still waiting for the selected colour ----------
+  // Own small layer (never touches the fill layer, saving or the exported picture). Grids use 4 texels per square side
+  // so a 120x120 Epic stays tiny in memory; Shapes use picture pixels.
+  _hlInit() {
+    const P = this.puzzle, g = P.grid;
+    this.hlK = g ? g.cs / 4 : 1; this.hlW = g ? g.w * 4 : P.w; this.hlH = g ? g.h * 4 : P.h;
+    this.hlP = g ? 4 : Math.max(6, Math.round(Math.max(P.w, P.h) / 70)); // stripe period in layer texels
+    this.hlCv = document.createElement('canvas'); this.hlCv.width = this.hlW; this.hlCv.height = this.hlH; this.hlCtx = this.hlCv.getContext('2d');
+    this.hlImg = this.hlCtx.createImageData(this.hlW, this.hlH); this.hl32 = new Uint32Array(this.hlImg.data.buffer);
+    this.hlSel = -1; this.hlCount = 0;
+    this.hlCol = P.palette.map((hex) => { let [r, gg, b] = hexToRgb(hex); if (0.299 * r + 0.587 * gg + 0.114 * b > 200) { r = Math.round(r * 0.55 + 123 * 0.45); gg = Math.round(gg * 0.55 + 92 * 0.45); b = Math.round(b * 0.55 + 255 * 0.45); } return rgb32(r, gg, b); });
+  }
+  /** layer rectangle [x0,y0,x1,y1] (inclusive) of a region, or null */
+  _hlRect(id) {
+    const o = id * 4, b = this.bb; if (b[o + 2] < 0) return null;
+    if (!this.puzzle.grid) return [b[o], b[o + 1], b[o + 2], b[o + 3]];
+    const cs = this.puzzle.grid.cs, cx = Math.floor(((b[o] + b[o + 2]) / 2) / cs), cy = Math.floor(((b[o + 1] + b[o + 3]) / 2) / cs);
+    return [cx * 4, cy * 4, cx * 4 + 3, cy * 4 + 3];
+  }
+  /** set (on) or clear the stripes of one region in the layer; returns its rect */
+  _hlSet(id, on) {
+    const R = this._hlRect(id); if (!R) return null;
+    const [x0, y0, x1, y1] = R, W = this.hlW, a = this.hl32, P = this.hlP, half = P / 2, grid = !!this.puzzle.grid, m = this.map, w = this.puzzle.w;
+    const c = on ? this.hlCol[this.puzzle.regions[id][0] - 1] : 0;
+    for (let y = y0; y <= y1; y++) for (let x = x0, q = y * W + x0; x <= x1; x++, q++) {
+      if (!grid && m[y * w + x] !== id) continue;
+      a[q] = on && ((x + y) % P) < half ? c : 0;
+    }
+    return R;
+  }
+  /** rebuild the whole layer for the selected colour (only when the selection changes) */
+  _hlRebuild() {
+    const g = this.game, sel = g ? g.selected : 0; this.hlSel = sel; this.hl32.fill(0); let n = 0;
+    if (sel > 0 && g.byColour[sel]) for (const id of g.byColour[sel]) if (!g.filled[id]) { this._hlSet(id, true); n++; }
+    this.hlCount = n; this.hlCtx.putImageData(this.hlImg, 0, 0);
+  }
+  /** keep the layer in step after regions were (un)filled */
+  _hlUpdate(ids) {
+    if (!this.hlCv || this.hlSel !== (this.game ? this.game.selected : 0)) return; // a rebuild is due anyway
+    const g = this.game, sel = this.hlSel; if (sel <= 0) return;
+    let X0 = 1e9, Y0 = 1e9, X1 = -1, Y1 = -1;
+    for (const id of ids) {
+      if (this.puzzle.regions[id][0] !== sel) continue;
+      const R = this._hlSet(id, !g.filled[id]); if (!R) continue;
+      X0 = Math.min(X0, R[0]); Y0 = Math.min(Y0, R[1]); X1 = Math.max(X1, R[2]); Y1 = Math.max(Y1, R[3]);
+    }
+    if (X1 >= 0) this.hlCtx.putImageData(this.hlImg, 0, 0, X0, Y0, X1 - X0 + 1, Y1 - Y0 + 1);
+    this.hlCount = g.remaining(sel);
+  }
+  /** spot finder state for tests: selected colour + number of striped spots */
+  finderInfo() { return { sel: this.hlSel, count: this.hlCount }; }
   col32(id) { const r = this.puzzle.regions[id]; return r[0] > 0 && this.game.filled[id] ? this.pal32[r[0] - 1] : r[0] > 0 && this.puzzle.grid ? GREY32 : WHITE32; }
   paintAll() {
     const m = this.map, img = this.img32, rc = this.puzzle.regions.map((_, i) => this.col32(i));
     for (let p = 0; p < m.length; p++) img[p] = rc[m[p]];
-    this.fctx.putImageData(this.img, 0, 0); this.dirty = true; this.kick();
+    this.fctx.putImageData(this.img, 0, 0); this.hlSel = -1; this.dirty = true; this.kick();
   }
   /** repaint one region according to the current game state */
   paintRegion(id) {
     const { w } = this.puzzle, o = id * 4, x0 = this.bb[o], y0 = this.bb[o + 1], x1 = this.bb[o + 2], y1 = this.bb[o + 3];
     if (x1 < 0) return; const c = this.col32(id), m = this.map, img = this.img32;
     for (let y = y0; y <= y1; y++) for (let x = x0, p = y * w + x0; x <= x1; x++, p++) if (m[p] === id) img[p] = c;
-    this.fctx.putImageData(this.img, 0, 0, x0, y0, x1 - x0 + 1, y1 - y0 + 1); this.dirty = true; this.kick();
+    this.fctx.putImageData(this.img, 0, 0, x0, y0, x1 - x0 + 1, y1 - y0 + 1); this._hlUpdate([id]); this.dirty = true; this.kick();
   }
   /** repaint many regions with ONE canvas upload (brush strokes / undo of a stroke) */
   paintRegions(ids) {
@@ -58,7 +110,7 @@ export class PuzzleView {
     if (X1 < 0) return;
     if (ids.length > 150 || (X1 - X0 + 1) * (Y1 - Y0 + 1) <= Math.max(60000, sum * 3)) this.fctx.putImageData(this.img, 0, 0, X0, Y0, X1 - X0 + 1, Y1 - Y0 + 1);
     else for (const id of ids) { const o = id * 4; if (bb[o + 2] >= 0) this.fctx.putImageData(this.img, 0, 0, bb[o], bb[o + 1], bb[o + 2] - bb[o] + 1, bb[o + 3] - bb[o + 1] + 1); }
-    this.dirty = true; this.kick();
+    this._hlUpdate(ids); this.dirty = true; this.kick();
   }
   /** show coloured overlay for regions: items [{id, color:'#rrggbb'}]; ms = how long (0 = until cleared) */
   setOverlay(items, ms = 0) {
@@ -286,6 +338,10 @@ export class PuzzleView {
     ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * this.tx, dpr * this.ty);
     ctx.imageSmoothingEnabled = true;
     ctx.drawImage(this.fillCv, 0, 0);
+    if (this.hlCv && !this.celeb) { // spot finder stripes (selected colour), rebuilt only when the selection changes
+      if (this.hlSel !== (this.game ? this.game.selected : 0)) this._hlRebuild();
+      if (this.hlCount) { ctx.globalAlpha = 0.6; const k = this.hlK; if (k !== 1) { ctx.imageSmoothingEnabled = false; ctx.drawImage(this.hlCv, 0, 0, this.hlW * k, this.hlH * k); ctx.imageSmoothingEnabled = true; } else ctx.drawImage(this.hlCv, 0, 0); ctx.globalAlpha = 1; }
+    }
     if (this.overlayItems) {
       const el = (now - this.overlayStart) / 1000; ctx.globalAlpha = 0.45 + 0.4 * Math.sin(el * 7 - 1.2) ** 2 * 1; ctx.drawImage(this.ovCv, 0, 0); ctx.globalAlpha = 1;
     }
@@ -293,6 +349,7 @@ export class PuzzleView {
     let oa = 1, ce = 0;
     if (this.celeb) { ce = (now - this.celeb.t0) / 1000; oa = Math.max(0.28, 1 - ce / 0.9); }
     const lw = P.grid ? Math.max(1.3, 1.1 / s) : Math.max(2.0, 1.5 / s);
+    oa *= this.gridLineAlpha();
     ctx.globalAlpha = oa;
     if (this.heavy && this.moving && this.outCache && this.outCache.ok) {
       const c = this.outCache, k = s / c.s; ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -317,6 +374,11 @@ export class PuzzleView {
       const gr = ctx.createLinearGradient(cx - W * 0.18, 0, cx + W * 0.18, 0); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.5, 'rgba(255,255,255,0.75)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
       ctx.fillStyle = gr; ctx.translate(x0 + W / 2, y0 + H / 2); ctx.rotate(-0.35); ctx.fillRect(-W, -H, 2 * W, 2 * H); ctx.restore();
     }
+  }
+  /** Grid lines fade out when the squares are tiny on screen (an Epic grid at full view is a picture, not a dark mesh) */
+  gridLineAlpha() {
+    const G = this.puzzle && this.puzzle.grid; if (!G) return 1;
+    const px = G.cs * this.s; return Math.max(0.18, Math.min(1, (px - 3) / 9));
   }
   _brushCircle(ctx) {
     const c = this.cur, r = this.brushRadiusScreen(), sel = this.game ? this.game.selected : 0, col = sel ? this.puzzle.palette[sel - 1] : '#7b5cff';
