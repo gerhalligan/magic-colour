@@ -1,4 +1,6 @@
-import pictures from './pictures.generated.js';
+import allPictures from './pictures.generated.js';
+import { DEMO, DEMO_IDS, demoBlock, wireDemo } from './demo.js';
+const pictures = DEMO ? allPictures.filter((p) => DEMO_IDS.includes(p.id)) : allPictures;
 import { createGame, textColourFor, MODE_MAGIC, MODE_CLASSIC, MODE_BRUSH } from './game.js';
 import { BRUSH_SIZES, snapTap } from './brush.js';
 import { PuzzleView } from './view.js';
@@ -444,6 +446,7 @@ function showWin(restored, award) {
     <button class="big mint" data-a="next">${I.next}<span>Next picture</span></button><button class="big" data-a="gallery">${I.gallery}<span>My gallery</span></button>
     <button class="big ghost" data-a="again">${I.again}<span>Colour it again</span></button><button class="big ghost" data-a="look">${I.close}<span>Close</span></button></div>`;
   const cv = renderFinal(P, 560, { caption: false }); cv.className = 'final'; $('.prev', card).appendChild(cv);
+  if (DEMO) { $('.prev', card).insertAdjacentHTML('afterend', demoBlock()); wireDemo(card); }
   openModal();
   card.onclick = (e) => modalAction(e, P);
 }

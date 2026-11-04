@@ -6,6 +6,7 @@
   "scripts": {
     "pictures": "node tools/art/render.mjs && node tools/pixel-grid.mjs && node tools/build-pictures.mjs",
     "build": "vite build && node tools/inline.mjs",
+    "build:demo": "MC_DEMO=1 vite build && MC_DEMO=1 node tools/inline.mjs",
     "test:segment": "node tests/segment.mjs",
     "test:game": "node tests/game.mjs",
     "test:brush": "node tests/brush.mjs",

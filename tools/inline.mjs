@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+const DEMO = process.env.MC_DEMO === '1';
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
@@ -10,8 +11,9 @@ const css = fs.readFileSync(path.join(root, 'src/style.css'), 'utf8').replace(/\
 let js = fs.readFileSync(path.join(root, 'dist/app.js'), 'utf8');
 js = js.replace(/<\/script/gi, '<\\/script').replace(/<!--/g, '<\\!--');
 const out = html.replace('<style>/*CSS*/</style>', () => '<style>' + css + '</style>').replace('<script>/*APP*/</script>', () => '<script>' + js + '</script>');
-fs.mkdirSync(path.join(root, 'dist-single'), { recursive: true });
-const dest = path.join(root, 'dist-single/Magic-Colour.html');
+const outDir = DEMO ? 'dist-demo' : 'dist-single';
+fs.mkdirSync(path.join(root, outDir), { recursive: true });
+const dest = path.join(root, outDir, 'Magic-Colour.html');
 fs.writeFileSync(dest, out);
 const bad = [];
 if (/type\s*=\s*["']module/.test(out)) bad.push('type=module');
@@ -25,7 +27,8 @@ const sha = crypto.createHash('sha256').update(out).digest('hex');
 // SEO / share assets next to the single file (file:// then has no missing icon / manifest requests)
 // copy public/ recursively (privacy.html, .well-known/assetlinks.json for the Android app, icons, ...) except sw.js
 const copyTree = (from, to, top = true) => { fs.mkdirSync(to, { recursive: true }); for (const f of fs.readdirSync(from)) { if (top && f === 'sw.js') continue; const a = path.join(from, f), b = path.join(to, f); if (fs.statSync(a).isDirectory()) copyTree(a, b, false); else fs.copyFileSync(a, b); } };
-copyTree(path.join(root, 'public'), path.join(root, 'dist-single'));
+copyTree(path.join(root, 'public'), path.join(root, outDir));
+if (DEMO) { console.log('demo build ready in dist-demo/'); if (bad.length) process.exit(1); process.exit(0); }
 // share copy
 fs.mkdirSync('/workspace/magic-colour-share', { recursive: true });
 fs.copyFileSync(dest, '/workspace/magic-colour-share/Magic-Colour.html');
