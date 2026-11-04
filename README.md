@@ -94,3 +94,6 @@ npm test && npm run build
 ## Deploy
 
 GitHub Pages serves `docs/` from `main`. `npm run build` refreshes `docs/index.html` (byte-identical to `dist-single/Magic-Colour.html`), `sw.js` (cache name carries the build hash), manifest and icons.
+
+## Play-app gate
+`src/gate.js` is inlined right after `<meta charset>` in the production build (not in demo builds). On the public `*.games.mikai.ai` host it redirects browser visitors to games.mikai.ai unless launched from the Play TWA (android-app:// referrer, then remembered in localStorage + cookie) or in an installed display mode. Bypass with `?dev=<token>` (see `DEV` in `src/gate.js`). Fails open.
