@@ -1,7 +1,7 @@
 {
   "name": "Magic Colour",
   "short_name": "Magic Colour",
-  "description": "Free colour-by-numbers for kids. No ads, no tracking, works offline.",
+  "description": "Colour-by-numbers for kids, made in Ireland. No ads, no tracking, works offline.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "fullscreen",

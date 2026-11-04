@@ -5,6 +5,9 @@ Weekly (Friday) improve run – easier to find the spots on big pictures.
 - Low-end Android: the finder is its own small layer (Shapes: picture size; Grids: 4×4 texels per square, about 0.9 MB for a 120×120), rebuilt only when the colour changes and updated per coloured spot. The fill layer, saving, Continue, gallery, exported/shared PNG, home layout, Play files (`.well-known/assetlinks.json`, privacy page) and offline service worker are unchanged.
 - New browser test `tests/finder.mjs` (`npm run test:finder`, part of `npm test`) at 390×844, 360×640 and desktop: defaults (One by one, smallest brush), palette-only never fills, stripes exactly on unfilled spots of the selected number, tap/undo/keyboard/colour switch, Magic fill, Brush only-matching, save + Continue, finishing + win card + gallery, Epic grid line fade and grey squares, no errors and no network requests.
 
+## 1.12.1 — 2026-11-04 — No more "free" in the web info
+- Now a paid Google Play app (€1): removed "free" from the page title, description, Open Graph / Twitter tags, JSON-LD description, web manifest and privacy page. Share image badges are now "Made in Ireland · No ads · No tracking · Works offline". Text and share image only.
+
 ## 1.11.1 — 2026-10-27
 Google Play preparation (no gameplay changes).
 - **Privacy policy page** at `/privacy.html` (no ads, no tracking, no accounts, no data collected, progress saved only on the device), listed in the sitemap.

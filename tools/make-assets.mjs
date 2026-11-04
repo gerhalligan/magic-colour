@@ -33,7 +33,7 @@ ${img(play, 'left:560px;top:300px;width:440px;transform:rotate(-4deg)')}
 <div style="position:absolute;left:56px;top:176px;font-size:92px;line-height:.95;font-weight:900;color:#5b3fe0;text-shadow:0 5px 0 #fff">Magic<br><span style="background:linear-gradient(90deg,#ff6fa5,#ffb02e,#1fb6a6,#4cc9f0);-webkit-background-clip:text;color:transparent;text-shadow:none">Colour</span></div>
 <div style="position:absolute;left:58px;top:400px;font-size:34px;font-weight:700;color:#2b2d42;width:520px;line-height:1.2">Colour-by-numbers for kids</div>
 <div style="position:absolute;left:56px;top:478px;display:flex;gap:10px;flex-wrap:wrap;width:540px">
-${['Free', 'No ads', 'No tracking', 'Works offline'].map((t, i) => `<span style="background:${['#ff6fa5', '#ff9e2e', '#1fb6a6', '#7b5cff'][i]};color:#fff;font-weight:700;font-size:25px;padding:7px 18px;border-radius:30px;border:4px solid #fff;box-shadow:0 4px 0 rgba(43,45,66,.3)">${t}</span>`).join('')}
+${['Made in Ireland', 'No ads', 'No tracking', 'Works offline'].map((t, i) => `<span style="background:${['#ff6fa5', '#ff9e2e', '#1fb6a6', '#7b5cff'][i]};color:#fff;font-weight:700;font-size:25px;padding:7px 18px;border-radius:30px;border:4px solid #fff;box-shadow:0 4px 0 rgba(43,45,66,.3)">${t}</span>`).join('')}
 </div></body>`);
 await p2.waitForTimeout(400);
 const full = await p2.screenshot();
