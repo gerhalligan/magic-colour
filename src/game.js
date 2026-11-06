@@ -19,6 +19,13 @@ export function createGame(puzzle, { mode = MODE_CLASSIC } = {}) {
     colourOf: (id) => regions[id][0],
     remaining(c) { return byColour[c].length - doneCount[c]; },
     colourDone(c) { return byColour[c].length > 0 && doneCount[c] === byColour[c].length; },
+    /** Next unfinished colour after the current selection (wraps). 0 if the picture is done. Select-only helper — never fills. */
+    nextUnfinished() {
+      if (g.complete) return 0;
+      const start = g.selected > 0 && g.selected <= K ? g.selected : 0;
+      for (let i = 1; i <= K; i++) { const c = ((start - 1 + i) % K) + 1; if (g.remaining(c) > 0) return c; }
+      return 0;
+    },
     filledCount() { let c = 0; for (let c1 = 1; c1 <= K; c1++) c += doneCount[c1]; return c; },
     progress() { return toDo ? g.filledCount() / toDo : 1; },
     isComplete() { return g.filledCount() === toDo; },

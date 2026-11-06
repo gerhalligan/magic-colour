@@ -51,18 +51,26 @@ for (const [name, vp, touch, dsf] of VIEWPORTS) {
   });
 
   await test(`${name}: One by one tap clears that spot's stripes, undo brings them back, switching colour moves the stripes`, async () => {
-    await open('happy-fish'); await page.click('.sw[data-c="1"]');
-    const before = await layerCheck(page); const id = await biggestRegionOf(page, 1); await tapRegion(id);
-    let s = await st(page); assert.equal(s.filled, 1); let L = await layerCheck(page); assert.equal(L.bad, 0); assert.equal(L.regions, before.regions - 1); assert.equal(L.info.count, before.want - 1);
+    // colour 4 has several spots on happy-fish — finishing a colour auto-advances, so this test must leave the colour unfinished
+    await open('happy-fish'); await page.click('.sw[data-c="4"]');
+    const before = await layerCheck(page); assert.ok(before.want >= 2, 'need a multi-spot colour'); const id = await biggestRegionOf(page, 4); await tapRegion(id);
+    let s = await st(page); assert.equal(s.filled, 1); assert.equal(s.sel, 4, 'auto-advance only when the colour is finished'); let L = await layerCheck(page); assert.equal(L.bad, 0); assert.equal(L.regions, before.regions - 1); assert.equal(L.info.count, before.want - 1);
     await page.click('#pUndo'); s = await st(page); assert.equal(s.filled, 0); L = await layerCheck(page); assert.equal(L.regions, before.regions); assert.equal(L.bad, 0);
     await page.keyboard.press('3'); L = await layerCheck(page); assert.equal(L.sel, 3, 'keyboard number picks a colour'); assert.equal(L.bad, 0); assert.equal(L.regions, L.want);
     await page.screenshot({ path: `${SHOTS}/finder-${name}-1-select.png` });
   });
 
-  await test(`${name}: Magic tap fills every spot of the number and the stripes disappear; Brush paints only that number`, async () => {
+  await test(`${name}: Magic tap finishes a colour, auto-picks the next (stripes follow, still select-only); Brush paints only that number`, async () => {
     await page.click('.mode[data-mode="magic"]'); await open('happy-fish'); await page.click('.sw[data-c="1"]');
     const id = await biggestRegionOf(page, 1); await tapRegion(id); await page.waitForTimeout(900);
-    let L = await layerCheck(page); assert.equal(L.on, 0); assert.equal(L.info.count, 0); assert.ok(await page.evaluate(() => window.__MC.cur.game.colourDone(1)));
+    assert.ok(await page.evaluate(() => window.__MC.cur.game.colourDone(1)));
+    const next = await page.evaluate(() => { const g = window.__MC.cur.game; return { sel: g.selected, filled: g.filledCount(), rem1: g.remaining(1), nextRem: g.remaining(g.selected) }; });
+    assert.ok(next.sel > 1, 'auto-advanced past finished colour 1'); assert.ok(next.rem1 === 0); assert.ok(next.nextRem > 0);
+    let L = await layerCheck(page); assert.equal(L.sel, next.sel); assert.equal(L.bad, 0); assert.equal(L.regions, L.want); assert.ok(L.on > 0, 'stripes now on the next colour');
+    // palette alone still never fills: re-select current next colour
+    const filledBefore = next.filled;
+    await page.click(`.sw[data-c="${next.sel}"]`);
+    assert.equal(await page.evaluate(() => window.__MC.cur.game.filledCount()), filledBefore, 're-select never fills');
     await page.click('.mode[data-mode="brush"]'); await page.click('.sw[data-c="2"]'); const b0 = await layerCheck(page);
     const tid = await biggestRegionOf(page, 2), p = await regionXY(page, tid);
     if (touch) { const cdp = await ctx.newCDPSession(page); await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: p.x, y: p.y, id: 1 }] }); for (let k = 1; k <= 6; k++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: p.x + k, y: p.y, id: 1 }] }); await page.waitForTimeout(16); } await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await cdp.detach(); }
@@ -74,10 +82,10 @@ for (const [name, vp, touch, dsf] of VIEWPORTS) {
   });
 
   await test(`${name}: progress is saved and Continue restores the picture with the finder in step`, async () => {
-    await open('happy-fish'); await page.click('.sw[data-c="1"]'); await tapRegion(await biggestRegionOf(page, 1));
+    await open('happy-fish'); await page.click('.sw[data-c="4"]'); await tapRegion(await biggestRegionOf(page, 4));
     await page.evaluate(() => { const m = window.__MC; m.flush(); m.store.saveProgress(m.cur.pic.id, m.cur.game.save()); });
     await page.reload(); await page.waitForSelector('.pic'); await page.waitForSelector('#continue:not([hidden]) .cont'); await page.click('#continue .cont'); await page.waitForSelector('#play.on'); await page.waitForTimeout(400);
-    const s = await st(page); assert.equal(s.filled, 1, 'restored'); assert.equal(s.sel, 1);
+    const s = await st(page); assert.equal(s.filled, 1, 'restored'); assert.equal(s.sel, 4, 'restored selection (colour 4 still unfinished)');
     const L = await layerCheck(page); assert.equal(L.bad, 0); assert.equal(L.regions, L.want);
     await page.click('#pHome'); await page.waitForSelector('#home.on');
   });

@@ -1,3 +1,10 @@
+## 1.13.0 — 2026-11-06
+Weekly (Friday) improve run – next colour + keep the screen awake.
+- **Next colour**: when a colour is finished, the next unfinished number is softly selected (with a short “Colour N next!” toast). Spot finder stripes move with it. Select only — picking never fills; Magic still needs a tap; Brush still paints only the matching number and only advances after the finger lifts (never mid-drag). Undo still restores the previous colour. Works in Magic, One by one and Brush.
+- **Screen stays awake** while colouring (Screen Wake Lock): the phone does not dim mid-picture on long Epic grids. Released on Home / Gallery / leaving the tab; silent no-op where unsupported. Offline, no network.
+- Mode rules unchanged: default remains **One by one**; Magic still needs a numbered region tap; Brush defaults to the smallest size. Compact home, Play files, gate.js, demo mode and the offline service worker are untouched.
+- Tests: `nextUnfinished` unit cases; finder browser test expects Magic finish → auto-advance with stripes on the next colour and palette-only still never filling.
+
 ## 1.12.2 — 2026-11-04 — Play-app gate
 - magic-colour.games.mikai.ai now only runs inside the Google Play app (TWA `ai.mikai.games.magiccolour`). Browser visitors are sent to https://games.mikai.ai/magic-colour/?from=web, which explains the app and offers the free demo. Detection: `android-app://` referrer, a remembered flag (localStorage + cookie) or an installed display mode; fails open on any error. `.well-known/assetlinks.json`, privacy page, manifest, icons and the offline service worker are unaffected. Developer bypass: `?dev=<token>` (token in `src/gate.js`). Local / file:// / demo builds are not gated.
 

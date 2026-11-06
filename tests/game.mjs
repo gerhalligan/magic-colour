@@ -93,4 +93,27 @@ await test('restore ignores garbage safely', () => {
 await test('selecting an invalid or finished colour never fills twice', () => {
   const g = createGame(puzzle(), { mode: MODE_MAGIC }); g.selectColour(1); g.tapRegion(1); assert.equal(g.tapRegion(1).type, 'already'); assert.equal(g.selectColour(1).done, true); assert.equal(g.selectColour(9).type, 'noop'); assert.equal(g.filledCount(), 3);
 });
+await test('nextUnfinished skips finished colours, wraps, and never fills via selectColour', () => {
+  const g = createGame(puzzle(), { mode: MODE_MAGIC });
+  assert.equal(g.nextUnfinished(), 1, 'no selection -> lowest unfinished');
+  g.selectColour(1); g.tapRegion(1); // finishes colour 1
+  assert.ok(g.colourDone(1));
+  assert.equal(g.nextUnfinished(), 2);
+  const before = g.filledCount();
+  g.selectColour(g.nextUnfinished());
+  assert.equal(g.selected, 2);
+  assert.equal(g.filledCount(), before, 'selecting next never fills');
+  g.selectColour(3); g.tapRegion(5); // finish 3
+  assert.equal(g.nextUnfinished(), 2, 'only 2 left');
+  g.selectColour(2); g.tapRegion(3);
+  assert.ok(g.complete);
+  assert.equal(g.nextUnfinished(), 0);
+});
+await test('nextUnfinished after the highest colour wraps to a lower unfinished one', () => {
+  const g = createGame(puzzle(), { mode: MODE_MAGIC });
+  g.selectColour(2); g.tapRegion(3);
+  g.selectColour(3); g.tapRegion(5);
+  assert.equal(g.selected, 3);
+  assert.equal(g.nextUnfinished(), 1);
+});
 done('game tests');

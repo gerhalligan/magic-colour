@@ -117,9 +117,10 @@ for (const [name, vp, touch, dsf] of VIEWPORTS) {
     assert.equal(await page.evaluate(() => window.__MC.settings.mode), 'classic'); assert.equal(await page.evaluate(() => window.__MC.cur.game.mode), 'classic');
     assert.ok(await page.$eval('.mode[data-mode="classic"]', (b) => b.classList.contains('on')), 'One by one button is on by default');
     assert.ok(!(await page.$eval('.mode[data-mode="magic"]', (b) => b.classList.contains('on'))));
-    const ids = await page.evaluate(() => window.__MC.cur.game.byColour[1].slice());
-    await page.click('.sw[data-c="1"]'); let s = await state(page); assert.equal(s.filled, 0, 'palette tap does not fill'); assert.equal(s.sel, 1);
-    const r = await regionXY(page, ids[0]); await tapAt(page, touch, r.x, r.y); s = await state(page); assert.equal(s.filled, 1, 'one tap = one region');
+    // colour 4 has several spots — leave it unfinished so we are not testing auto-advance here
+    const ids = await page.evaluate(() => window.__MC.cur.game.byColour[4].slice());
+    await page.click('.sw[data-c="4"]'); let s = await state(page); assert.equal(s.filled, 0, 'palette tap does not fill'); assert.equal(s.sel, 4);
+    const r = await regionXY(page, ids[0]); await tapAt(page, touch, r.x, r.y); s = await state(page); assert.equal(s.filled, 1, 'one tap = one region'); assert.equal(s.sel, 4, 'stays on unfinished colour');
     await page.click('#pUndo'); s = await state(page); assert.equal(s.filled, 0);
   });
 
@@ -131,10 +132,12 @@ for (const [name, vp, touch, dsf] of VIEWPORTS) {
     assert.equal(s.filled, 0, 'palette tap alone does NOT colour anything'); assert.equal(s.sel, 2);
     assert.ok(await page.evaluate(() => !!window.__MC.view.overlayItems), 'matching spots glow'); assert.ok(!(await page.$eval('.sw[data-c="2"]', (b) => b.classList.contains('done'))));
     const r = await regionXY(page, info.ids[0]); await tapAt(page, touch, r.x, r.y); s = await state(page);
-    assert.equal(s.filled, info.n2, 'a single tap fills all regions of colour 2'); assert.equal(s.sel, 2);
+    assert.equal(s.filled, info.n2, 'a single tap fills all regions of colour 2');
+    assert.ok(s.sel !== 2, 'auto-advances past the finished colour'); assert.ok(s.sel > 0);
     const pal = await page.evaluate(() => window.__MC.cur.pic.palette[1]);
     for (const id of info.ids) assert.equal(await px(page, id), pal);
     assert.ok(await page.$eval('.sw[data-c="2"]', (b) => b.classList.contains('done')), 'tick shown for completed colour');
+    assert.equal(await page.evaluate(() => window.__MC.cur.game.filledCount()), info.n2, 'auto-advance never fills');
     await page.waitForTimeout(300); await page.screenshot({ path: `${SHOTS}/${name}-3-magic-colour2.png` });
   });
 
@@ -145,7 +148,8 @@ for (const [name, vp, touch, dsf] of VIEWPORTS) {
     const s1 = await state(page); assert.equal(s1.filled, before.filled, 'wrong tap fills nothing'); assert.equal(s1.sel, 3);
     assert.ok(await page.evaluate(() => window.__MC.view.wiggle.size > 0), 'wiggle'); assert.match(await page.textContent('#toast'), /number \d+/);
     const id = await page.evaluate(() => window.__MC.cur.game.byColour[3][0]); const r = await regionXY(page, id); await tapAt(page, touch, r.x, r.y);
-    assert.equal(await page.evaluate(() => window.__MC.cur.game.remaining(3)), 0); assert.equal((await state(page)).sel, 3);
+    assert.equal(await page.evaluate(() => window.__MC.cur.game.remaining(3)), 0);
+    const after3 = await state(page); assert.ok(after3.sel !== 3, 'auto-advances after finishing colour 3'); assert.ok(after3.sel > 0);
   });
 
   await test(`${name}: undo + hint + wrong colour are gentle`, async () => {

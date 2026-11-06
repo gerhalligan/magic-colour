@@ -91,10 +91,29 @@ app.innerHTML = `
 function toast(msg, ms = 2400) {
   const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), ms);
 }
-function show(name) { for (const s of app.querySelectorAll('.screen')) s.classList.toggle('on', s.id === name); if (name === 'play' && view) requestAnimationFrame(() => view.resize(false)); }
+function show(name) { for (const s of app.querySelectorAll('.screen')) s.classList.toggle('on', s.id === name); if (name === 'play') { if (view) requestAnimationFrame(() => view.resize(false)); requestWake(); } else releaseWake(); }
 function soundIcons() { const h = settings.sound ? I.sound : I.mute; $('#hSound').innerHTML = h; $('#pSound').innerHTML = h; }
 function setSound(on) { settings.sound = on; store.saveSettings(settings); audio.setMuted(!on); soundIcons(); if (on) { audio.unlock(); audio.tap(); } }
 soundIcons();
+
+// ---------- screen wake lock (keeps the phone awake while colouring; silent no-op if unsupported) ----------
+let wake = null;
+async function requestWake() {
+  try {
+    if (!('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
+    if (wake) return;
+    wake = await navigator.wakeLock.request('screen');
+    wake.addEventListener('release', () => { if (wake) wake = null; });
+  } catch (e) { wake = null; }
+}
+function releaseWake() {
+  const w = wake; wake = null;
+  if (w) try { w.release(); } catch (e) { /* ignore */ }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') releaseWake();
+  else if (cur && $('#play').classList.contains('on')) requestWake();
+});
 
 // ---------- home ----------
 function renderTypes() {
@@ -220,7 +239,7 @@ $('#pSound').addEventListener('click', () => setSound(!settings.sound));
 $('#hSurprise').addEventListener('click', () => { audio.unlock(); const done = store.done(); const all = ofType(settings.type), pool = all.filter((p) => !done[p.id] && (filter.cat === 'all' || p.cat === filter.cat)); const l = pool.length ? pool : all; openPicture(l[(Math.random() * l.length) | 0].id, true); });
 let hasEntry = false;
 function enter() { if (hasEntry) return; try { history.pushState({ mc: 1 }, ''); hasEntry = true; } catch (e) { /* ignore */ } }
-function homeNow() { flush(); closeModal(); clearTimeout(celebTimer); renderGrid(); show('home'); }
+function homeNow() { flush(); closeModal(); clearTimeout(celebTimer); releaseWake(); renderGrid(); show('home'); }
 function goHome() { if (hasEntry) { hasEntry = false; try { history.back(); return; } catch (e) { /* fall through */ } } homeNow(); }
 addEventListener('popstate', () => { hasEntry = false; if (!$('#home').classList.contains('on')) homeNow(); });
 
@@ -240,7 +259,7 @@ function startPicture(p) {
   const prog0 = game.progress();
   cur = { pic: p, game, milestones: { half: prog0 >= 0.5, almost: prog0 >= 0.9 } };
   if (!view) view = new PuzzleView($('#cv'), { onTap: onTapRegion, onBrushStart, onBrush, onBrushEnd });
-  buildPalette(); updateModeUI(); show('play'); enter();
+  buildPalette(); updateModeUI(); show('play'); enter(); requestWake();
   view.load(p, game);
   requestAnimationFrame(() => { view.resize(true); });
   updatePalette(); updateProgress();
@@ -274,6 +293,22 @@ function maybeMilestoneToast() {
   const p = cur.game.progress(), m = cur.milestones || (cur.milestones = { half: false, almost: false });
   if (!m.half && p >= 0.5 && p < 1) { m.half = true; toast("Halfway! 🌟", 2200); }
   else if (!m.almost && p >= 0.9 && p < 1) { m.almost = true; toast("Almost done! ✨", 2200); }
+}
+/** When a colour is finished, softly pick the next unfinished number (select only — never fills). Spot finder stripes follow. */
+function advanceColour() {
+  if (!cur || cur.game.complete) return;
+  const g = cur.game;
+  if (!g.selected || !g.colourDone(g.selected)) return; // undo / switch may have intervened
+  const n = g.nextUnfinished();
+  if (!n) return;
+  g.selectColour(n); // select only
+  updatePalette();
+  if (view) { view.dirty = true; view.kick(); }
+  toast('Colour ' + n + ' next! \u{1F3A8}', 1800);
+  audio.select(n);
+}
+function scheduleAdvance(delay) {
+  later(() => advanceColour(), Math.max(0, delay | 0));
 }
 function updateModeUI() {
   for (const b of app.querySelectorAll('.mode')) { const on = b.dataset.mode === settings.mode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); }
@@ -339,6 +374,7 @@ function handle(res, ctx = {}) {
       if (res.colourDone) { audio.done(); const b = $('#palette').children[res.colour - 1]; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
       save();
       if (res.complete) later(() => finish(false), ids.length * step + 350);
+      else if (res.colourDone) scheduleAdvance(ids.length * step + 280);
       break; }
     case 'select': audio.select(res.colour); if (res.fromRegion) toast('Colour ' + res.colour + ' picked! ' + (g.mode === MODE_MAGIC ? 'Tap that spot again \u2013 the magic brush colours them all!' : 'Now tap the spots numbered ' + res.colour)); break;
     case 'wrong': {
@@ -365,7 +401,7 @@ function onBrush(ids, info) {
     if (!bs.told) {
       bs.told = true;
       if (sel === 0) { toast('Pick a colour first, then paint \u{1F3A8}', 2200); audio.nudge(); for (const b of $('#palette').children) { b.classList.remove('nudge'); void b.offsetWidth; b.classList.add('nudge'); } }
-      else toast('All the ' + sel + 's are done \u2705 Pick another colour', 2400);
+      // colour finished mid-stroke: stay quiet — onBrushEnd auto-picks the next colour
     }
     return 0;
   }
@@ -392,7 +428,9 @@ function onBrush(ids, info) {
 function onBrushEnd(painted) {
   if (!cur) return; const g = cur.game; g.endStroke(); save(); updateUndo();
   const sel = g.selected, now = performance.now();
-  if (!painted && sel && !g.colourDone(sel) && !(bs && bs.told) && now - lastGlow > 4000) { // nothing painted: softly show where that number is
+  // advance only after the stroke ends (never mid-drag), so the brush does not suddenly switch numbers under the finger
+  if (sel && g.colourDone(sel) && !g.complete) scheduleAdvance(220);
+  else if (!painted && sel && !g.colourDone(sel) && !(bs && bs.told) && now - lastGlow > 4000) { // nothing painted: softly show where that number is
     lastGlow = now; view.setOverlay(g.byColour[sel].filter((i) => !g.filled[i]).map((id) => ({ id, color: '#ffd93d' })), 1400);
   }
   bs = null;
@@ -476,4 +514,4 @@ $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') clos
 // ---------- boot ----------
 renderChips(); renderGrid();
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
-window.__MC = { onBrush, setBrushSize, ofType, get cur() { return cur; }, get view() { return view; }, pictures, store, flush, openPicture, startPicture, handle, settings, isFresh, pictureOfTheDay, dayKey, renderStickers, renderContinue, unfinishedLast, STICKER, get pending() { return pending; } };
+window.__MC = { onBrush, setBrushSize, ofType, get cur() { return cur; }, get view() { return view; }, pictures, store, flush, openPicture, startPicture, handle, settings, isFresh, pictureOfTheDay, dayKey, renderStickers, renderContinue, unfinishedLast, STICKER, advanceColour, get pending() { return pending; } };
