@@ -8,6 +8,7 @@ import { store } from './store.js';
 import { audio } from './audio.js';
 import { saveOrShare, renderFinal, canShareFiles } from './export.js';
 import { confetti } from './confetti.js';
+import { createReplay } from './replay.js';
 import { I, CAT, DIFF, STICKER } from './icons.js';
 
 const $ = (sel, el = document) => el.querySelector(sel);
@@ -91,6 +92,7 @@ app.innerHTML = `
 function toast(msg, ms = 2400) {
   const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), ms);
 }
+function clearToast() { clearTimeout(toastTimer); $('#toast').classList.remove('on'); }
 function show(name) { for (const s of app.querySelectorAll('.screen')) s.classList.toggle('on', s.id === name); if (name === 'play') { if (view) requestAnimationFrame(() => view.resize(false)); requestWake(); } else releaseWake(); }
 function soundIcons() { const h = settings.sound ? I.sound : I.mute; $('#hSound').innerHTML = h; $('#pSound').innerHTML = h; }
 function setSound(on) { settings.sound = on; store.saveSettings(settings); audio.setMuted(!on); soundIcons(); if (on) { audio.unlock(); audio.tap(); } }
@@ -251,7 +253,7 @@ function openPicture(id, force) {
   startPicture(p);
 }
 function startPicture(p) {
-  flush(); closeModal(); clearTimeout(celebTimer); if (stopConfetti) { stopConfetti(); stopConfetti = null; }
+  flush(); closeModal(); clearToast(); clearTimeout(celebTimer); if (stopConfetti) { stopConfetti(); stopConfetti = null; }
   settings.lastId = p.id; store.saveSettings(settings);
   const game = createGame(p, { mode: settings.mode });
   game.restore(store.progress(p.id));
@@ -483,7 +485,7 @@ function showWin(restored, award) {
     <div class="btns"><button class="big pri" data-a="save">${I.save}<span>Save picture</span></button>${share ? `<button class="big" data-a="share">${I.share}<span>Share</span></button>` : ''}
     <button class="big mint" data-a="next">${I.next}<span>Next picture</span></button><button class="big" data-a="gallery">${I.gallery}<span>My gallery</span></button>
     <button class="big ghost" data-a="again">${I.again}<span>Colour it again</span></button><button class="big ghost" data-a="look">${I.close}<span>Close</span></button></div>`;
-  const cv = renderFinal(P, 560, { caption: false }); cv.className = 'final'; $('.prev', card).appendChild(cv);
+  mountPreview(card, P);
   if (DEMO) { $('.prev', card).insertAdjacentHTML('afterend', demoBlock()); wireDemo(card); }
   openModal();
   card.onclick = (e) => modalAction(e, P);
@@ -498,20 +500,42 @@ function modalAction(e, P) {
   else if (a === 'again') { store.clearProgress(P.id); startPicture(P); cur.game.reset(); view.paintAll(); updatePalette(); updateProgress(); save(); }
   else if (a === 'look') { closeModal(); if (cur) { view.clearCelebrate(); } }
   else if (a === 'close') closeModal();
+  else if (a === 'watch') playReplay(P);
 }
+// ---------- "Watch it colour" replay (read-only: never changes progress, the gallery or the game) ----------
+let replay = null;
+function mountPreview(card, P) {
+  stopReplay();
+  const prev = $('.prev', card), wrap = document.createElement('div'); wrap.className = 'pv';
+  const cv = renderFinal(P, 560, { caption: false }); cv.className = 'final'; wrap.appendChild(cv);
+  wrap.insertAdjacentHTML('beforeend', '<button class="watch" data-a="watch" aria-label="Watch it colour">\u25B6<span>Watch</span></button>');
+  prev.appendChild(wrap);
+}
+function playReplay(P) {
+  const wrap = $('#modalCard .pv'); if (!wrap) return;
+  stopReplay();
+  let lastNote = 0;
+  const r = createReplay(P, 560, {
+    onColour: (c) => { const now = performance.now(); if (now - lastNote > 140) { lastNote = now; audio.select(c); } },
+    onEnd: () => { audio.done(); wrap.classList.remove('playing'); if (replay === r) replay = null; },
+  });
+  r.canvas.className = 'final'; const old = $('canvas', wrap); if (old) old.replaceWith(r.canvas); else wrap.prepend(r.canvas);
+  wrap.classList.add('playing'); replay = r; r.play();
+}
+function stopReplay() { if (replay) { replay.stop(); replay = null; } const w = $('#modalCard .pv.playing'); if (w) w.classList.remove('playing'); }
 function openViewer(P) {
   const share = canShareFiles(), card = $('#modalCard'); card.className = 'card win';
   card.innerHTML = `<h2>${P.name}</h2><p class="sub">${stars(P.diff)}</p><div class="prev"></div>
     <div class="btns"><button class="big pri" data-a="save">${I.save}<span>Save picture</span></button>${share ? `<button class="big" data-a="share">${I.share}<span>Share</span></button>` : ''}
     <button class="big ghost" data-a="again">${I.again}<span>Colour it again</span></button><button class="big ghost" data-a="close">${I.close}<span>Close</span></button></div>`;
-  const cv = renderFinal(P, 560, { caption: false }); cv.className = 'final'; $('.prev', card).appendChild(cv);
+  mountPreview(card, P);
   openModal(); card.onclick = (e) => { const b = e.target.closest('[data-a]'); if (b && b.dataset.a === 'again') { audio.tap(); store.clearProgress(P.id); cur = null; closeModal(); startPicture(P); cur.game.reset(); view.paintAll(); updatePalette(); updateProgress(); return; } modalAction(e, P); };
 }
 function openModal() { $('#modal').classList.add('on'); }
-function closeModal() { $('#modal').classList.remove('on'); }
+function closeModal() { stopReplay(); $('#modal').classList.remove('on'); }
 $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') closeModal(); });
 
 // ---------- boot ----------
 renderChips(); renderGrid();
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
-window.__MC = { onBrush, setBrushSize, ofType, get cur() { return cur; }, get view() { return view; }, pictures, store, flush, openPicture, startPicture, handle, settings, isFresh, pictureOfTheDay, dayKey, renderStickers, renderContinue, unfinishedLast, STICKER, advanceColour, get pending() { return pending; } };
+window.__MC = { onBrush, setBrushSize, ofType, get cur() { return cur; }, get view() { return view; }, pictures, store, flush, openPicture, startPicture, handle, settings, isFresh, pictureOfTheDay, dayKey, renderStickers, renderContinue, unfinishedLast, STICKER, advanceColour, get pending() { return pending; }, get replay() { return replay; }, openViewer, renderGallery };

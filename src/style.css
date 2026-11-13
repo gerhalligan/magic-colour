@@ -112,6 +112,10 @@ svg{display:block}
 .card .sub{margin:2px 0 10px;font-weight:800;color:#7b7160}
 .prev{display:flex;justify-content:center}
 .final{width:min(60vw,36vh,360px);height:auto;border-radius:18px;box-shadow:0 4px 0 var(--line);background:#fff;aspect-ratio:1}
+.pv{position:relative;display:inline-block;line-height:0}
+.watch{position:absolute;right:8px;bottom:10px;display:flex;align-items:center;gap:6px;min-height:44px;min-width:44px;padding:0 14px;border-radius:22px;background:var(--brand);color:#fff;font-weight:900;font-size:16px;line-height:1;box-shadow:0 3px 0 var(--brand2);opacity:.94;transition:opacity .2s}
+.watch:active{transform:translateY(2px) scale(.97)}
+.pv.playing .watch{opacity:0;pointer-events:none}
 .btns{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:14px}
 .big{display:flex;align-items:center;gap:10px;min-height:56px;padding:0 18px;border-radius:28px;background:#fff;box-shadow:0 4px 0 var(--line);font-weight:900;font-size:18px;color:var(--ink)}
 .big svg{font-size:26px}

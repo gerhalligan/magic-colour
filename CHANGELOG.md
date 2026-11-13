@@ -1,3 +1,11 @@
+## 1.14.0 — 2026-11-13
+Weekly (Friday) improve run – watch your picture colour itself in.
+- **Watch it colour** ▶: a finished picture's preview (on the “Brilliant!” card and in My Gallery) has a **Watch** button. Tapping it replays the picture filling itself in, colour by colour from top to bottom, with a soft note for each new colour and a little cheer at the end (follows the sound switch). Takes 3–7 seconds, even on 120×120 Epic grids, and ends on the finished picture. Tap again to watch again.
+- Read-only and light: the replay only reads the picture data – it never changes progress, the gallery, stickers, undo or the colouring screen. Grid pictures replay at one pixel per square and the Shapes ink outline is drawn once, so it stays smooth on low-end Android. Closing the card, Colour it again or Next picture stops it. Offline, no new files, no network.
+- **Fix**: opening a new picture no longer shows the previous picture's leftover message (e.g. “Now tap the spots numbered 2”).
+- Mode rules unchanged: default remains **One by one**; Magic still needs a numbered region tap; Brush defaults to the smallest size. Compact home, Play files, gate.js, demo mode and the offline service worker are untouched.
+- New browser test `tests/replay.mjs` (`npm run test:replay`, part of `npm test`) at 390×844, 360×640 and desktop: replay order covers every coloured spot once colour by colour, the last frame matches the finished picture (Shapes, Hard Shapes and an Epic grid), the win card and gallery Watch button (44 px, on the picture), playing/ending, read-only (progress and gallery unchanged), stops on close / Colour it again, plus defaults, palette-only never fills, stale toast, Continue, no errors and no network requests.
+
 ## 1.13.0 — 2026-11-06
 Weekly (Friday) improve run – next colour + keep the screen awake.
 - **Next colour**: when a colour is finished, the next unfinished number is softly selected (with a short “Colour N next!” toast). Spot finder stripes move with it. Select only — picking never fills; Magic still needs a tap; Brush still paints only the matching number and only advances after the finger lifts (never mid-drag). Undo still restores the previous colour. Works in Magic, One by one and Brush.
