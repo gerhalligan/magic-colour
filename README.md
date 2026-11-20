@@ -15,6 +15,7 @@ Ad-free colour-by-numbers for young children (≈4–9). No ads, no tracking, no
 * **Zoom & pan**: pinch / two-finger drag on touch (one finger paints in Brush mode, pans in the other modes); on desktop mouse wheel zooms, and in Brush mode hold **Space** + drag, or **right/middle-button drag**, to pan (left-drag paints).
 * **Forgiving taps** (Magic / One by one): a tap just beside a spot of the selected number (on the paper, a coloured spot or just outside the picture, about 14 px; only about 6 px over a different number) still colours that spot (`snapTap` in `src/brush.js`).
 * Wrong number? A gentle wiggle and a hint, never a penalty.
+* **Peek** (eye button on the colouring screen): hold to see the finished picture lined up with the current zoom (a quick tap peeks for ~2 s; touching the picture ends it). Read-only own layer (`view.setPeek`), never touches progress, undo or the fill layer.
 * Hint, undo, auto-save per picture, celebration + category stickers, "My gallery", save/share PNG, cute WebAudio sounds (soft sparkle while brushing, throttled) with mute.
 
 ## Develop

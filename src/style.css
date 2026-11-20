@@ -73,6 +73,9 @@ svg{display:block}
 #brushbar button.on i{background:#fff}
 #stage{position:relative;min-height:0;margin:0 6px;border-radius:22px;background:#f1eadb;overflow:hidden;box-shadow:inset 0 0 0 3px #fff, 0 3px 0 var(--line)}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;background:repeating-conic-gradient(#f7f1e4 0 25%,#f1eadb 0 50%) 0 0/28px 28px}
+.peekbtn{position:absolute;right:10px;top:62px;min-width:44px;height:44px;padding:0 10px;border-radius:15px;background:rgba(255,255,255,.92);box-shadow:0 2px 0 var(--line);font-size:24px;color:var(--brand2);display:flex;align-items:center;justify-content:center;gap:4px;z-index:2;touch-action:none;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
+.peekbtn span{font-size:13px;font-weight:900}
+.peekbtn.on{background:var(--brand);color:#fff;box-shadow:0 2px 0 var(--brand2)}
 .pbar{position:absolute;left:10px;top:10px;width:min(150px,38%);height:20px;border-radius:12px;background:rgba(255,255,255,.85);overflow:hidden;pointer-events:none}
 .pbar i{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,var(--pink),var(--sun));transition:width .4s}
 .pbar b{position:absolute;inset:0;text-align:center;font-size:12px;line-height:20px;font-weight:900;color:var(--ink)}

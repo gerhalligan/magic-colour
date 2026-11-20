@@ -21,6 +21,7 @@ export const I = {
   next: s(`<path ${st} d="M10 24h26M26 13l11 11-11 11"/>`),
   dice: s(`<rect ${st} x="8" y="8" width="32" height="32" rx="7"/><circle cx="17" cy="17" r="3" fill="currentColor"/><circle cx="31" cy="17" r="3" fill="currentColor"/><circle cx="24" cy="24" r="3" fill="currentColor"/><circle cx="17" cy="31" r="3" fill="currentColor"/><circle cx="31" cy="31" r="3" fill="currentColor"/>`),
   again: s(`<path ${st} d="M38 24a14 14 0 1 1-4.5-10.3"/><path ${st} d="M36 7v8h-8"/>`),
+  eye: s(`<path ${st} d="M4 24c5-9 12-14 20-14s15 5 20 14c-5 9-12 14-20 14S9 33 4 24z"/><circle cx="24" cy="24" r="6.5" fill="currentColor"/>`),
   close: s(`<path ${st} d="m12 12 24 24M36 12 12 36"/>`),
   star: s(`<path fill="currentColor" d="m24 5 5.8 12 13.2 1.8-9.6 9.2 2.3 13L24 34.8 12.3 41l2.3-13L5 18.8 18.2 17z"/>`),
 };

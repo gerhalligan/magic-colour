@@ -34,6 +34,7 @@ export class PuzzleView {
     // bounding boxes + brush hit-tester (shared with the unit tests via brush.js)
     this.bb = computeBBoxes(this.map, w, h, puzzle.regions.length); this.brusher = new Brusher(puzzle, this.map, this.bb); this._cancelStroke(false); this.cur = null;
     this.sparks.length = 0; this.rings.length = 0; this.wiggle.clear(); this.overlayItems = null; this.celeb = null; this.outCache = null;
+    this.peek = false; this.peekCv = null;
     this._hlInit();
     this.paintAll(); this.resize(true);
   }
@@ -87,6 +88,19 @@ export class PuzzleView {
     this.hlCount = g.remaining(sel);
   }
   /** spot finder state for tests: selected colour + number of striped spots */
+  // ---------- peek: show the finished picture while the Peek button is held (read-only own layer, built once per picture on first use) ----------
+  setPeek(on) {
+    on = !!on && !!this.puzzle && !this.celeb; if (on === !!this.peek) return;
+    if (on && !this.peekCv) this._buildPeek();
+    this.peek = on; this.dirty = true; this.kick();
+  }
+  _buildPeek() {
+    const P = this.puzzle, c = document.createElement('canvas'); c.width = P.w; c.height = P.h;
+    const x = c.getContext('2d'), im = x.createImageData(P.w, P.h), a = new Uint32Array(im.data.buffer), m = this.map;
+    const rc = P.regions.map((r) => (r[0] > 0 ? this.pal32[r[0] - 1] : WHITE32));
+    for (let p = 0; p < m.length; p++) a[p] = rc[m[p]];
+    x.putImageData(im, 0, 0); this.peekCv = c;
+  }
   finderInfo() { return { sel: this.hlSel, count: this.hlCount }; }
   col32(id) { const r = this.puzzle.regions[id]; return r[0] > 0 && this.game.filled[id] ? this.pal32[r[0] - 1] : r[0] > 0 && this.puzzle.grid ? GREY32 : WHITE32; }
   paintAll() {
@@ -302,7 +316,7 @@ export class PuzzleView {
     this.wiggle.set(id, performance.now());
     this.setOverlay([{ id, color: '#ffc2d1' }], 1100); this.kick();
   }
-  celebrate() { this.celeb = { t0: performance.now(), next: 0 }; this.kick(); }
+  celebrate() { this.peek = false; this.celeb = { t0: performance.now(), next: 0 }; this.kick(); }
   clearCelebrate() { this.celeb = null; this.dirty = true; this.kick(); }
 
   // ---------- frame loop ----------
@@ -337,12 +351,13 @@ export class PuzzleView {
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, this.cv.width, this.cv.height);
     ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * this.tx, dpr * this.ty);
     ctx.imageSmoothingEnabled = true;
-    ctx.drawImage(this.fillCv, 0, 0);
-    if (this.hlCv && !this.celeb) { // spot finder stripes (selected colour), rebuilt only when the selection changes
+    const peek = this.peek && this.peekCv;
+    ctx.drawImage(peek ? this.peekCv : this.fillCv, 0, 0);
+    if (this.hlCv && !this.celeb && !peek) { // spot finder stripes (selected colour), rebuilt only when the selection changes
       if (this.hlSel !== (this.game ? this.game.selected : 0)) this._hlRebuild();
       if (this.hlCount) { ctx.globalAlpha = 0.6; const k = this.hlK; if (k !== 1) { ctx.imageSmoothingEnabled = false; ctx.drawImage(this.hlCv, 0, 0, this.hlW * k, this.hlH * k); ctx.imageSmoothingEnabled = true; } else ctx.drawImage(this.hlCv, 0, 0); ctx.globalAlpha = 1; }
     }
-    if (this.overlayItems) {
+    if (this.overlayItems && !peek) {
       const el = (now - this.overlayStart) / 1000; ctx.globalAlpha = 0.45 + 0.4 * Math.sin(el * 7 - 1.2) ** 2 * 1; ctx.drawImage(this.ovCv, 0, 0); ctx.globalAlpha = 1;
     }
     // celebration: outline fades to a soft line, shine sweeps across
@@ -365,7 +380,7 @@ export class PuzzleView {
     }
     ctx.globalAlpha = 1;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    if (!this.celeb) this._labels(ctx, now);
+    if (!this.celeb && !peek) this._labels(ctx, now);
     this._effects(ctx, now);
     if (this.brush.on && this.cur && !this.celeb) this._brushCircle(ctx);
     if (this.celeb && ce < 2) { // shine band

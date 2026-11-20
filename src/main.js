@@ -75,6 +75,7 @@ app.innerHTML = `
     <canvas id="cv"></canvas>
     <div class="pbar"><i id="pFill"></i><b id="pText"></b></div>
     <button class="sndbtn" id="pSound" aria-label="Sound"></button>
+    <button class="peekbtn" id="pPeek" aria-label="Peek: hold to see the finished picture">${I.eye}<span>Peek</span></button>
     <div id="brushbar" role="group" aria-label="Brush size">${BRUSH_SIZES.map((b, i) => `<button data-size="${i}" aria-label="${b.label} brush" title="${b.label}"><i style="--d:${[10, 17, 25, 34][i]}px"></i></button>`).join('')}</div>
     <div class="zoomctl">
       <button id="zIn" aria-label="Zoom in">${I.plus}</button>
@@ -241,7 +242,7 @@ $('#pSound').addEventListener('click', () => setSound(!settings.sound));
 $('#hSurprise').addEventListener('click', () => { audio.unlock(); const done = store.done(); const all = ofType(settings.type), pool = all.filter((p) => !done[p.id] && (filter.cat === 'all' || p.cat === filter.cat)); const l = pool.length ? pool : all; openPicture(l[(Math.random() * l.length) | 0].id, true); });
 let hasEntry = false;
 function enter() { if (hasEntry) return; try { history.pushState({ mc: 1 }, ''); hasEntry = true; } catch (e) { /* ignore */ } }
-function homeNow() { flush(); closeModal(); clearTimeout(celebTimer); releaseWake(); renderGrid(); show('home'); }
+function homeNow() { stopPeek(); flush(); closeModal(); clearTimeout(celebTimer); releaseWake(); renderGrid(); show('home'); }
 function goHome() { if (hasEntry) { hasEntry = false; try { history.back(); return; } catch (e) { /* fall through */ } } homeNow(); }
 addEventListener('popstate', () => { hasEntry = false; if (!$('#home').classList.contains('on')) homeNow(); });
 
@@ -253,7 +254,7 @@ function openPicture(id, force) {
   startPicture(p);
 }
 function startPicture(p) {
-  flush(); closeModal(); clearToast(); clearTimeout(celebTimer); if (stopConfetti) { stopConfetti(); stopConfetti = null; }
+  stopPeek(); flush(); closeModal(); clearToast(); clearTimeout(celebTimer); if (stopConfetti) { stopConfetti(); stopConfetti = null; }
   settings.lastId = p.id; store.saveSettings(settings);
   const game = createGame(p, { mode: settings.mode });
   game.restore(store.progress(p.id));
@@ -451,10 +452,24 @@ $('#pHint').addEventListener('click', () => {
   toast('Look for the glowing spots \u2013 they are number ' + h.colour + '!', 3200);
 });
 $('#pHome').addEventListener('click', () => { audio.tap(); goHome(); });
+// ---------- Peek: hold (or tap) the eye to see the finished picture, lined up with the current zoom. Read-only: never touches the game, progress or undo ----------
+let peekTimer = 0, peekDown = 0, peekTold = false;
+function startPeek() {
+  if (!cur || !view || cur.game.complete) return;
+  clearTimeout(peekTimer); peekTimer = 0; view.setPeek(true); $('#pPeek').classList.add('on');
+  if (!peekTold) { peekTold = true; toast('\u{1F440} This is how your picture will look!', 1800); }
+}
+function stopPeek() { clearTimeout(peekTimer); peekTimer = 0; peekDown = 0; if (view) view.setPeek(false); $('#pPeek').classList.remove('on'); }
+function peekRelease() { if (!peekDown) return; const held = performance.now() - peekDown; peekDown = 0; if (held < 350) { clearTimeout(peekTimer); peekTimer = setTimeout(stopPeek, 2000); } else stopPeek(); }
+$('#pPeek').addEventListener('pointerdown', (e) => { if (e.button > 0) return; e.preventDefault(); audio.unlock(); if (!cur || cur.game.complete) return; audio.tap(); try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ } peekDown = performance.now(); startPeek(); });
+for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) $('#pPeek').addEventListener(ev, peekRelease);
+$('#pPeek').addEventListener('contextmenu', (e) => e.preventDefault());
+$('#pPeek').addEventListener('click', (e) => { if (e.detail === 0) { startPeek(); peekTimer = setTimeout(stopPeek, 2000); } }); // keyboard
+$('#cv').addEventListener('pointerdown', () => { if (view && view.peek) stopPeek(); }, true); // touching the picture ends the peek
 $('#zIn').addEventListener('click', () => view && view.zoomBy(1.6));
 $('#zOut').addEventListener('click', () => view && view.zoomBy(1 / 1.6));
 $('#zFit').addEventListener('click', () => view && view.fit());
-document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) { save(); stopPeek(); } });
 addEventListener('pagehide', save);
 addEventListener('blur', () => view && view.setSpace(false));
 addEventListener('keyup', (e) => { if (e.key === ' ' && view) { view.setSpace(false); if (cur && $('#play').classList.contains('on')) e.preventDefault(); } });
@@ -465,6 +480,7 @@ addEventListener('keydown', (e) => { if (!cur || !$('#play').classList.contains(
 
 // ---------- completion ----------
 function finish(restored) {
+  stopPeek();
   const P = cur.pic; store.markDone(P.id); save();
   const award = store.earnSticker(P.cat);
   if (restored) { view.celeb = null; showWin(true, award); return; }
@@ -538,4 +554,4 @@ $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') clos
 // ---------- boot ----------
 renderChips(); renderGrid();
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
-window.__MC = { onBrush, setBrushSize, ofType, get cur() { return cur; }, get view() { return view; }, pictures, store, flush, openPicture, startPicture, handle, settings, isFresh, pictureOfTheDay, dayKey, renderStickers, renderContinue, unfinishedLast, STICKER, advanceColour, get pending() { return pending; }, get replay() { return replay; }, openViewer, renderGallery };
+window.__MC = { onBrush, setBrushSize, ofType, get cur() { return cur; }, get view() { return view; }, pictures, store, flush, openPicture, startPicture, handle, settings, isFresh, pictureOfTheDay, dayKey, renderStickers, renderContinue, unfinishedLast, STICKER, advanceColour, get pending() { return pending; }, get replay() { return replay; }, get peeking() { return !!(view && view.peek); }, startPeek, stopPeek, openViewer, renderGallery };
