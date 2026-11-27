@@ -264,7 +264,7 @@ function startPicture(p) {
   if (!view) view = new PuzzleView($('#cv'), { onTap: onTapRegion, onBrushStart, onBrush, onBrushEnd });
   buildPalette(); updateModeUI(); show('play'); enter(); requestWake();
   view.load(p, game);
-  requestAnimationFrame(() => { view.resize(true); });
+  requestAnimationFrame(() => { view.resize(true); fitPalette(); });
   updatePalette(); updateProgress();
   if (game.complete) finish(true);
   else if (!settings.introSeen) { settings.introSeen = true; store.saveSettings(settings); tipShown = true; toast('Three ways to play (top bar): \u2728 Magic \u00B7 \u261D\uFE0F One by one \u00B7 \u{1F58C}\uFE0F Brush', 5200); }
@@ -275,17 +275,55 @@ function startPicture(p) {
 // ---------- palette ----------
 function buildPalette() {
   const p = cur.pic, K = p.palette.length;
-  const nav = $('#palette'); nav.style.setProperty('--rows', K > 6 ? 2 : 1); nav.style.setProperty('--cols', K > 12 ? 3 : K > 5 ? 2 : 1);
+  const nav = $('#palette'); nav.style.setProperty('--rows', K > 5 ? 2 : 1); nav.style.setProperty('--cols', K > 12 ? 3 : K > 5 ? 2 : 1);
   nav.innerHTML = p.palette.map((hex, i) => `<button class="sw" data-c="${i + 1}" style="--c:${hex};--t:${textColourFor(hex)}" aria-label="Colour ${i + 1}"><u class="ring"></u><b>${i + 1}</b><i class="tk">${I.tick}</i></button>`).join('');
 }
 function updatePalette() {
-  const g = cur.game;
+  const g = cur.game, now = performance.now(), seen = cur.doneSeen || (cur.doneSeen = {});
+  let wait = 0;
   for (const b of $('#palette').children) {
-    const c = +b.dataset.c, tot = g.byColour[c].length, d = g.doneCount[c];
-    b.classList.toggle('sel', g.selected === c); b.classList.toggle('done', g.colourDone(c));
+    const c = +b.dataset.c, tot = g.byColour[c].length, d = g.doneCount[c], dn = g.colourDone(c);
+    b.classList.toggle('sel', g.selected === c); b.classList.toggle('done', dn);
     b.style.setProperty('--p', tot ? Math.round(100 * d / tot) : 100);
+    // tidy palette: a finished colour keeps its place for a moment (pop + tick), then tucks away small at the end
+    if (!dn) delete seen[c]; else if (!(c in seen)) seen[c] = cur.paletteReady ? now : 0;
+    const old = dn && now - seen[c] >= TUCK_MS; b.classList.toggle('gone', old);
+    if (dn && !old) wait = Math.max(wait, TUCK_MS - (now - seen[c]));
   }
+  clearTimeout(tuckTimer); if (wait) tuckTimer = setTimeout(() => { if (cur) updatePalette(); }, wait + 20);
+  if (g.selected !== cur.shownSel || wait === 0 && cur.tucked !== tuckedKey()) { cur.shownSel = g.selected; cur.tucked = tuckedKey(); revealSelected(); paletteEdges(); }
 }
+// ---------- tidy palette (1.16): finished colours tuck away at the end, the picked colour always scrolls into view, soft edge fades show there are more colours ----------
+const TUCK_MS = 900;
+let tuckTimer = 0;
+const tuckedKey = () => [...$('#palette').querySelectorAll('.sw.gone')].map((b) => b.dataset.c).join();
+const reduceMotion = () => !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+/** Measure once per picture / screen size: only palettes that do not fit (big pictures) tuck finished colours away. */
+function fitPalette() {
+  if (!cur) return; const nav = $('#palette');
+  nav.classList.remove('tuck');
+  const over = nav.scrollWidth > nav.clientWidth + 2 || nav.scrollHeight > nav.clientHeight + 2;
+  nav.classList.toggle('tuck', over); cur.paletteReady = true;
+  revealSelected(true); paletteEdges();
+}
+function revealSelected(instant) {
+  if (!cur || !cur.game.selected) return;
+  const nav = $('#palette'), b = nav.children[cur.game.selected - 1]; if (!b) return;
+  if (nav.scrollWidth <= nav.clientWidth + 1 && nav.scrollHeight <= nav.clientHeight + 1) return;
+  const n = nav.getBoundingClientRect(), r = b.getBoundingClientRect(), pad = 44;
+  if (!n.width || !n.height) return;
+  const dx = r.left < n.left + pad ? r.left - n.left - pad : r.right > n.right - pad ? r.right - n.right + pad : 0;
+  const dy = r.top < n.top + pad ? r.top - n.top - pad : r.bottom > n.bottom - pad ? r.bottom - n.bottom + pad : 0;
+  if (dx || dy) nav.scrollBy({ left: dx, top: dy, behavior: instant || reduceMotion() ? 'auto' : 'smooth' });
+}
+function paletteEdges() {
+  const nav = $('#palette'), x = nav.scrollLeft, y = nav.scrollTop;
+  const before = x > 2 || y > 2, after = x + nav.clientWidth < nav.scrollWidth - 2 || y + nav.clientHeight < nav.scrollHeight - 2;
+  nav.classList.toggle('more-a', before); nav.classList.toggle('more-b', after);
+}
+$('#palette').addEventListener('scroll', paletteEdges, { passive: true });
+let fitRaf = 0;
+addEventListener('resize', () => { cancelAnimationFrame(fitRaf); fitRaf = requestAnimationFrame(() => { if (cur && $('#play').classList.contains('on')) fitPalette(); }); });
 function updateProgress() {
   const g = cur.game, pc = Math.round(g.progress() * 100); $('#pFill').style.width = pc + '%'; $('#pText').textContent = pc + '%';
   maybeMilestoneToast();
@@ -447,7 +485,7 @@ $('#pUndo').addEventListener('click', () => {
 $('#pHint').addEventListener('click', () => {
   if (!cur) return; audio.unlock(); flush(); const h = cur.game.hint(); if (!h) return; audio.hint();
   view.focusRegions(h.ids); view.setOverlay(h.ids.map((id) => ({ id, color: '#ffd93d' })), 4200);
-  updatePalette(); view.dirty = true; view.kick();
+  updatePalette(); revealSelected(); view.dirty = true; view.kick();
   const b = $('#palette').children[h.colour - 1]; b.classList.remove('nudge'); void b.offsetWidth; b.classList.add('nudge');
   toast('Look for the glowing spots \u2013 they are number ' + h.colour + '!', 3200);
 });
